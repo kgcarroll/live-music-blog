@@ -1,0 +1,60 @@
+import {notFound} from 'next/navigation'
+import type {Metadata} from 'next'
+import {EditorialCard, type EditorialCardItem} from '@/components/EditorialCard'
+import {sanityFetch} from '@/sanity/lib/live'
+import {AUTHOR_BY_SLUG, AUTHOR_SLUGS, POSTS_BY_AUTHOR_SLUG} from '@/sanity/lib/queries'
+
+type Props = {params: Promise<{slug: string}>}
+
+export async function generateStaticParams() {
+  const {data} = await sanityFetch({
+    query: AUTHOR_SLUGS,
+    perspective: 'published',
+    stega: false,
+  })
+  return (data || []).map((row: {slug: string}) => ({slug: row.slug}))
+}
+
+export async function generateMetadata({params}: Props): Promise<Metadata> {
+  const {slug} = await params
+  const {data} = await sanityFetch({
+    query: AUTHOR_BY_SLUG,
+    params: {slug},
+    stega: false,
+  })
+  if (!data?.name) return {title: 'Not found'}
+  return {
+    title: `${data.name} · Authors`,
+    description: `Posts by ${data.name}.`,
+  }
+}
+
+export default async function AuthorPostsPage({params}: Props) {
+  const {slug} = await params
+  const {data: author} = await sanityFetch({
+    query: AUTHOR_BY_SLUG,
+    params: {slug},
+  })
+  if (!author?.slug) notFound()
+
+  const {data: posts} = await sanityFetch({
+    query: POSTS_BY_AUTHOR_SLUG,
+    params: {slug},
+  })
+  const items = (posts ?? []) as EditorialCardItem[]
+
+  return (
+    <div>
+      <h1 className="text-3xl font-bold text-zinc-50">{author.name}</h1>
+      <p className="mt-3 max-w-2xl text-zinc-400">Interviews, photo posts, and reviews by this author.</p>
+      <div className="mt-10 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+        {items.map((item) => (
+          <EditorialCard key={item._id} item={item} />
+        ))}
+      </div>
+      {!items.length ? (
+        <p className="mt-8 text-sm text-zinc-500">No published posts for this author yet.</p>
+      ) : null}
+    </div>
+  )
+}
