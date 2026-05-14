@@ -2,11 +2,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {ArticleBody} from '@/components/ArticleBody'
 import type {EditorialAuthor} from '@/components/EditorialCard'
-import {authorHref} from '@/lib/paths'
+import {authorHref, editorialTypeLabel} from '@/lib/paths'
 import {urlForImage} from '@/sanity/lib/image'
 
 export type EditorialDoc = {
   _id: string
+  _type: string
   title: string | null
   slug: string | null
   publishedAt?: string | null
@@ -36,15 +37,15 @@ export type EditorialDoc = {
 }
 
 export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
-  const date =
+  const metaDate =
     doc.publishedAt != null
       ? new Date(doc.publishedAt).toLocaleDateString(undefined, {
-          weekday: 'long',
           year: 'numeric',
-          month: 'long',
+          month: 'short',
           day: 'numeric',
         })
       : null
+  const typeLabel = editorialTypeLabel(doc._type)
 
   const dims = doc.coverImage?.asset?.metadata?.dimensions
   const w = Math.min(dims?.width || 1600, 1600)
@@ -63,25 +64,38 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
 
   return (
     <article className="pb-16">
-      <div className="border-b border-zinc-800 bg-zinc-950/80">
+      <div className="bg-zinc-950/80">
         <div className="mx-auto max-w-3xl px-4 py-10">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl">{doc.title}</h1>
-          {doc.subhead ? <p className="mt-4 text-lg text-zinc-400">{doc.subhead}</p> : null}
-          {doc.galleryNote ? <p className="mt-4 text-lg text-zinc-400">{doc.galleryNote}</p> : null}
-          {doc.verdict ? <p className="mt-4 text-lg font-medium text-amber-200/90">{doc.verdict}</p> : null}
-          <p className="mt-6 text-sm text-zinc-400">
+          <p className="text-xs leading-snug text-zinc-400">
+            <span className="uppercase tracking-wide text-amber-300">{typeLabel}</span>
+            {metaDate ? (
+              <>
+                <span className="mx-1.5 text-zinc-600" aria-hidden="true">
+                  |
+                </span>
+                <time className="tabular-nums text-zinc-400" dateTime={doc.publishedAt ?? undefined}>
+                  {metaDate}
+                </time>
+              </>
+            ) : null}
+          </p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl">{doc.title}</h1>
+          <p className="mt-3 text-sm text-zinc-400">
+            Written by{' '}
             {doc.author?.name?.trim() && doc.author?.slug?.trim() ? (
               <Link
                 href={authorHref(doc.author.slug.trim())}
-                className="font-medium text-zinc-200 underline-offset-2 transition-colors hover:text-amber-200 hover:underline"
+                className="text-zinc-400 transition-colors hover:text-amber-200"
               >
                 {doc.author.name.trim()}
               </Link>
             ) : (
-              <span className="font-medium text-zinc-200">Editorial</span>
+              <span className="text-zinc-400">Editorial</span>
             )}
-            {date ? <span> · {date}</span> : null}
           </p>
+          {doc.subhead ? <p className="mt-4 text-lg text-zinc-400">{doc.subhead}</p> : null}
+          {doc.galleryNote ? <p className="mt-4 text-lg text-zinc-400">{doc.galleryNote}</p> : null}
+          {doc.verdict ? <p className="mt-4 text-lg font-medium text-amber-200/90">{doc.verdict}</p> : null}
           {chips.length > 0 ? (
             <p className="mt-3 text-sm text-amber-200/85">{chips.join(' · ')}</p>
           ) : null}
