@@ -14,7 +14,6 @@ export type EditorialDoc = {
   author?: EditorialAuthor | null
   subhead?: string | null
   galleryNote?: string | null
-  rating?: number | null
   verdict?: string | null
   coverImage?: {
     alt?: string
@@ -70,9 +69,6 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
           {doc.subhead ? <p className="mt-4 text-lg text-zinc-400">{doc.subhead}</p> : null}
           {doc.galleryNote ? <p className="mt-4 text-lg text-zinc-400">{doc.galleryNote}</p> : null}
           {doc.verdict ? <p className="mt-4 text-lg font-medium text-amber-200/90">{doc.verdict}</p> : null}
-          {typeof doc.rating === 'number' ? (
-            <p className="mt-2 text-sm text-zinc-400">Rating: {doc.rating} / 5</p>
-          ) : null}
           <p className="mt-6 text-sm text-zinc-400">
             {doc.author?.name?.trim() && doc.author?.slug?.trim() ? (
               <Link

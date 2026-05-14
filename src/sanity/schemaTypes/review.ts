@@ -22,12 +22,6 @@ export const review = defineType({
       type: 'reference',
       to: [{type: 'author'}],
     }),
-    defineField({
-      name: 'rating',
-      type: 'number',
-      title: 'Rating (1-5)',
-      validation: (Rule) => Rule.min(1).max(5).integer(),
-    }),
     defineField({name: 'verdict', type: 'string', title: 'One-line verdict'}),
     defineField({name: 'featured', type: 'boolean', initialValue: false}),
     defineField({name: 'venue', type: 'reference', to: [{type: 'venue'}]}),

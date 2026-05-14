@@ -28,7 +28,6 @@ const editorialProjection = `{
   featured,
   subhead,
   galleryNote,
-  rating,
   verdict,
   ${imageProjection},
   venue->{
