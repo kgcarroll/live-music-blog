@@ -12,6 +12,19 @@ const imageProjection = `coverImage{
   }
 }`
 
+const galleryImagesProjection = `gallery[]{
+  _key,
+  ...,
+  asset->{
+    _id,
+    url,
+    metadata {
+      lqip,
+      dimensions { width, height, aspectRatio }
+    }
+  }
+}`
+
 const authorEmbed = `author->{
   name,
   "slug": slug.current
@@ -29,6 +42,8 @@ const editorialProjection = `{
   subhead,
   galleryNote,
   verdict,
+  youtubeUrl,
+  ${galleryImagesProjection},
   ${imageProjection},
   venue->{
     name,
@@ -66,8 +81,8 @@ const editorialCardListFields = `
   ${imageProjection}
 `
 
-export const HOME_EDITORIAL_LIST = defineQuery(`
-  *[_type in ["interview","photoPost","review"] && defined(slug.current)] | order(publishedAt desc)[0...48] {
+export const HOME_EDITORIAL_PAGE = defineQuery(`
+  *[_type in ["interview","photoPost","review"] && defined(slug.current)] | order(publishedAt desc)[$start...$end] {
     ${editorialCardListFields}
   }
 `)

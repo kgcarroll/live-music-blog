@@ -2,7 +2,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {ArticleBody} from '@/components/ArticleBody'
 import type {EditorialAuthor} from '@/components/EditorialCard'
+import {PhotoGalleryMosaic, type PhotoGalleryImage} from '@/components/PhotoGalleryMosaic'
+import {YouTubeEmbed} from '@/components/YouTubeEmbed'
 import {authorHref, editorialTypeLabel} from '@/lib/paths'
+import {getYouTubeVideoId} from '@/lib/youtube'
 import {urlForImage} from '@/sanity/lib/image'
 
 export type EditorialDoc = {
@@ -15,7 +18,9 @@ export type EditorialDoc = {
   author?: EditorialAuthor | null
   subhead?: string | null
   galleryNote?: string | null
+  gallery?: PhotoGalleryImage[] | null
   verdict?: string | null
+  youtubeUrl?: string | null
   coverImage?: {
     alt?: string
     hotspot?: unknown
@@ -61,6 +66,8 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
   doc.artists?.forEach((a) => {
     if (a?.name) chips.push(a.name)
   })
+
+  const youtubeId = doc._type === 'review' ? getYouTubeVideoId(doc.youtubeUrl) : null
 
   return (
     <article className="pb-16">
@@ -120,8 +127,18 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
         </div>
       ) : null}
 
+      {doc._type === 'photoPost' && doc.gallery?.length ? (
+        <PhotoGalleryMosaic images={doc.gallery} />
+      ) : null}
+
       {doc.excerpt ? (
         <p className="mx-auto mt-10 max-w-3xl px-4 text-lg leading-relaxed text-zinc-300">{doc.excerpt}</p>
+      ) : null}
+
+      {youtubeId ? (
+        <div className="mx-auto mt-10 max-w-4xl px-4">
+          <YouTubeEmbed videoId={youtubeId} title={doc.title} />
+        </div>
       ) : null}
 
       <div className="mx-auto mt-10 max-w-3xl px-4">
