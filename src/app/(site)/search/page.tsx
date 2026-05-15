@@ -34,11 +34,10 @@ export default async function SearchPage({searchParams}: PageProps) {
   return (
     <div>
       <h1 className="text-3xl font-bold text-zinc-50">Search</h1>
-      <p className="mt-3 max-w-2xl text-zinc-400">
-        Find articles across interviews, news, photo posts, and reviews. Results update as you type; the address bar
-        updates after you pause so Back and Forward stay usable.
+      <p className="mt-2 max-w-xl text-sm text-zinc-500">
+        Articles, interviews, photos, and reviews. The URL updates after you stop typing.
       </p>
-      <div className="mt-10">
+      <div className="mt-8">
         <SearchExperience initialQuery={initialQuery} />
       </div>
     </div>

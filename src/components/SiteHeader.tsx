@@ -9,7 +9,6 @@ const links = [
   {href: '/', label: 'Home'},
   {href: '/about', label: 'About'},
   {href: '/contact', label: 'Contact'},
-  {href: '/search', label: 'Search'},
   {href: '/interviews', label: 'Interviews'},
   {href: '/news', label: 'News'},
   {href: '/photos', label: 'Photos'},
@@ -71,19 +70,45 @@ function IconSpotify({className}: {className?: string}) {
   )
 }
 
-function HeaderSocial({
+function IconSearch({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </svg>
+  )
+}
+
+const asideIconLinkClass =
+  'group inline-flex h-9 w-9 items-center justify-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50'
+const asideIconClass =
+  'text-zinc-400 transition-colors duration-200 group-hover:text-amber-200 group-focus-visible:text-amber-200'
+
+/** Social links and search icon (search is always shown). */
+function HeaderAsideLinks({
   instagram,
   spotify,
+  pathname,
   className,
+  onNavigate,
 }: {
   instagram: string | null
   spotify: string | null
+  pathname: string
   className?: string
+  onNavigate?: () => void
 }) {
-  if (!instagram && !spotify) return null
-  const linkClass = 'group inline-flex h-9 w-9 items-center justify-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50'
-  const iconClass =
-    'text-zinc-400 transition-colors duration-200 group-hover:text-amber-200 group-focus-visible:text-amber-200'
   return (
     <div className={`flex shrink-0 items-center gap-2 ${className ?? ''}`}>
       {instagram ? (
@@ -91,10 +116,10 @@ function HeaderSocial({
           href={instagram}
           target="_blank"
           rel="noopener noreferrer"
-          className={linkClass}
+          className={asideIconLinkClass}
           aria-label="Instagram (opens in a new tab)"
         >
-          <IconInstagram className={iconClass} />
+          <IconInstagram className={asideIconClass} />
         </a>
       ) : null}
       {spotify ? (
@@ -102,12 +127,21 @@ function HeaderSocial({
           href={spotify}
           target="_blank"
           rel="noopener noreferrer"
-          className={linkClass}
+          className={asideIconLinkClass}
           aria-label="Spotify (opens in a new tab)"
         >
-          <IconSpotify className={iconClass} />
+          <IconSpotify className={asideIconClass} />
         </a>
       ) : null}
+      <Link
+        href="/search"
+        className={asideIconLinkClass}
+        aria-label="Search"
+        aria-current={pathname === '/search' ? 'page' : undefined}
+        onClick={onNavigate}
+      >
+        <IconSearch className={asideIconClass} />
+      </Link>
     </div>
   )
 }
@@ -214,13 +248,16 @@ export function SiteHeader({
             })}
           </ul>
         </nav>
-        {(instagram || spotify) && (
-          <div className="flex shrink-0 justify-center border-t border-zinc-800 px-4 py-4">
-            <div className="flex w-full max-w-6xl justify-end">
-              <HeaderSocial instagram={instagram} spotify={spotify} />
-            </div>
+        <div className="flex shrink-0 justify-center border-t border-zinc-800 px-4 py-4">
+          <div className="flex w-full max-w-6xl justify-end">
+            <HeaderAsideLinks
+              instagram={instagram}
+              spotify={spotify}
+              pathname={pathname}
+              onNavigate={() => setOpen(false)}
+            />
           </div>
-        )}
+        </div>
       </div>
     ) : null
 
@@ -237,7 +274,7 @@ export function SiteHeader({
                 Live Music Blog
               </Link>
               <div className="flex shrink-0 items-center gap-2 md:hidden">
-                <HeaderSocial instagram={instagram} spotify={spotify} />
+                <HeaderAsideLinks instagram={instagram} spotify={spotify} pathname={pathname} />
                 <button
                   type="button"
                   className="inline-flex items-center justify-center rounded-md border border-zinc-700 p-2 text-zinc-100"
@@ -278,7 +315,7 @@ export function SiteHeader({
                 })}
               </nav>
               <div className="flex min-w-0 items-center justify-end">
-                <HeaderSocial instagram={instagram} spotify={spotify} />
+                <HeaderAsideLinks instagram={instagram} spotify={spotify} pathname={pathname} />
               </div>
             </div>
           </div>
