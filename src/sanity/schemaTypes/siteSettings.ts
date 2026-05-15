@@ -35,6 +35,12 @@ export const siteSettings = defineType({
       description: 'Artist or profile link from open.spotify.com',
     }),
     defineField({name: 'aboutPortable', type: 'array', title: 'About page body', of: [{type: 'block'}]}),
-    defineField({name: 'contactIntro', type: 'text', rows: 3}),
+    defineField({
+      name: 'contactPortable',
+      type: 'array',
+      title: 'Contact page intro',
+      description: 'Shown above the contact form. Supports rich text like the About page.',
+      of: [{type: 'block'}],
+    }),
   ],
 })

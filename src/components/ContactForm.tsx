@@ -100,13 +100,15 @@ export function ContactForm() {
           className="w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100 outline-none ring-amber-500/40 focus:ring-2"
         />
       </div>
-      <button
-        type="submit"
-        disabled={status === 'loading'}
-        className="w-full rounded-md bg-amber-400 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-amber-300 disabled:opacity-60"
-      >
-        {status === 'loading' ? 'Sending...' : 'Send message'}
-      </button>
+      <div className="flex justify-center">
+        <button
+          type="submit"
+          disabled={status === 'loading'}
+          className="rounded-md bg-amber-400 px-5 py-2 text-sm font-semibold text-zinc-950 hover:bg-amber-300 disabled:opacity-60"
+        >
+          {status === 'loading' ? 'Sending...' : 'Send message'}
+        </button>
+      </div>
       {message ? (
         <p
           className={`text-sm ${status === 'error' ? 'text-red-400' : 'text-emerald-400'}`}
