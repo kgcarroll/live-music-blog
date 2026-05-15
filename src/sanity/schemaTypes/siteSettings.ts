@@ -7,6 +7,22 @@ export const siteSettings = defineType({
   fields: [
     defineField({name: 'siteTitle', type: 'string', initialValue: 'Live Music Blog'}),
     defineField({
+      name: 'logo',
+      title: 'Site logo',
+      type: 'image',
+      description:
+        'Displayed in the site header (replaces the site title text). Use a wide logo with a transparent background; about 240–400px wide works well.',
+      options: {hotspot: false},
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alt text',
+          description: 'For screen readers. Defaults to the site title if empty.',
+        }),
+      ],
+    }),
+    defineField({
       name: 'instagramUrl',
       type: 'url',
       title: 'Instagram URL',

@@ -132,9 +132,22 @@ export const POSTS_BY_AUTHOR_SLUG = defineQuery(`
   }
 `)
 
+const settingsImageProjection = `{
+  alt,
+  asset->{
+    _id,
+    url,
+    metadata {
+      lqip,
+      dimensions { width, height, aspectRatio }
+    }
+  }
+}`
+
 export const SITE_SETTINGS = defineQuery(`
   *[_type == "siteSettings"] | order(_updatedAt desc)[0]{
     siteTitle,
+    logo ${settingsImageProjection},
     instagramUrl,
     spotifyUrl,
     aboutPortable,

@@ -2,6 +2,9 @@
 
 import Link from 'next/link'
 import {usePathname} from 'next/navigation'
+
+import type {HeaderLogo} from '@/lib/resolveHeaderLogo'
+import {SiteLogoMark} from '@/components/SiteLogoMark'
 import {useEffect, useState, useSyncExternalStore} from 'react'
 import {createPortal} from 'react-dom'
 
@@ -13,7 +16,6 @@ const links = [
   {href: '/news', label: 'News'},
   {href: '/photos', label: 'Photos'},
   {href: '/reviews', label: 'Reviews'},
-  {href: '/authors', label: 'Authors'},
 ]
 
 /** Tailwind `md` breakpoint — mobile menu only mounts below this width. */
@@ -148,8 +150,12 @@ function HeaderAsideLinks({
 
 export function SiteHeader({
   social,
+  logo,
+  siteTitle,
 }: {
   social: {instagram: string | null; spotify: string | null}
+  logo: HeaderLogo | null
+  siteTitle: string
 }) {
   const {instagram, spotify} = social
   const [open, setOpen] = useState(false)
@@ -204,10 +210,10 @@ export function SiteHeader({
           <div className="flex w-full max-w-6xl items-center justify-between px-4 py-3">
             <Link
               href="/"
-              className="min-w-0 flex-1 pr-3 text-left text-xl font-semibold leading-tight tracking-tight text-zinc-50"
+              className="min-w-0 flex-1 pr-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
               onClick={() => setOpen(false)}
             >
-              Live Music Blog
+              <SiteLogoMark logo={logo} siteTitle={siteTitle} />
             </Link>
             <button
               type="button"
@@ -269,9 +275,9 @@ export function SiteHeader({
             <div className="flex w-full min-h-11 items-center justify-between py-3 md:min-h-0 md:justify-center md:py-0">
               <Link
                 href="/"
-                className="min-w-0 flex-1 pr-3 text-left text-xl font-semibold leading-tight tracking-tight text-zinc-50 md:flex-none md:pr-0 md:text-center md:text-2xl"
+                className="min-w-0 flex-1 pr-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 md:flex-none md:pr-0 md:text-center"
               >
-                Live Music Blog
+                <SiteLogoMark logo={logo} siteTitle={siteTitle} />
               </Link>
               <div className="flex shrink-0 items-center gap-2 md:hidden">
                 <HeaderAsideLinks instagram={instagram} spotify={spotify} pathname={pathname} />

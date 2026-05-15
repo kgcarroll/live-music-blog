@@ -2,7 +2,8 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import {useMemo} from 'react'
+import {useSearchParams} from 'next/navigation'
+import {useCallback, useEffect, useMemo, useRef} from 'react'
 import {liteClient as algoliasearch} from 'algoliasearch/lite'
 import type {Hit, UiState} from 'instantsearch.js'
 import type {SendEventForHits} from 'instantsearch.js/es/lib/utils'
@@ -12,6 +13,7 @@ import {
   Hits,
   SearchBox,
   Snippet,
+  useInstantSearch,
 } from 'react-instantsearch'
 import {
   InstantSearchNext,
@@ -19,6 +21,7 @@ import {
 } from 'react-instantsearch-nextjs'
 import type {EditorialAlgoliaRecord} from '@/lib/algolia/reindexEditorialAlgolia'
 import {getAlgoliaPublicEnv, isAlgoliaSearchConfigured} from '@/lib/algoliaPublicEnv'
+import {formatEditorialDate} from '@/lib/formatDate'
 import {editorialHref, editorialTypeLabel} from '@/lib/paths'
 
 export type EditorialSearchRecord = EditorialAlgoliaRecord
@@ -28,14 +31,7 @@ type SearchRouteState = {q?: string}
 function SearchHit({hit, sendEvent: _sendEvent}: {hit: Hit<EditorialSearchRecord>; sendEvent: SendEventForHits}) {
   const href = editorialHref(hit.editorialType, hit.slug)
   const typeLabel = editorialTypeLabel(hit.editorialType)
-  const date =
-    hit.publishedAt != null
-      ? new Date(hit.publishedAt).toLocaleDateString(undefined, {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        })
-      : null
+  const date = hit.publishedAt != null ? formatEditorialDate(hit.publishedAt) : null
 
   return (
     <article className="group flex w-full gap-4 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3 transition hover:border-amber-500/40 sm:gap-5 sm:p-4">
@@ -100,6 +96,116 @@ type SearchSubmitSlotProps = {
   classNames: {submitIcon?: string}
 }
 
+/** Run one browse search on mount (recent articles via index custom ranking). Runs once per InstantSearch tree. */
+function SearchInitialBrowse() {
+  const {refresh} = useInstantSearch()
+  const didBrowse = useRef(false)
+
+  useEffect(() => {
+    if (didBrowse.current) return
+    didBrowse.current = true
+    refresh()
+  }, [refresh])
+
+  return null
+}
+
+function SearchHitsLoading({label}: {label: string}) {
+  return (
+    <div className="space-y-4" aria-busy="true" aria-label={label}>
+      <p className="sr-only">{label}</p>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="h-28 rounded-xl bg-zinc-800/60 animate-pulse" />
+      ))}
+    </div>
+  )
+}
+
+function SearchHitsEmpty() {
+  const {indexUiState} = useInstantSearch()
+  const query = typeof indexUiState?.query === 'string' ? indexUiState.query.trim() : ''
+  return (
+    <p className="text-sm text-zinc-500">
+      {query
+        ? 'No articles match your search. Try different words.'
+        : 'No articles in the search index yet. Run npm run algolia:index or POST /api/algolia/reindex after publishing content.'}
+    </p>
+  )
+}
+
+function SearchHitsSection() {
+  const {results, status, indexUiState} = useInstantSearch()
+  const hits = results?.hits ?? []
+  const isSearching = status === 'loading' || status === 'stalled'
+  const awaitingFirstResponse = results == null
+  const query = typeof indexUiState?.query === 'string' ? indexUiState.query.trim() : ''
+  const browseLabel = query ? 'Loading search results' : 'Loading recent articles'
+
+  if (awaitingFirstResponse || (hits.length === 0 && isSearching)) {
+    return <SearchHitsLoading label={browseLabel} />
+  }
+
+  if (hits.length === 0) {
+    return <SearchHitsEmpty />
+  }
+
+  return (
+    <section aria-label={query ? 'Search results' : 'Articles'}>
+      <div className={isSearching ? 'opacity-70 transition-opacity' : undefined} aria-busy={isSearching}>
+        <Hits<EditorialSearchRecord>
+          hitComponent={SearchHit}
+          classNames={{root: 'w-full space-y-4', list: 'w-full space-y-4', item: ''}}
+        />
+        {isSearching ? (
+          <p className="sr-only" aria-live="polite">
+            Updating results…
+          </p>
+        ) : null}
+      </div>
+    </section>
+  )
+}
+
+function DebouncedSearchBox() {
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const queryHook = useCallback((query: string, search: (value: string) => void) => {
+    clearTimeout(debounceRef.current)
+    if (!query.trim()) {
+      search(query)
+      return
+    }
+    debounceRef.current = setTimeout(() => search(query), 300)
+  }, [])
+
+  return (
+    <SearchBox
+      placeholder="Search interviews, news, photos, reviews…"
+      searchAsYouType
+      queryHook={queryHook}
+      submitIconComponent={SearchSubmitButtonContent}
+      classNames={{
+        root: 'w-full',
+        form: 'flex flex-row items-stretch gap-3',
+        input:
+          'min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-400/20',
+        submit:
+          'inline-flex min-h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-amber-600/60 bg-amber-500/10 text-amber-100 transition hover:bg-amber-500/20',
+        reset: 'hidden',
+        loadingIndicator: 'sr-only',
+        submitIcon: '',
+        resetIcon: 'hidden',
+        loadingIcon: 'h-4 w-4 animate-spin',
+        aiModeButton: 'hidden',
+        aiModeIcon: 'hidden',
+      }}
+      translations={{
+        submitButtonTitle: 'Submit search',
+        resetButtonTitle: 'Clear',
+      }}
+    />
+  )
+}
+
 function SearchSubmitButtonContent({classNames}: SearchSubmitSlotProps) {
   return (
     <>
@@ -121,8 +227,13 @@ function SearchSubmitButtonContent({classNames}: SearchSubmitSlotProps) {
   )
 }
 
-export function SearchExperience({initialQuery}: {initialQuery: string}) {
+export function SearchExperience() {
   const {appId, searchKey, indexName} = getAlgoliaPublicEnv()
+  const searchParams = useSearchParams()
+  const initialQueryRef = useRef<string | null>(null)
+  if (initialQueryRef.current === null) {
+    initialQueryRef.current = searchParams.get('q')?.trim() ?? ''
+  }
 
   const searchClient = useMemo(
     () => (isAlgoliaSearchConfigured() ? algoliasearch(appId, searchKey) : null),
@@ -153,6 +264,11 @@ export function SearchExperience({initialQuery}: {initialQuery: string}) {
     }
   }, [indexName])
 
+  const initialUiState = useMemo((): UiState => {
+    const q = initialQueryRef.current ?? ''
+    return {[indexName]: {query: q}}
+  }, [indexName])
+
   if (!searchClient || !indexName) {
     return (
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-zinc-200">
@@ -176,11 +292,6 @@ export function SearchExperience({initialQuery}: {initialQuery: string}) {
     )
   }
 
-  const initialUiState: UiState | undefined =
-    initialQuery.trim().length > 0
-      ? {[indexName]: {query: initialQuery}}
-      : undefined
-
   return (
     <InstantSearchNext
       searchClient={searchClient}
@@ -191,38 +302,17 @@ export function SearchExperience({initialQuery}: {initialQuery: string}) {
         preserveSharedStateOnUnmount: true,
       }}
     >
+      <SearchInitialBrowse />
       <Configure
         hitsPerPage={15}
         attributesToHighlight={['title']}
         attributesToSnippet={['excerpt:20', 'bodyText:24']}
       />
       <div className="w-full min-w-0 lg:w-1/2">
-        <SearchBox
-          placeholder="Search interviews, news, photos, reviews…"
-          submitIconComponent={SearchSubmitButtonContent}
-          classNames={{
-            root: 'w-full',
-            form: 'flex flex-row items-stretch gap-3',
-            input:
-              'min-h-11 min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-zinc-100 placeholder:text-zinc-500 outline-none focus:border-amber-500/50 focus:ring-2 focus:ring-amber-400/20',
-            submit:
-              'inline-flex min-h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-amber-600/60 bg-amber-500/10 text-amber-100 transition hover:bg-amber-500/20',
-            reset: 'hidden',
-            loadingIndicator: 'sr-only',
-            submitIcon: '',
-            resetIcon: 'hidden',
-            loadingIcon: 'h-4 w-4 animate-spin',
-            aiModeButton: 'hidden',
-            aiModeIcon: 'hidden',
-          }}
-          translations={{
-            submitButtonTitle: 'Submit search',
-            resetButtonTitle: 'Clear',
-          }}
-        />
+        <DebouncedSearchBox />
       </div>
       <div className="mt-10 w-full">
-        <Hits<EditorialSearchRecord> hitComponent={SearchHit} classNames={{root: 'w-full space-y-4', list: 'w-full space-y-4', item: ''}} />
+        <SearchHitsSection />
       </div>
     </InstantSearchNext>
   )

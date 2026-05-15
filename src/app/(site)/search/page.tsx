@@ -1,7 +1,6 @@
 import type {Metadata} from 'next'
-import {SearchExperience} from './SearchExperience'
 
-export const dynamic = 'force-dynamic'
+import {SearchPageView} from './SearchPageView'
 
 type PageProps = {
   searchParams: Promise<{q?: string | string[]}>
@@ -27,19 +26,7 @@ export async function generateMetadata({searchParams}: PageProps): Promise<Metad
   }
 }
 
-export default async function SearchPage({searchParams}: PageProps) {
-  const sp = await searchParams
-  const initialQuery = firstQueryParam(sp.q)
-
-  return (
-    <div>
-      <h1 className="text-3xl font-bold text-zinc-50">Search</h1>
-      <p className="mt-2 max-w-xl text-sm text-zinc-500">
-        Articles, interviews, photos, and reviews. The URL updates after you stop typing.
-      </p>
-      <div className="mt-8">
-        <SearchExperience initialQuery={initialQuery} />
-      </div>
-    </div>
-  )
+/** Server shell only — search UI is client-only so URL sync does not re-run this page in a loop. */
+export default function SearchPage() {
+  return <SearchPageView />
 }

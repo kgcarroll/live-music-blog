@@ -35,7 +35,6 @@ export const resolve: PresentationPluginOptions['resolve'] = {
             title: doc?.title || 'Author',
             href: `/authors/${doc?.slug}`,
           },
-          {title: 'Authors', href: '/authors'},
           {title: 'Home', href: '/'},
         ],
       }),
