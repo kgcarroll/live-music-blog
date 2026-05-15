@@ -230,7 +230,7 @@ export function SiteHeader({
           className="min-h-0 flex-1 overflow-y-auto px-6 pb-12 pt-8"
           aria-label="Mobile main"
         >
-          <ul className="group/mnav flex flex-col">
+          <ul className="flex flex-col [&:has(a:hover)_a]:opacity-35 [&:has(a:hover)_a:hover]:!opacity-100 [&:has(a:hover)_a:hover]:text-amber-200">
             {links.map((l) => {
               const active = pathname === l.href
               return (
@@ -238,7 +238,7 @@ export function SiteHeader({
                   <Link
                     href={l.href}
                     aria-current={active ? 'page' : undefined}
-                    className="block py-4 text-lg font-medium tracking-tight text-zinc-100 transition-[opacity,color] duration-200 group-hover/mnav:opacity-35 group-hover/mnav:hover:!opacity-100 group-hover/mnav:hover:text-amber-200"
+                    className="block py-4 text-lg font-medium tracking-tight text-zinc-100 transition-[opacity,color] duration-200"
                     onClick={() => setOpen(false)}
                   >
                     {l.label}
@@ -297,7 +297,7 @@ export function SiteHeader({
             <div className="hidden w-full md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-x-4 md:py-1">
               <div className="min-w-0" aria-hidden="true" />
               <nav
-                className="group/mainnav flex flex-wrap items-center justify-center gap-x-8 gap-y-2 py-1 text-sm font-medium transition-opacity duration-200 lg:gap-x-10"
+                className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 py-1 text-sm font-medium lg:gap-x-10 [&:has(a:hover)_a]:opacity-35 [&:has(a:hover)_a:hover]:!opacity-100 [&:has(a:hover)_a:hover]:text-amber-200"
                 aria-label="Main"
               >
                 {links.map((l) => {
@@ -307,7 +307,7 @@ export function SiteHeader({
                       key={l.href}
                       href={l.href}
                       aria-current={active ? 'page' : undefined}
-                      className="text-zinc-300 transition-[opacity,color] duration-200 group-hover/mainnav:opacity-35 group-hover/mainnav:hover:!opacity-100 group-hover/mainnav:hover:text-amber-200"
+                      className="text-zinc-300 transition-[opacity,color] duration-200"
                     >
                       {l.label}
                     </Link>

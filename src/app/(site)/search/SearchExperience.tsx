@@ -196,7 +196,7 @@ export function SearchExperience({initialQuery}: {initialQuery: string}) {
         attributesToHighlight={['title']}
         attributesToSnippet={['excerpt:20', 'bodyText:24']}
       />
-      <div className="w-1/2 min-w-0">
+      <div className="w-full min-w-0 lg:w-1/2">
         <SearchBox
           placeholder="Search interviews, news, photos, reviews…"
           submitIconComponent={SearchSubmitButtonContent}
