@@ -82,7 +82,7 @@ const editorialCardListFields = `
 `
 
 export const HOME_EDITORIAL_PAGE = defineQuery(`
-  *[_type in ["interview","photoPost","review"] && defined(slug.current)] | order(publishedAt desc)[$start...$end] {
+  *[_type in ["interview","news","photoPost","review"] && defined(slug.current)] | order(publishedAt desc)[$start...$end] {
     ${editorialCardListFields}
   }
 `)
@@ -126,7 +126,7 @@ export const ALL_AUTHORS = defineQuery(`
 `)
 
 export const POSTS_BY_AUTHOR_SLUG = defineQuery(`
-  *[_type in ["interview","photoPost","review"] && author->slug.current == $slug && defined(slug.current)]
+  *[_type in ["interview","news","photoPost","review"] && author->slug.current == $slug && defined(slug.current)]
   | order(publishedAt desc) {
     ${editorialCardListFields}
   }

@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
   const paths = body.paths?.length
     ? body.paths
-    : (url.searchParams.get('path')?.split(',') ?? ['/', '/interviews', '/photos', '/reviews'])
+    : (url.searchParams.get('path')?.split(',') ?? ['/', '/interviews', '/news', '/photos', '/reviews'])
 
   for (const p of paths) {
     revalidatePath(p)

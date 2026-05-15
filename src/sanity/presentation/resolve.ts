@@ -1,6 +1,6 @@
 import {defineLocations, type PresentationPluginOptions} from 'sanity/presentation'
 
-const editorial = (segment: 'interviews' | 'photos' | 'reviews') =>
+const editorial = (segment: 'interviews' | 'news' | 'photos' | 'reviews') =>
   defineLocations({
     select: {
       title: 'title',
@@ -21,6 +21,7 @@ const editorial = (segment: 'interviews' | 'photos' | 'reviews') =>
 export const resolve: PresentationPluginOptions['resolve'] = {
   locations: {
     interview: editorial('interviews'),
+    news: editorial('news'),
     photoPost: editorial('photos'),
     review: editorial('reviews'),
     author: defineLocations({

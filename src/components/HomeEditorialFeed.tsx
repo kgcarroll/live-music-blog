@@ -46,7 +46,7 @@ export function HomeEditorialFeed({initialItems}: {initialItems: EditorialCardIt
           <Link href="/studio" className="text-amber-300 underline">
             Sanity Studio
           </Link>{' '}
-          to add interviews, photos, or reviews.
+          to add interviews, news, photos, or reviews.
         </p>
       ) : null}
       {hasMore ? (
