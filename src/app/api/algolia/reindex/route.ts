@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 
 import {type NextRequest, NextResponse} from 'next/server'
+import {parseBody} from 'next-sanity/webhook'
 
 import {runFullEditorialAlgoliaReindex} from '@/lib/algolia/reindexEditorialAlgolia'
 
@@ -46,11 +47,14 @@ function collectProvidedSecrets(request: NextRequest, bodySecret?: string): stri
 /**
  * POST — full editorial reindex (Sanity → Algolia).
  *
- * Auth: value must match `ALGOLIA_REINDEX_SECRET` from any of:
- * - Header named in `ALGOLIA_REINDEX_SECRET_HEADER` (for webhooks that only allow custom headers)
- * - `x-algolia-reindex-secret`
- * - `Authorization: Bearer …` or raw `Authorization: …`
- * - JSON body `{ "secret": "…" }` or query `?secret=…`
+ * Auth (first match wins):
+ * 1. **Sanity GROQ webhook** — set the webhook “Secret” in Sanity to the same value as `ALGOLIA_REINDEX_SECRET`.
+ *    Requests include `sanity-webhook-signature`; verified with `next-sanity/webhook` `parseBody`.
+ * 2. **Custom** — value must equal `ALGOLIA_REINDEX_SECRET` via:
+ *    - Header named in env `ALGOLIA_REINDEX_SECRET_HEADER` (value in Sanity = that header’s **name**, e.g. `X-Algolia-Reindex-Secret`, not this env var’s name)
+ *    - `x-algolia-reindex-secret`
+ *    - `Authorization: Bearer …` or raw `Authorization: …`
+ *    - JSON `{ "secret": "…" }` or query `?secret=…`
  */
 export async function POST(request: NextRequest) {
   const secret = process.env.ALGOLIA_REINDEX_SECRET
@@ -58,16 +62,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({message: 'ALGOLIA_REINDEX_SECRET not set'}, {status: 501})
   }
 
-  let body: {secret?: string} = {}
-  try {
-    body = (await request.json()) as {secret?: string}
-  } catch {
-    // empty or non-JSON body (typical for header-only webhooks)
-  }
+  const sanitySignature = request.headers.get('sanity-webhook-signature')
+  if (sanitySignature) {
+    try {
+      const {isValidSignature} = await parseBody(request, secret, false)
+      if (isValidSignature !== true) {
+        return NextResponse.json({message: 'Invalid Sanity webhook signature'}, {status: 401})
+      }
+    } catch {
+      return NextResponse.json({message: 'Invalid webhook payload'}, {status: 400})
+    }
+  } else {
+    let body: {secret?: string} = {}
+    try {
+      body = (await request.json()) as {secret?: string}
+    } catch {
+      // empty or non-JSON body
+    }
 
-  const provided = collectProvidedSecrets(request, body.secret)
-  if (!matchesSecret(secret, provided)) {
-    return NextResponse.json({message: 'Invalid secret'}, {status: 401})
+    const provided = collectProvidedSecrets(request, body.secret)
+    if (!matchesSecret(secret, provided)) {
+      return NextResponse.json({message: 'Invalid secret'}, {status: 401})
+    }
   }
 
   try {
