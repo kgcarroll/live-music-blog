@@ -23,8 +23,10 @@ Open [http://localhost:3000](http://localhost:3000) for the site and [http://loc
 | `NEXT_PUBLIC_SANITY_DATASET` | Usually `production` |
 | `SANITY_API_READ_TOKEN` | Viewer token — drafts + `SanityLive` / Presentation |
 | `NEXT_PUBLIC_SITE_URL` | e.g. `http://localhost:3000` — used for Presentation + stega |
-| `RESEND_API_KEY`, `CONTACT_TO_EMAIL` | Contact form (optional until you test `/contact`) |
-| `RESEND_FROM` | Optional; defaults to Resend onboarding sender |
+| `RESEND_API_KEY`, `CONTACT_TO_EMAIL` | Contact form at `/contact` via [Resend](https://resend.com) |
+| `RESEND_FROM` | Verified sender after domain setup (e.g. `Live Music Blog <hello@yourdomain.com>`); omit for Resend test mode |
+
+**Contact form (Resend):** Create an API key, set `CONTACT_TO_EMAIL` to the inbox that receives messages, and add both vars in Vercel for production. Without a verified domain, Resend only delivers to your account email when using the default `onboarding@resend.dev` sender. After verifying a domain, set `RESEND_FROM` and redeploy.
 
 ### CORS (required for Visual Editing)
 

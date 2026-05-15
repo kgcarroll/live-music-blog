@@ -30,7 +30,12 @@ export function ContactForm() {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload),
       })
-      if (!res.ok) throw new Error('Request failed')
+      const data = (await res.json().catch(() => ({}))) as {error?: string}
+      if (!res.ok) {
+        setStatus('error')
+        setMessage(data.error || 'Something went wrong. Please try again later.')
+        return
+      }
       setStatus('ok')
       setMessage('Thanks — your message was sent.')
       form.reset()
