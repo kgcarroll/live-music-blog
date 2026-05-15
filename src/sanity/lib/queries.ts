@@ -45,14 +45,6 @@ const editorialProjection = `{
   youtubeUrl,
   ${galleryImagesProjection},
   ${imageProjection},
-  venue->{
-    name,
-    "slug": slug.current
-  },
-  artists[]->{
-    name,
-    "slug": slug.current
-  },
   seoTitle,
   seoDescription,
   body[]{

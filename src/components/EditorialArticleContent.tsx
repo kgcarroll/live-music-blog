@@ -34,8 +34,6 @@ export type EditorialDoc = {
       } | null
     } | null
   } | null
-  venue?: {name?: string | null} | null
-  artists?: {name?: string | null}[] | null
   seoTitle?: string | null
   seoDescription?: string | null
   body?: import('@portabletext/types').TypedObject[] | null
@@ -60,12 +58,6 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
     doc.coverImage && doc.coverImage.asset?._id
       ? urlForImage(doc.coverImage as never).width(1600).url()
       : null
-
-  const chips: string[] = []
-  if (doc.venue?.name) chips.push(doc.venue.name)
-  doc.artists?.forEach((a) => {
-    if (a?.name) chips.push(a.name)
-  })
 
   const youtubeId = doc._type === 'review' ? getYouTubeVideoId(doc.youtubeUrl) : null
 
@@ -103,9 +95,6 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
           {doc.subhead ? <p className="mt-4 text-lg text-zinc-400">{doc.subhead}</p> : null}
           {doc.galleryNote ? <p className="mt-4 text-lg text-zinc-400">{doc.galleryNote}</p> : null}
           {doc.verdict ? <p className="mt-4 text-lg font-medium text-amber-200/90">{doc.verdict}</p> : null}
-          {chips.length > 0 ? (
-            <p className="mt-3 text-sm text-amber-200/85">{chips.join(' · ')}</p>
-          ) : null}
         </div>
       </div>
 

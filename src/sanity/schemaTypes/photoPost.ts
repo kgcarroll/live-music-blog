@@ -42,12 +42,6 @@ export const photoPost = defineType({
       ],
     }),
     defineField({name: 'featured', type: 'boolean', initialValue: false}),
-    defineField({name: 'venue', type: 'reference', to: [{type: 'venue'}]}),
-    defineField({
-      name: 'artists',
-      type: 'array',
-      of: [{type: 'reference', to: [{type: 'artist'}]}],
-    }),
     bodyField(),
     ...seoFields(),
   ],

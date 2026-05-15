@@ -18,7 +18,7 @@ export default async function InterviewsHubPage() {
     <div>
       <h1 className="text-3xl font-bold text-zinc-50">Interviews</h1>
       <p className="mt-3 max-w-2xl text-zinc-400">
-        Conversations with artists, promoters, and people behind the scenes.
+        Conversations with promoters and people behind the scenes.
       </p>
       <div className="mt-10 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
         {items.map((item) => (
