@@ -300,10 +300,10 @@ export function SiteHeader({
                 </button>
               </div>
             </div>
-            <div className="hidden w-full md:grid md:grid-cols-[1fr_auto_1fr] md:items-center md:gap-x-4 md:py-1">
+            <div className="hidden w-full md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(max-content,1fr)] md:items-center md:gap-x-3 md:py-1">
               <div className="min-w-0" aria-hidden="true" />
               <nav
-                className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 py-1 text-sm font-medium lg:gap-x-10 [&:has(a:hover)_a]:opacity-35 [&:has(a:hover)_a:hover]:!opacity-100 [&:has(a:hover)_a:hover]:text-amber-200"
+                className="flex min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-2 py-1 text-sm font-medium lg:gap-x-8 [&:has(a:hover)_a]:opacity-35 [&:has(a:hover)_a:hover]:!opacity-100 [&:has(a:hover)_a:hover]:text-amber-200"
                 aria-label="Main"
               >
                 {links.map((l) => {
