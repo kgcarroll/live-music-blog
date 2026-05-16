@@ -39,20 +39,21 @@ function plainTextFromPortableText(value: unknown): string {
   if (!Array.isArray(value)) return ''
 
   return value
-    .map((block) => {
+    .map((block: unknown) => {
       if (
         block == null ||
         typeof block !== 'object' ||
         !('children' in block) ||
-        !Array.isArray(block.children)
+        !Array.isArray((block as {children?: unknown}).children)
       ) {
         return ''
       }
 
-      return block.children
-        .map((child) => {
+      return (block as {children: unknown[]}).children
+        .map((child: unknown) => {
           if (child == null || typeof child !== 'object' || !('text' in child)) return ''
-          return typeof child.text === 'string' ? child.text : ''
+          const text = (child as {text?: unknown}).text
+          return typeof text === 'string' ? text : ''
         })
         .join('')
     })
