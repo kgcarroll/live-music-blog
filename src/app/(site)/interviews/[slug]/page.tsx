@@ -1,6 +1,7 @@
 import {notFound} from 'next/navigation'
 import type {Metadata} from 'next'
 import {EditorialArticleContent} from '@/components/EditorialArticleContent'
+import {buildEditorialMetadata} from '@/lib/editorialMetadata'
 import {sanityFetch} from '@/sanity/lib/live'
 import {EDITORIAL_BY_SLUG, EDITORIAL_SLUGS} from '@/sanity/lib/queries'
 
@@ -26,10 +27,7 @@ export async function generateMetadata({params}: Props): Promise<Metadata> {
     stega: false,
   })
   if (!data) return {title: 'Not found'}
-  return {
-    title: data.seoTitle || data.title || 'Interview',
-    description: data.seoDescription || data.excerpt || undefined,
-  }
+  return buildEditorialMetadata(data, 'Interview')
 }
 
 export default async function InterviewArticlePage({params}: Props) {
