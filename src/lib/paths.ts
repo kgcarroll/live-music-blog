@@ -34,3 +34,7 @@ export function editorialHref(type: EditorialType | string, slug: string) {
 export function authorHref(slug: string) {
   return `/authors/${slug}`
 }
+
+export function tagHref(slug: string) {
+  return `/tags/${slug}`
+}

@@ -1,5 +1,5 @@
 import {defineField, defineType} from 'sanity'
-import {bodyField, coverField, seoFields} from './blocks'
+import {bodyField, coverField, seoFields, tagsField} from './blocks'
 
 export const photoPost = defineType({
   name: 'photoPost',
@@ -42,6 +42,7 @@ export const photoPost = defineType({
       ],
     }),
     defineField({name: 'featured', type: 'boolean', initialValue: false}),
+    tagsField(),
     bodyField(),
     ...seoFields(),
   ],

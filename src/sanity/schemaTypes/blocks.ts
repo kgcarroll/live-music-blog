@@ -1,4 +1,4 @@
-import {defineField} from 'sanity'
+import {defineArrayMember, defineField} from 'sanity'
 
 export const bodyField = () =>
   defineField({
@@ -44,6 +44,15 @@ export const coverField = () =>
     type: 'image',
     options: {hotspot: true},
     fields: [defineField({name: 'alt', type: 'string', title: 'Alt text'})],
+  })
+
+export const tagsField = () =>
+  defineField({
+    name: 'tags',
+    title: 'Tags',
+    description: 'Connect this article to tag hub pages and related articles.',
+    type: 'array',
+    of: [defineArrayMember({type: 'reference', to: [{type: 'tag'}]})],
   })
 
 export const seoFields = () => [

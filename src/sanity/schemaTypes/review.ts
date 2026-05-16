@@ -1,5 +1,5 @@
 import {defineField, defineType} from 'sanity'
-import {bodyField, coverField, seoFields} from './blocks'
+import {bodyField, coverField, seoFields, tagsField} from './blocks'
 
 export const review = defineType({
   name: 'review',
@@ -44,6 +44,7 @@ export const review = defineType({
         }),
     }),
     defineField({name: 'featured', type: 'boolean', initialValue: false}),
+    tagsField(),
     bodyField(),
     ...seoFields(),
   ],

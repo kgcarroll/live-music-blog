@@ -39,5 +39,20 @@ export const resolve: PresentationPluginOptions['resolve'] = {
         ],
       }),
     }),
+    tag: defineLocations({
+      select: {
+        title: 'title',
+        slug: 'slug.current',
+      },
+      resolve: (doc) => ({
+        locations: [
+          {
+            title: doc?.title || 'Tag',
+            href: `/tags/${doc?.slug}`,
+          },
+          {title: 'Home', href: '/'},
+        ],
+      }),
+    }),
   },
 }

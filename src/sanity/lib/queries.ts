@@ -30,6 +30,22 @@ const authorEmbed = `author->{
   "slug": slug.current
 }`
 
+const tagsProjection = `tags[]->{
+  _id,
+  title,
+  "slug": slug.current
+}`
+
+const editorialCardListFields = `
+  _type,
+  _id,
+  title,
+  "slug": slug.current,
+  publishedAt,
+  ${authorEmbed},
+  ${imageProjection}
+`
+
 const editorialProjection = `{
   _id,
   _type,
@@ -38,6 +54,7 @@ const editorialProjection = `{
   publishedAt,
   excerpt,
   ${authorEmbed},
+  ${tagsProjection},
   featured,
   subhead,
   galleryNote,
@@ -60,18 +77,17 @@ const editorialProjection = `{
         }
       }
     }
+  },
+  "relatedArticles": *[
+    _type in ["interview","news","photoPost","review"] &&
+    _id != ^._id &&
+    defined(slug.current) &&
+    count(^.tags[]._ref) > 0 &&
+    references(^.tags[]._ref)
+  ] | order(publishedAt desc)[0...3] {
+    ${editorialCardListFields}
   }
 }`
-
-const editorialCardListFields = `
-  _type,
-  _id,
-  title,
-  "slug": slug.current,
-  publishedAt,
-  ${authorEmbed},
-  ${imageProjection}
-`
 
 export const HOME_EDITORIAL_PAGE = defineQuery(`
   *[_type in ["interview","news","photoPost","review"] && defined(slug.current)] | order(publishedAt desc)[$start...$end] {
@@ -120,6 +136,31 @@ export const ALL_AUTHORS = defineQuery(`
 export const POSTS_BY_AUTHOR_SLUG = defineQuery(`
   *[_type in ["interview","news","photoPost","review"] && author->slug.current == $slug && defined(slug.current)]
   | order(publishedAt desc) {
+    ${editorialCardListFields}
+  }
+`)
+
+export const TAG_BY_SLUG = defineQuery(`
+  *[_type == "tag" && slug.current == $slug][0]{
+    _id,
+    title,
+    "slug": slug.current,
+    description
+  }
+`)
+
+export const TAG_SLUGS = defineQuery(`
+  *[_type == "tag" && defined(slug.current)]{
+    "slug": slug.current
+  }
+`)
+
+export const POSTS_BY_TAG_ID = defineQuery(`
+  *[
+    _type in ["interview","news","photoPost","review"] &&
+    defined(slug.current) &&
+    $tagId in tags[]._ref
+  ] | order(publishedAt desc) {
     ${editorialCardListFields}
   }
 `)

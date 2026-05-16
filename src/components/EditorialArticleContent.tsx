@@ -1,10 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import {ArticleBody} from '@/components/ArticleBody'
-import type {EditorialAuthor} from '@/components/EditorialCard'
+import {EditorialCard, type EditorialAuthor, type EditorialCardItem} from '@/components/EditorialCard'
 import {PhotoGalleryMosaic, type PhotoGalleryImage} from '@/components/PhotoGalleryMosaic'
 import {YouTubeEmbed} from '@/components/YouTubeEmbed'
-import {authorHref, editorialTypeLabel} from '@/lib/paths'
+import {authorHref, editorialTypeLabel, tagHref} from '@/lib/paths'
 import {getYouTubeVideoId} from '@/lib/youtube'
 import {urlForImage} from '@/sanity/lib/image'
 
@@ -16,6 +16,7 @@ export type EditorialDoc = {
   publishedAt?: string | null
   excerpt?: string | null
   author?: EditorialAuthor | null
+  tags?: EditorialTag[] | null
   subhead?: string | null
   galleryNote?: string | null
   gallery?: PhotoGalleryImage[] | null
@@ -37,6 +38,13 @@ export type EditorialDoc = {
   seoTitle?: string | null
   seoDescription?: string | null
   body?: import('@portabletext/types').TypedObject[] | null
+  relatedArticles?: EditorialCardItem[] | null
+}
+
+type EditorialTag = {
+  _id?: string
+  title?: string | null
+  slug?: string | null
 }
 
 export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
@@ -60,6 +68,8 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
       : null
 
   const youtubeId = doc._type === 'review' ? getYouTubeVideoId(doc.youtubeUrl) : null
+  const tags = (doc.tags ?? []).filter((tag) => tag?.title?.trim() && tag?.slug?.trim())
+  const relatedArticles = doc.relatedArticles ?? []
 
   return (
     <article className="pb-16">
@@ -133,6 +143,36 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
       <div className="mx-auto mt-10 max-w-3xl px-4">
         <ArticleBody value={doc.body || undefined} />
       </div>
+
+      {tags.length ? (
+        <section className="mx-auto mt-10 max-w-3xl px-4" aria-label="Article tags">
+          <h2 className="text-xs font-medium uppercase tracking-wide text-zinc-500">Tags</h2>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <Link
+                key={tag._id ?? tag.slug}
+                href={tagHref(tag.slug?.trim() ?? '')}
+                className="rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 transition hover:border-amber-500/50 hover:text-amber-200"
+              >
+                {tag.title}
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {relatedArticles.length ? (
+        <section className="mx-auto mt-14 max-w-5xl px-4" aria-labelledby="related-articles-heading">
+          <h2 id="related-articles-heading" className="text-2xl font-semibold tracking-tight text-zinc-50">
+            Related articles
+          </h2>
+          <div className="mt-6 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-3 md:gap-6">
+            {relatedArticles.map((item) => (
+              <EditorialCard key={item._id} item={item} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </article>
   )
 }

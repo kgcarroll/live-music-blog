@@ -1,5 +1,5 @@
 import {defineField, defineType} from 'sanity'
-import {bodyField, coverField, seoFields} from './blocks'
+import {bodyField, coverField, seoFields, tagsField} from './blocks'
 
 export const news = defineType({
   name: 'news',
@@ -24,6 +24,7 @@ export const news = defineType({
     }),
     defineField({name: 'subhead', type: 'string', title: 'Deck / subhead'}),
     defineField({name: 'featured', type: 'boolean', initialValue: false}),
+    tagsField(),
     bodyField(),
     ...seoFields(),
   ],
