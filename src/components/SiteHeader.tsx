@@ -5,7 +5,7 @@ import {usePathname} from 'next/navigation'
 
 import type {HeaderLogo} from '@/lib/resolveHeaderLogo'
 import {SiteLogoMark} from '@/components/SiteLogoMark'
-import {useEffect, useState, useSyncExternalStore} from 'react'
+import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import {createPortal} from 'react-dom'
 
 const links = [
@@ -20,6 +20,8 @@ const links = [
 
 /** Tailwind `md` breakpoint — mobile menu only mounts below this width. */
 const MOBILE_NAV_MQ = '(max-width: 767px)'
+const LOGO_HIDE_SCROLL_Y = 140
+const LOGO_SHOW_SCROLL_Y = 48
 
 function subscribeMobileNavMq(onChange: () => void) {
   if (typeof window === 'undefined') return () => {}
@@ -160,6 +162,9 @@ export function SiteHeader({
   const {instagram, spotify} = social
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [showLogo, setShowLogo] = useState(true)
+  const lastScrollY = useRef(0)
+  const showLogoRef = useRef(true)
   const pathname = usePathname()
   const isMobileLayout = useSyncExternalStore(
     subscribeMobileNavMq,
@@ -169,6 +174,34 @@ export function SiteHeader({
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    lastScrollY.current = window.scrollY
+
+    const updateLogoVisibility = (next: boolean) => {
+      if (showLogoRef.current === next) return
+      showLogoRef.current = next
+      setShowLogo(next)
+    }
+
+    const onScroll = () => {
+      const y = window.scrollY
+      const delta = y - lastScrollY.current
+
+      if (y <= LOGO_SHOW_SCROLL_Y) {
+        updateLogoVisibility(true)
+      } else if (delta < 0) {
+        updateLogoVisibility(true)
+      } else if (y >= LOGO_HIDE_SCROLL_Y && delta > 0) {
+        updateLogoVisibility(false)
+      }
+
+      lastScrollY.current = y
+    }
+
+    window.addEventListener('scroll', onScroll, {passive: true})
+    return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
   useEffect(() => {
@@ -269,35 +302,51 @@ export function SiteHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur">
+      <header className="fixed inset-x-0 top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4">
-          <div className="flex flex-col md:items-center md:gap-2 md:pb-4 md:pt-4">
-            <div className="flex w-full min-h-11 items-center justify-between py-3 md:min-h-0 md:justify-center md:py-0">
-              <Link
-                href="/"
-                className="min-w-0 flex-1 pr-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 md:flex-none md:pr-0 md:text-center"
-              >
-                <SiteLogoMark logo={logo} siteTitle={siteTitle} />
-              </Link>
-              <div className="flex shrink-0 items-center gap-2 md:hidden">
-                <HeaderAsideLinks instagram={instagram} spotify={spotify} pathname={pathname} />
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-md border border-zinc-700 p-2 text-zinc-100"
-                  aria-expanded={open}
-                  aria-controls="mobile-nav"
-                  onClick={() => setOpen((v) => !v)}
+          <div
+            className={`flex flex-col overflow-hidden transition-[max-height,padding] duration-300 ease-out md:items-center md:gap-2 ${
+              showLogo ? 'max-h-24 md:max-h-36 md:pb-4 md:pt-4' : 'max-h-24 md:max-h-20 md:pb-8 md:pt-3'
+            }`}
+          >
+            <div
+              className={`w-full transition-[grid-template-rows,opacity,transform] duration-300 ease-out md:grid ${
+                showLogo
+                  ? 'md:grid-rows-[1fr] md:opacity-100 md:translate-y-0'
+                  : 'md:grid-rows-[0fr] md:opacity-0 md:-translate-y-2 md:pointer-events-none'
+              }`}
+            >
+              <div className="flex w-full min-h-11 items-center justify-between py-3 md:min-h-0 md:overflow-hidden md:justify-center md:py-0">
+                <Link
+                  href="/"
+                  className={`min-w-0 flex-1 pr-3 text-left outline-none transition-[opacity,transform] duration-300 ease-out focus-visible:ring-2 focus-visible:ring-amber-400/50 md:flex-none md:pr-0 md:text-center ${
+                    showLogo ? 'md:opacity-100 md:translate-y-0' : 'md:opacity-0 md:-translate-y-2 md:pointer-events-none'
+                  }`}
+                  aria-hidden={!showLogo && !isMobileLayout}
+                  tabIndex={!showLogo && !isMobileLayout ? -1 : undefined}
                 >
-                  <span className="sr-only">Menu</span>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d="M4 7H20M4 12H20M4 17H20"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
+                  <SiteLogoMark logo={logo} siteTitle={siteTitle} />
+                </Link>
+                <div className="flex shrink-0 items-center gap-2 md:hidden">
+                  <HeaderAsideLinks instagram={instagram} spotify={spotify} pathname={pathname} />
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center rounded-md border border-zinc-700 p-2 text-zinc-100"
+                    aria-expanded={open}
+                    aria-controls="mobile-nav"
+                    onClick={() => setOpen((v) => !v)}
+                  >
+                    <span className="sr-only">Menu</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M4 7H20M4 12H20M4 17H20"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
             <div className="hidden w-full md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(max-content,1fr)] md:items-center md:gap-x-3 md:py-1">
@@ -327,6 +376,7 @@ export function SiteHeader({
           </div>
         </div>
       </header>
+      <div className="h-[92px] md:h-[136px]" aria-hidden="true" />
       {mobileMenu ? createPortal(mobileMenu, document.body) : null}
     </>
   )
