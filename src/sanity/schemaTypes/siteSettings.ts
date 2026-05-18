@@ -23,6 +23,14 @@ export const siteSettings = defineType({
       ],
     }),
     defineField({
+      name: 'favicon',
+      title: 'Favicon',
+      type: 'image',
+      description:
+        'Browser tab and social app icon. Upload a square PNG, ideally 512x512, with a simple mark.',
+      options: {hotspot: false},
+    }),
+    defineField({
       name: 'instagramUrl',
       type: 'url',
       title: 'Instagram URL',

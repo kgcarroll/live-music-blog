@@ -4,9 +4,7 @@ import type {TypedObject} from '@portabletext/types'
 import {ArticleBody} from '@/components/ArticleBody'
 import {EditorialCard, type EditorialAuthor, type EditorialCardItem} from '@/components/EditorialCard'
 import {PhotoGalleryMosaic, type PhotoGalleryImage} from '@/components/PhotoGalleryMosaic'
-import {YouTubeEmbed} from '@/components/YouTubeEmbed'
 import {authorHref, editorialTypeLabel, tagHref} from '@/lib/paths'
-import {getYouTubeVideoId} from '@/lib/youtube'
 import {urlForImage} from '@/sanity/lib/image'
 
 export type EditorialDoc = {
@@ -22,7 +20,6 @@ export type EditorialDoc = {
   galleryNote?: string | null
   gallery?: PhotoGalleryImage[] | null
   verdict?: string | null
-  youtubeUrl?: string | null
   coverImage?: {
     alt?: string
     hotspot?: unknown
@@ -100,7 +97,6 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
       ? urlForImage(doc.coverImage as never).width(1600).url()
       : null
 
-  const youtubeId = doc._type === 'review' ? getYouTubeVideoId(doc.youtubeUrl) : null
   const tags = (doc.tags ?? []).filter((tag) => tag?.title?.trim() && tag?.slug?.trim())
   const relatedArticles = doc.relatedArticles ?? []
   const authorBio = excerptText(plainTextFromPortableText(doc.author?.bio))
@@ -168,12 +164,6 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
 
       {doc.excerpt ? (
         <p className="mx-auto mt-10 max-w-3xl px-4 text-lg leading-relaxed text-zinc-300">{doc.excerpt}</p>
-      ) : null}
-
-      {youtubeId ? (
-        <div className="mx-auto mt-10 max-w-4xl px-4">
-          <YouTubeEmbed videoId={youtubeId} title={doc.title} />
-        </div>
       ) : null}
 
       <div className="mx-auto mt-10 max-w-3xl px-4">

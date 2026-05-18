@@ -34,6 +34,37 @@ export const bodyField = () =>
           defineField({name: 'caption', type: 'string', title: 'Caption'}),
         ],
       },
+      {
+        name: 'youtubeEmbed',
+        title: 'YouTube video',
+        type: 'object',
+        fields: [
+          defineField({
+            name: 'url',
+            title: 'YouTube URL',
+            type: 'url',
+            validation: (Rule) => Rule.required(),
+          }),
+          defineField({
+            name: 'title',
+            title: 'Accessible title',
+            type: 'string',
+            initialValue: 'YouTube video',
+          }),
+        ],
+        preview: {
+          select: {
+            title: 'title',
+            subtitle: 'url',
+          },
+          prepare({title, subtitle}) {
+            return {
+              title: title || 'YouTube video',
+              subtitle,
+            }
+          },
+        },
+      },
     ],
   })
 

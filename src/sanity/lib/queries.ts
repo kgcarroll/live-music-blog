@@ -60,7 +60,6 @@ const editorialProjection = `{
   subhead,
   galleryNote,
   verdict,
-  youtubeUrl,
   ${galleryImagesProjection},
   ${imageProjection},
   seoTitle,
@@ -183,6 +182,7 @@ export const SITE_SETTINGS = defineQuery(`
   *[_type == "siteSettings"] | order(_updatedAt desc)[0]{
     siteTitle,
     logo ${settingsImageProjection},
+    favicon ${settingsImageProjection},
     instagramUrl,
     spotifyUrl,
     aboutPortable,

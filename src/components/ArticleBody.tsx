@@ -1,6 +1,13 @@
 import {PortableText, type PortableTextComponents} from '@portabletext/react'
 import type {TypedObject} from '@portabletext/types'
 import {SanityImage} from '@/components/SanityImage'
+import {YouTubeEmbed} from '@/components/YouTubeEmbed'
+import {getYouTubeVideoId} from '@/lib/youtube'
+
+type YouTubeEmbedValue = {
+  url?: unknown
+  title?: unknown
+}
 
 const components: PortableTextComponents = {
   block: {
@@ -36,6 +43,17 @@ const components: PortableTextComponents = {
   },
   types: {
     image: ({value}) => <SanityImage value={value} sizes="(max-width:768px) 100vw, 42rem" />,
+    youtubeEmbed: ({value}) => {
+      const embed = value as YouTubeEmbedValue
+      const videoId = getYouTubeVideoId(typeof embed.url === 'string' ? embed.url : undefined)
+      if (!videoId) return null
+
+      return (
+        <div className="my-8">
+          <YouTubeEmbed videoId={videoId} title={typeof embed.title === 'string' ? embed.title : null} />
+        </div>
+      )
+    },
   },
 }
 
