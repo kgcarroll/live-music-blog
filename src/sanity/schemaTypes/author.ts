@@ -1,4 +1,4 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const author = defineType({
   name: 'author',
@@ -6,6 +6,14 @@ export const author = defineType({
   type: 'document',
   fields: [
     defineField({name: 'name', type: 'string', validation: (Rule) => Rule.required()}),
+    defineField({
+      name: 'bio',
+      title: 'Bio',
+      type: 'array',
+      description:
+        'Author bio shown in full on the author page and clamped to two lines below articles.',
+      of: [defineArrayMember({type: 'block'})],
+    }),
     defineField({
       name: 'slug',
       type: 'slug',

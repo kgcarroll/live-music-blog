@@ -27,6 +27,7 @@ const galleryImagesProjection = `gallery[]{
 
 const authorEmbed = `author->{
   name,
+  bio,
   "slug": slug.current
 }`
 
@@ -115,6 +116,7 @@ export const AUTHOR_BY_SLUG = defineQuery(`
   *[_type == "author" && slug.current == $slug][0]{
     _id,
     name,
+    bio,
     "slug": slug.current
   }
 `)

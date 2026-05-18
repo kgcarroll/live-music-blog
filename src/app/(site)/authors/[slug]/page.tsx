@@ -1,10 +1,18 @@
 import {notFound} from 'next/navigation'
 import type {Metadata} from 'next'
+import type {TypedObject} from '@portabletext/types'
+import {ArticleBody} from '@/components/ArticleBody'
 import {EditorialCard, type EditorialCardItem} from '@/components/EditorialCard'
 import {sanityFetch} from '@/sanity/lib/live'
 import {AUTHOR_BY_SLUG, AUTHOR_SLUGS, POSTS_BY_AUTHOR_SLUG} from '@/sanity/lib/queries'
 
 type Props = {params: Promise<{slug: string}>}
+
+type AuthorPageData = {
+  name?: string | null
+  slug?: string | null
+  bio?: TypedObject[] | null
+}
 
 export async function generateStaticParams() {
   const {data} = await sanityFetch({
@@ -35,7 +43,8 @@ export default async function AuthorPostsPage({params}: Props) {
     query: AUTHOR_BY_SLUG,
     params: {slug},
   })
-  if (!author?.slug) notFound()
+  const authorData = (author ?? null) as AuthorPageData | null
+  if (!authorData?.slug) notFound()
 
   const {data: posts} = await sanityFetch({
     query: POSTS_BY_AUTHOR_SLUG,
@@ -45,8 +54,14 @@ export default async function AuthorPostsPage({params}: Props) {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-zinc-50">{author.name}</h1>
-      <p className="mt-3 max-w-2xl text-zinc-400">Interviews, photo posts, and reviews by this author.</p>
+      <h1 className="text-3xl font-bold text-zinc-50">{authorData.name}</h1>
+      {authorData.bio?.length ? (
+        <div className="mt-6">
+          <ArticleBody value={authorData.bio} />
+        </div>
+      ) : (
+        <p className="mt-3 max-w-2xl text-zinc-400">Interviews, photo posts, and reviews by this author.</p>
+      )}
       <div className="mt-10 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
         {items.map((item) => (
           <EditorialCard key={item._id} item={item} />

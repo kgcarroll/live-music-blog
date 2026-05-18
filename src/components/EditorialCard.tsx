@@ -1,10 +1,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import type {TypedObject} from '@portabletext/types'
 import {editorialHref, editorialTypeLabel} from '@/lib/paths'
 import {urlForImage} from '@/sanity/lib/image'
 
 export type EditorialAuthor = {
   name?: string | null
+  bio?: TypedObject[] | null
   slug?: string | null
 }
 

@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import type {TypedObject} from '@portabletext/types'
 import {ArticleBody} from '@/components/ArticleBody'
 import {EditorialCard, type EditorialAuthor, type EditorialCardItem} from '@/components/EditorialCard'
 import {PhotoGalleryMosaic, type PhotoGalleryImage} from '@/components/PhotoGalleryMosaic'
@@ -37,7 +38,7 @@ export type EditorialDoc = {
   } | null
   seoTitle?: string | null
   seoDescription?: string | null
-  body?: import('@portabletext/types').TypedObject[] | null
+  body?: TypedObject[] | null
   relatedArticles?: EditorialCardItem[] | null
 }
 
@@ -45,6 +46,38 @@ type EditorialTag = {
   _id?: string
   title?: string | null
   slug?: string | null
+}
+
+const AUTHOR_BIO_EXCERPT_CHARS = 240
+
+function plainTextFromPortableText(value: TypedObject[] | null | undefined): string {
+  if (!value?.length) return ''
+
+  return value
+    .map((block) => {
+      if (!('children' in block) || !Array.isArray(block.children)) return ''
+      return block.children
+        .map((child: unknown) => {
+          if (child == null || typeof child !== 'object' || !('text' in child)) return ''
+          const text = (child as {text?: unknown}).text
+          return typeof text === 'string' ? text : ''
+        })
+        .join('')
+    })
+    .filter(Boolean)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function excerptText(text: string): {text: string; truncated: boolean} {
+  if (text.length <= AUTHOR_BIO_EXCERPT_CHARS) return {text, truncated: false}
+  const sliced = text.slice(0, AUTHOR_BIO_EXCERPT_CHARS)
+  const lastSpace = sliced.lastIndexOf(' ')
+  return {
+    text: sliced.slice(0, lastSpace > 120 ? lastSpace : sliced.length).trim(),
+    truncated: true,
+  }
 }
 
 export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
@@ -70,6 +103,9 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
   const youtubeId = doc._type === 'review' ? getYouTubeVideoId(doc.youtubeUrl) : null
   const tags = (doc.tags ?? []).filter((tag) => tag?.title?.trim() && tag?.slug?.trim())
   const relatedArticles = doc.relatedArticles ?? []
+  const authorBio = excerptText(plainTextFromPortableText(doc.author?.bio))
+  const authorName = doc.author?.name?.trim()
+  const authorSlug = doc.author?.slug?.trim()
 
   return (
     <article className="pb-16">
@@ -143,6 +179,26 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
       <div className="mx-auto mt-10 max-w-3xl px-4">
         <ArticleBody value={doc.body || undefined} />
       </div>
+
+      {authorBio.text && authorName && authorSlug ? (
+        <aside className="mx-auto mt-8 max-w-3xl px-4" aria-label={`About ${authorName}`}>
+          <p className="text-xs italic leading-relaxed text-zinc-500">
+            <span>
+              {authorBio.text}
+              {authorBio.truncated ? '...' : null}
+            </span>
+            {authorBio.truncated ? (
+              <Link
+                href={authorHref(authorSlug)}
+                className="ml-1 font-medium text-zinc-400 transition-colors hover:text-amber-200"
+                aria-label={`Read more by ${authorName}`}
+              >
+                read more
+              </Link>
+            ) : null}
+          </p>
+        </aside>
+      ) : null}
 
       {tags.length ? (
         <section className="mx-auto mt-10 max-w-3xl px-4" aria-label="Article tags">
