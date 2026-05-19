@@ -55,12 +55,12 @@ function ArticleShareLinks({title, url}: {title: string | null; url: string}) {
 
   return (
     <nav className="mt-5 flex items-center gap-3" aria-label="Share this article">
-      <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">Share</span>
+      <span className="text-xs font-medium uppercase tracking-wide text-amber-300">Share</span>
       <a
         href={facebookUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 text-zinc-300 transition hover:border-amber-500/50 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+        className="inline-flex items-center justify-center text-amber-300 transition hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
         aria-label="Share on Facebook"
       >
         <FacebookIcon />
@@ -69,7 +69,7 @@ function ArticleShareLinks({title, url}: {title: string | null; url: string}) {
         href={xUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 text-zinc-300 transition hover:border-amber-500/50 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+        className="inline-flex items-center justify-center text-amber-300 transition hover:text-zinc-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
         aria-label="Share on X"
       >
         <XIcon />
@@ -80,7 +80,7 @@ function ArticleShareLinks({title, url}: {title: string | null; url: string}) {
 
 function FacebookIcon() {
   return (
-    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M14.2 8.5V6.9c0-.8.5-1 1-1h1.4V3.4c-.7-.1-1.5-.2-2.2-.2-2.2 0-3.7 1.3-3.7 3.8v1.5H8.4v2.8h2.3v9.5h2.9v-9.5H16l.4-2.8h-2.2Z" />
     </svg>
   )

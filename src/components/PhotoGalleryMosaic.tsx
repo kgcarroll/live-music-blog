@@ -31,6 +31,7 @@ export function PhotoGalleryMosaic({images}: {images: PhotoGalleryImage[]}) {
   const items = images.filter((img) => img.asset?._id)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   const [lightboxEntered, setLightboxEntered] = useState(false)
+  const [imageEntered, setImageEntered] = useState(false)
   const [mounted, setMounted] = useState(false)
   const isClosingRef = useRef(false)
   const prevOpenRef = useRef<number | null>(null)
@@ -47,23 +48,33 @@ export function PhotoGalleryMosaic({images}: {images: PhotoGalleryImage[]}) {
   const close = useCallback(() => {
     isClosingRef.current = true
     setLightboxEntered(false)
+    setImageEntered(false)
   }, [])
 
   useEffect(() => {
     if (openIndex === null) {
       prevOpenRef.current = null
       setLightboxEntered(false)
+      setImageEntered(false)
       return
     }
+    setImageEntered(false)
+    const imageId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setImageEntered(true))
+    })
     if (prevOpenRef.current === null) {
       setLightboxEntered(false)
-      const id = requestAnimationFrame(() => {
+      const lightboxId = requestAnimationFrame(() => {
         requestAnimationFrame(() => setLightboxEntered(true))
       })
       prevOpenRef.current = openIndex
-      return () => cancelAnimationFrame(id)
+      return () => {
+        cancelAnimationFrame(imageId)
+        cancelAnimationFrame(lightboxId)
+      }
     }
     prevOpenRef.current = openIndex
+    return () => cancelAnimationFrame(imageId)
   }, [openIndex])
 
   const handleBackdropTransitionEnd = useCallback(
@@ -176,10 +187,13 @@ export function PhotoGalleryMosaic({images}: {images: PhotoGalleryImage[]}) {
               return (
                 <div className="flex h-[80vh] w-full items-center justify-center px-10 sm:px-16">
                   <div
-                    className="inline-block max-h-[80vh] max-w-[min(95vw,calc(100vw-8rem))]"
+                    className={`inline-block max-h-[80vh] max-w-[min(95vw,calc(100vw-8rem))] transition duration-300 ease-out motion-reduce:transition-none ${
+                      imageEntered ? 'opacity-100' : 'opacity-0'
+                    }`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Image
+                      key={img._key ?? img.asset?._id ?? openIndex}
                       src={lightboxSrc(img)}
                       alt={img.alt || 'Gallery image'}
                       width={w}
