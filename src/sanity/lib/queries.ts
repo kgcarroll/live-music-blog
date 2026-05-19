@@ -136,7 +136,7 @@ export const ALL_AUTHORS = defineQuery(`
 
 export const POSTS_BY_AUTHOR_SLUG = defineQuery(`
   *[_type in ["interview","news","photoPost","review"] && author->slug.current == $slug && defined(slug.current)]
-  | order(publishedAt desc) {
+  | order(publishedAt desc) [$start...$end] {
     ${editorialCardListFields}
   }
 `)

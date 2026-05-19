@@ -2,7 +2,9 @@ import {notFound} from 'next/navigation'
 import type {Metadata} from 'next'
 import type {TypedObject} from '@portabletext/types'
 import {ArticleBody} from '@/components/ArticleBody'
-import {EditorialCard, type EditorialCardItem} from '@/components/EditorialCard'
+import {AuthorEditorialFeed} from '@/components/AuthorEditorialFeed'
+import type {EditorialCardItem} from '@/components/EditorialCard'
+import {AUTHOR_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
 import {sanityFetch} from '@/sanity/lib/live'
 import {AUTHOR_BY_SLUG, AUTHOR_SLUGS, POSTS_BY_AUTHOR_SLUG} from '@/sanity/lib/queries'
 
@@ -48,9 +50,11 @@ export default async function AuthorPostsPage({params}: Props) {
 
   const {data: posts} = await sanityFetch({
     query: POSTS_BY_AUTHOR_SLUG,
-    params: {slug},
+    params: {slug, start: 0, end: AUTHOR_EDITORIAL_PAGE_SIZE + 1},
   })
-  const items = (posts ?? []) as EditorialCardItem[]
+  const rows = (posts ?? []) as EditorialCardItem[]
+  const items = rows.slice(0, AUTHOR_EDITORIAL_PAGE_SIZE)
+  const hasMore = rows.length > AUTHOR_EDITORIAL_PAGE_SIZE
 
   return (
     <div>
@@ -62,14 +66,7 @@ export default async function AuthorPostsPage({params}: Props) {
       ) : (
         <p className="mt-3 max-w-2xl text-zinc-400">Interviews, photo posts, and reviews by this author.</p>
       )}
-      <div className="mt-10 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-        {items.map((item) => (
-          <EditorialCard key={item._id} item={item} />
-        ))}
-      </div>
-      {!items.length ? (
-        <p className="mt-8 text-sm text-zinc-500">No published posts for this author yet.</p>
-      ) : null}
+      <AuthorEditorialFeed authorSlug={slug} initialHasMore={hasMore} initialItems={items} />
     </div>
   )
 }

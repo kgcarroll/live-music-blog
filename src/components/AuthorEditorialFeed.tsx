@@ -1,25 +1,32 @@
 'use client'
 
-import Link from 'next/link'
 import {useCallback, useState} from 'react'
+import {loadOlderAuthorEditorial} from '@/app/(site)/authorEditorialActions'
 import {EditorialCard, EditorialCardSkeleton, type EditorialCardItem} from '@/components/EditorialCard'
-import {loadOlderHomeEditorial} from '@/app/(site)/homeEditorialActions'
-import {HOME_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
+import {AUTHOR_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
 
-export function HomeEditorialFeed({initialItems}: {initialItems: EditorialCardItem[]}) {
+export function AuthorEditorialFeed({
+  authorSlug,
+  initialHasMore,
+  initialItems,
+}: {
+  authorSlug: string
+  initialHasMore: boolean
+  initialItems: EditorialCardItem[]
+}) {
   const [items, setItems] = useState(initialItems)
   const [loading, setLoading] = useState(false)
-  const [hasMore, setHasMore] = useState(initialItems.length === HOME_EDITORIAL_PAGE_SIZE)
+  const [hasMore, setHasMore] = useState(initialHasMore)
 
   const loadOlder = useCallback(async () => {
     if (loading) return
     setLoading(true)
     try {
-      const more = await loadOlderHomeEditorial(items.length)
+      const page = await loadOlderAuthorEditorial(authorSlug, items.length)
       setItems((prev) => {
-        const seen = new Set(prev.map((i) => i._id))
+        const seen = new Set(prev.map((item) => item._id))
         const next = [...prev]
-        for (const row of more) {
+        for (const row of page.items) {
           if (row?._id && !seen.has(row._id)) {
             seen.add(row._id)
             next.push(row)
@@ -27,33 +34,25 @@ export function HomeEditorialFeed({initialItems}: {initialItems: EditorialCardIt
         }
         return next
       })
-      setHasMore(more.length === HOME_EDITORIAL_PAGE_SIZE)
+      setHasMore(page.hasMore)
     } finally {
       setLoading(false)
     }
-  }, [items.length, loading])
+  }, [authorSlug, items.length, loading])
 
   return (
     <>
-      <section className="grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+      <div className="mt-10 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
         {items.map((item) => (
           <EditorialCard key={item._id} item={item} />
         ))}
         {loading
-          ? Array.from({length: HOME_EDITORIAL_PAGE_SIZE}, (_, index) => (
-              <EditorialCardSkeleton key={`home-skeleton-${index}`} />
+          ? Array.from({length: AUTHOR_EDITORIAL_PAGE_SIZE}, (_, index) => (
+              <EditorialCardSkeleton key={`author-skeleton-${index}`} />
             ))
           : null}
-      </section>
-      {!items.length ? (
-        <p className="mt-8 rounded-lg border border-dashed border-zinc-700 p-6 text-center text-sm text-zinc-500">
-          No stories yet. Open{' '}
-          <Link href="/studio" className="text-amber-300 underline">
-            Sanity Studio
-          </Link>{' '}
-          to add interviews, news, photos, or reviews.
-        </p>
-      ) : null}
+      </div>
+      {!items.length ? <p className="mt-8 text-sm text-zinc-500">No published posts for this author yet.</p> : null}
       {hasMore ? (
         <div className="mt-10 flex justify-center">
           <button

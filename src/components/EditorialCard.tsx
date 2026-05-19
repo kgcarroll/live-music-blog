@@ -32,6 +32,26 @@ export type EditorialCardItem = {
   } | null
 }
 
+export function EditorialCardSkeleton() {
+  return (
+    <article
+      className="flex h-full min-h-0 w-full min-w-0 animate-pulse flex-col overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/40 shadow-sm"
+      aria-hidden="true"
+    >
+      <div className="aspect-[4/3] w-full shrink-0 bg-zinc-800/80" />
+      <div className="flex min-h-0 flex-1 flex-col gap-2 p-3 sm:p-4">
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-14 rounded bg-amber-300/20" />
+          <div className="h-3 w-20 rounded bg-zinc-700/80" />
+        </div>
+        <div className="mt-1 h-4 w-11/12 rounded bg-zinc-700/80" />
+        <div className="h-4 w-2/3 rounded bg-zinc-700/60" />
+        <div className="mt-auto h-3 w-24 rounded bg-zinc-800" />
+      </div>
+    </article>
+  )
+}
+
 export function EditorialCard({item}: {item: EditorialCardItem}) {
   if (!item.slug) return null
   const href = editorialHref(item._type, item.slug)

@@ -114,10 +114,31 @@ function SearchHitsLoading({label}: {label: string}) {
   return (
     <div className="space-y-4" aria-busy="true" aria-label={label}>
       <p className="sr-only">{label}</p>
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="h-28 rounded-xl bg-zinc-800/60 animate-pulse" />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <SearchResultSkeleton key={i} />
       ))}
     </div>
+  )
+}
+
+function SearchResultSkeleton() {
+  return (
+    <article
+      className="flex w-full animate-pulse gap-4 rounded-xl border border-zinc-800 bg-zinc-900/40 p-3 sm:gap-5 sm:p-4"
+      aria-hidden="true"
+    >
+      <div className="aspect-[4/3] w-24 shrink-0 rounded-lg bg-zinc-800/80 sm:w-32" />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-center gap-2">
+          <div className="h-3 w-16 rounded bg-amber-300/20" />
+          <div className="h-3 w-20 rounded bg-zinc-700/80" />
+        </div>
+        <div className="mt-3 h-4 w-10/12 rounded bg-zinc-700/80" />
+        <div className="mt-2 h-4 w-7/12 rounded bg-zinc-700/60" />
+        <div className="mt-4 hidden h-3 w-full rounded bg-zinc-800 sm:block" />
+        <div className="mt-2 hidden h-3 w-5/6 rounded bg-zinc-800 sm:block" />
+      </div>
+    </article>
   )
 }
 
@@ -156,6 +177,13 @@ function SearchHitsSection() {
           hitComponent={SearchHit}
           classNames={{root: 'w-full space-y-4', list: 'w-full space-y-4', item: ''}}
         />
+        {isSearching ? (
+          <div className="mt-4 space-y-4">
+            {[0, 1, 2].map((i) => (
+              <SearchResultSkeleton key={`updating-${i}`} />
+            ))}
+          </div>
+        ) : null}
         {isSearching ? (
           <p className="sr-only" aria-live="polite">
             Updating results…
