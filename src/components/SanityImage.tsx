@@ -23,10 +23,13 @@ export function SanityImage({
   value,
   sizes,
   priority,
+  embedded,
 }: {
   value: BodyImageValue
   sizes: string
   priority?: boolean
+  /** Side-by-side layouts: no extra vertical margin on figure. */
+  embedded?: boolean
 }) {
   if (!value?.asset?._id) return null
   const dims = value.asset.metadata?.dimensions
@@ -36,7 +39,7 @@ export function SanityImage({
   const lqip = value.asset.metadata?.lqip
 
   return (
-    <figure className="my-8">
+    <figure className={embedded ? 'w-full' : 'my-8'}>
       <Image
         src={src}
         alt={value.alt || ''}

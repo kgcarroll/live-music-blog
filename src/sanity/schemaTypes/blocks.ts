@@ -1,4 +1,5 @@
-import {defineArrayMember, defineField} from 'sanity'
+import {defineArrayMember, defineField, type ArrayOfType} from 'sanity'
+import {imageTextRowBlock} from './portableTextBlocks'
 
 export const bodyField = () =>
   defineField({
@@ -34,9 +35,10 @@ export const bodyField = () =>
           defineField({name: 'caption', type: 'string', title: 'Caption'}),
         ],
       },
+      imageTextRowBlock() as ArrayOfType<'object'>,
       {
         name: 'youtubeEmbed',
-        title: 'YouTube video',
+        title: 'YouTube Video',
         type: 'object',
         fields: [
           defineField({
@@ -49,7 +51,7 @@ export const bodyField = () =>
             name: 'title',
             title: 'Accessible title',
             type: 'string',
-            initialValue: 'YouTube video',
+            initialValue: 'YouTube Video',
           }),
         ],
         preview: {
@@ -59,7 +61,7 @@ export const bodyField = () =>
           },
           prepare({title, subtitle}) {
             return {
-              title: title || 'YouTube video',
+              title: title || 'YouTube Video',
               subtitle,
             }
           },

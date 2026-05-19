@@ -32,12 +32,13 @@ function plainTextFromPortableText(value: unknown): string {
 
   return value
     .map((block: unknown) => {
-      if (
-        block == null ||
-        typeof block !== 'object' ||
-        !('children' in block) ||
-        !Array.isArray((block as {children?: unknown}).children)
-      ) {
+      if (block == null || typeof block !== 'object') return ''
+
+      if ('_type' in block && block._type === 'imageTextRow' && 'text' in block) {
+        return plainTextFromPortableText((block as {text?: unknown}).text)
+      }
+
+      if (!('children' in block) || !Array.isArray((block as {children?: unknown}).children)) {
         return ''
       }
 

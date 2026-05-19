@@ -76,6 +76,21 @@ const editorialProjection = `{
           dimensions { width, height, aspectRatio }
         }
       }
+    },
+    _type == "imageTextRow" => {
+      ...,
+      image {
+        ...,
+        asset->{
+          _id,
+          url,
+          metadata {
+            lqip,
+            dimensions { width, height, aspectRatio }
+          }
+        }
+      },
+      text[]{ ... }
     }
   },
   "relatedArticles": *[
