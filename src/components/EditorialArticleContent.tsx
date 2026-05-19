@@ -4,7 +4,8 @@ import type {TypedObject} from '@portabletext/types'
 import {ArticleBody} from '@/components/ArticleBody'
 import {EditorialCard, type EditorialAuthor, type EditorialCardItem} from '@/components/EditorialCard'
 import {PhotoGalleryMosaic, type PhotoGalleryImage} from '@/components/PhotoGalleryMosaic'
-import {authorHref, editorialTypeLabel, tagHref} from '@/lib/paths'
+import {authorHref, editorialHref, editorialTypeLabel, tagHref} from '@/lib/paths'
+import {absoluteSiteUrl} from '@/lib/siteUrl'
 import {urlForImage} from '@/sanity/lib/image'
 
 export type EditorialDoc = {
@@ -46,6 +47,52 @@ type EditorialTag = {
 }
 
 const AUTHOR_BIO_EXCERPT_CHARS = 240
+
+function ArticleShareLinks({title, url}: {title: string | null; url: string}) {
+  const shareText = title?.trim() || 'Live Music Blog'
+  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+  const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`
+
+  return (
+    <nav className="mt-5 flex items-center gap-3" aria-label="Share this article">
+      <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">Share</span>
+      <a
+        href={facebookUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 text-zinc-300 transition hover:border-amber-500/50 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+        aria-label="Share on Facebook"
+      >
+        <FacebookIcon />
+      </a>
+      <a
+        href={xUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-zinc-700 text-zinc-300 transition hover:border-amber-500/50 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+        aria-label="Share on X"
+      >
+        <XIcon />
+      </a>
+    </nav>
+  )
+}
+
+function FacebookIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M14.2 8.5V6.9c0-.8.5-1 1-1h1.4V3.4c-.7-.1-1.5-.2-2.2-.2-2.2 0-3.7 1.3-3.7 3.8v1.5H8.4v2.8h2.3v9.5h2.9v-9.5H16l.4-2.8h-2.2Z" />
+    </svg>
+  )
+}
+
+function XIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M13.9 10.4 21.3 2h-1.8l-6.4 7.3L8 2H2l7.8 11.3L2 22h1.8l6.8-7.7L16 22h6l-8.1-11.6Zm-2.4 2.7-.8-1.1L4.4 3.3h2.7l5 7 .8 1.1 6.6 9.3h-2.7l-5.3-7.6Z" />
+    </svg>
+  )
+}
 
 function plainTextFromPortableText(value: TypedObject[] | null | undefined): string {
   if (!value?.length) return ''
@@ -102,6 +149,8 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
   const authorBio = excerptText(plainTextFromPortableText(doc.author?.bio))
   const authorName = doc.author?.name?.trim()
   const authorSlug = doc.author?.slug?.trim()
+  const articlePath = doc.slug ? editorialHref(doc._type, doc.slug) : null
+  const articleShareUrl = articlePath ? absoluteSiteUrl(articlePath) : null
 
   return (
     <article className="pb-16">
@@ -134,6 +183,7 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
               <span className="text-zinc-400">Editorial</span>
             )}
           </p>
+          {articleShareUrl ? <ArticleShareLinks title={doc.title} url={articleShareUrl} /> : null}
           {doc.subhead ? <p className="mt-4 text-lg text-zinc-400">{doc.subhead}</p> : null}
           {doc.galleryNote ? <p className="mt-4 text-lg text-zinc-400">{doc.galleryNote}</p> : null}
           {doc.verdict ? <p className="mt-4 text-lg font-medium text-amber-200/90">{doc.verdict}</p> : null}

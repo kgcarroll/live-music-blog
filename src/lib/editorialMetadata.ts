@@ -1,6 +1,7 @@
 import type {Metadata} from 'next'
 
 import {editorialHref, editorialTypeLabel} from '@/lib/paths'
+import {absoluteSiteUrl} from '@/lib/siteUrl'
 import {urlForImage} from '@/sanity/lib/image'
 
 type EditorialMetadataDoc = {
@@ -25,15 +26,6 @@ type EditorialMetadataDoc = {
 const OG_IMAGE_WIDTH = 1200
 const OG_IMAGE_HEIGHT = 630
 const DESCRIPTION_MAX_LENGTH = 160
-
-function siteOrigin() {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'http://localhost:3000'
-  return raw.replace(/\/$/, '')
-}
-
-function absoluteSiteUrl(path: string) {
-  return `${siteOrigin()}${path.startsWith('/') ? path : `/${path}`}`
-}
 
 function plainTextFromPortableText(value: unknown): string {
   if (!Array.isArray(value)) return ''
