@@ -1,11 +1,18 @@
 import {defineArrayMember, defineField, type ArrayOfType} from 'sanity'
 import {imageTextRowBlock} from './portableTextBlocks'
 
-export const bodyField = () =>
+/** Content + SEO tabs for interview, news, photoPost, and review documents. */
+export const editorialDocumentGroups = [
+  {name: 'content', title: 'Content', default: true},
+  {name: 'seo', title: 'SEO'},
+]
+
+export const bodyField = (group = 'content') =>
   defineField({
     name: 'body',
     title: 'Body',
     type: 'array',
+    group,
     of: [
       {
         type: 'block',
@@ -70,20 +77,22 @@ export const bodyField = () =>
     ],
   })
 
-export const coverField = () =>
+export const coverField = (group = 'content') =>
   defineField({
     name: 'coverImage',
     title: 'Cover Image',
     type: 'image',
+    group,
     options: {hotspot: true},
     fields: [defineField({name: 'alt', type: 'string', title: 'Alt Text'})],
   })
 
 /** Wide hero image for the homepage carousel; falls back to cover image when empty. */
-export const featureImageField = () =>
+export const featureImageField = (group = 'content') =>
   defineField({
     name: 'featureImage',
     title: 'Feature Image',
+    group,
     description:
       'Homepage carousel only. Use a 16:9 image and set the hotspot in Studio to frame the subject. Leave empty to use the Cover Image.',
     type: 'image',
@@ -107,16 +116,30 @@ export const pageIntroField = (
     ...(options?.group ? {group: options.group} : {}),
   })
 
-export const tagsField = () =>
+export const tagsField = (group = 'content') =>
   defineField({
     name: 'tags',
     title: 'Tags',
     description: 'Connect this article to tag hub pages and related articles.',
     type: 'array',
+    group,
     of: [defineArrayMember({type: 'reference', to: [{type: 'tag'}]})],
   })
 
 export const seoFields = () => [
-  defineField({name: 'seoTitle', type: 'string', title: 'SEO Title'}),
-  defineField({name: 'seoDescription', type: 'text', title: 'SEO Description', rows: 3}),
+  defineField({
+    name: 'seoTitle',
+    type: 'string',
+    title: 'SEO Title',
+    group: 'seo',
+    description: 'Optional. Overrides the page title in search results and social previews.',
+  }),
+  defineField({
+    name: 'seoDescription',
+    type: 'text',
+    title: 'SEO Description',
+    group: 'seo',
+    rows: 3,
+    description: 'Optional meta description (about 160 characters). Falls back to excerpt or body when empty.',
+  }),
 ]

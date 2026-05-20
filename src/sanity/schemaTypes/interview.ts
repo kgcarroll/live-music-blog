@@ -1,31 +1,46 @@
 import {defineField, defineType} from 'sanity'
-import {bodyField, coverField, featureImageField, seoFields, tagsField} from './blocks'
+import {bodyField, coverField, editorialDocumentGroups, featureImageField, seoFields, tagsField} from './blocks'
 
 export const interview = defineType({
   name: 'interview',
   title: 'Interview',
   type: 'document',
+  groups: editorialDocumentGroups,
   fields: [
-    defineField({name: 'title', type: 'string', title: 'Title', validation: (Rule) => Rule.required()}),
+    defineField({
+      name: 'title',
+      type: 'string',
+      title: 'Title',
+      group: 'content',
+      validation: (Rule) => Rule.required(),
+    }),
     defineField({
       name: 'slug',
       type: 'slug',
       title: 'Slug',
+      group: 'content',
       options: {source: 'title', maxLength: 96},
       validation: (Rule) => Rule.required(),
     }),
-    defineField({name: 'publishedAt', type: 'datetime', title: 'Published At', validation: (Rule) => Rule.required()}),
+    defineField({
+      name: 'publishedAt',
+      type: 'datetime',
+      title: 'Published At',
+      group: 'content',
+      validation: (Rule) => Rule.required(),
+    }),
     defineField({
       name: 'author',
       title: 'Author',
       type: 'reference',
+      group: 'content',
       to: [{type: 'author'}],
     }),
-    defineField({name: 'subhead', type: 'string', title: 'Deck / Subhead'}),
-    defineField({name: 'featured', type: 'boolean', title: 'Featured', initialValue: false}),
+    defineField({name: 'subhead', type: 'string', title: 'Deck / Subhead', group: 'content'}),
+    defineField({name: 'featured', type: 'boolean', title: 'Featured', group: 'content', initialValue: false}),
     featureImageField(),
     coverField(),
-    defineField({name: 'excerpt', type: 'text', title: 'Excerpt', rows: 3}),
+    defineField({name: 'excerpt', type: 'text', title: 'Excerpt', group: 'content', rows: 3}),
     bodyField(),
     tagsField(),
     ...seoFields(),
