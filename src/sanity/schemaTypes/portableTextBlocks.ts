@@ -34,7 +34,7 @@ export const imageTextRowBlock = () => ({
           defineField({
             name: 'alt',
             type: 'string',
-            title: 'Alt text',
+            title: 'Alt Text',
             validation: (Rule) => Rule.required(),
           }),
         ],
@@ -63,7 +63,7 @@ export const imageTextRowBlock = () => ({
             .trim()
         return {
           title: 'Image & Text',
-          subtitle: snippet ? snippet.slice(0, 80) : 'Image with rich text',
+          subtitle: snippet ? snippet.slice(0, 80) : 'Image With Rich Text',
           media,
         }
       },

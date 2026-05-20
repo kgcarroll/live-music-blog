@@ -31,7 +31,7 @@ export const bodyField = () =>
         type: 'image',
         options: {hotspot: true},
         fields: [
-          defineField({name: 'alt', type: 'string', title: 'Alt text', validation: (Rule) => Rule.required()}),
+          defineField({name: 'alt', type: 'string', title: 'Alt Text', validation: (Rule) => Rule.required()}),
           defineField({name: 'caption', type: 'string', title: 'Caption'}),
         ],
       },
@@ -49,7 +49,7 @@ export const bodyField = () =>
           }),
           defineField({
             name: 'title',
-            title: 'Accessible title',
+            title: 'Accessible Title',
             type: 'string',
             initialValue: 'YouTube Video',
           }),
@@ -73,22 +73,32 @@ export const bodyField = () =>
 export const coverField = () =>
   defineField({
     name: 'coverImage',
-    title: 'Cover image',
+    title: 'Cover Image',
     type: 'image',
     options: {hotspot: true},
-    fields: [defineField({name: 'alt', type: 'string', title: 'Alt text'})],
+    fields: [defineField({name: 'alt', type: 'string', title: 'Alt Text'})],
   })
 
 /** Wide hero image for the homepage carousel; falls back to cover image when empty. */
 export const featureImageField = () =>
   defineField({
     name: 'featureImage',
-    title: 'Feature image',
+    title: 'Feature Image',
     description:
-      'Homepage carousel only. Use a 16:9 image and set the hotspot in Studio to frame the subject. Leave empty to use the cover image.',
+      'Homepage carousel only. Use a 16:9 image and set the hotspot in Studio to frame the subject. Leave empty to use the Cover Image.',
     type: 'image',
     options: {hotspot: true},
-    fields: [defineField({name: 'alt', type: 'string', title: 'Alt text'})],
+    fields: [defineField({name: 'alt', type: 'string', title: 'Alt Text'})],
+  })
+
+/** Simple rich text for static pages and section hub intros (Site settings). */
+export const pageIntroField = (name: string, title: string, description?: string) =>
+  defineField({
+    name,
+    title,
+    type: 'array',
+    description,
+    of: [{type: 'block'}],
   })
 
 export const tagsField = () =>
@@ -101,6 +111,6 @@ export const tagsField = () =>
   })
 
 export const seoFields = () => [
-  defineField({name: 'seoTitle', type: 'string', title: 'SEO title'}),
-  defineField({name: 'seoDescription', type: 'text', title: 'SEO description', rows: 3}),
+  defineField({name: 'seoTitle', type: 'string', title: 'SEO Title'}),
+  defineField({name: 'seoDescription', type: 'text', title: 'SEO Description', rows: 3}),
 ]
