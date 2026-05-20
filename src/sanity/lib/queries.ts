@@ -233,6 +233,10 @@ export const SITE_SETTINGS = defineQuery(`
     instagramUrl,
     spotifyUrl,
     aboutPortable,
-    contactPortable
+    contactPortable,
+    interviewsHubPortable,
+    newsHubPortable,
+    photosHubPortable,
+    reviewsHubPortable
   }
 `)
