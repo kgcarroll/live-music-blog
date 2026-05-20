@@ -57,7 +57,7 @@ export const review = defineType({
       title: 'Show Date',
       group: 'seo',
       description:
-        'Optional. When the concert happened. With Venue, enables MusicEvent in review JSON-LD; otherwise the article title is used.',
+        'Optional. Concert date for review JSON-LD. If empty, Published At is used as startDate.',
     }),
     defineField({
       name: 'venueName',
@@ -65,7 +65,7 @@ export const review = defineType({
       title: 'Venue',
       group: 'seo',
       description:
-        'Optional. Venue or city, e.g. "Capital One Arena". With Show Date, enables MusicEvent JSON-LD; leave empty to fall back to the review title only.',
+        'Optional. Venue or city for JSON-LD, e.g. "Capital One Arena". If empty, the review title is used as the place name.',
     }),
   ],
   preview: {

@@ -46,34 +46,33 @@ function jsonLdArticleType(editorialType: string): string {
   }
 }
 
-/** MusicEvent needs startDate + location; otherwise use Thing so Google Review validates. */
+/**
+ * Google Review markup accepts Event (not generic Thing) for itemReviewed.
+ * Falls back when SEO show fields are empty: startDate → publishedAt, location name → title.
+ */
 function buildReviewItemReviewed(
   name: string,
   imageUrl: string | undefined,
   showDate?: string | null,
   venueName?: string | null,
+  publishedAt?: string | null,
 ): Record<string, unknown> {
-  const venue = venueName?.trim()
-  const startDate = showDate?.trim()
+  const startDate = showDate?.trim() || publishedAt?.trim()
+  const locationName = venueName?.trim() || name
 
-  if (startDate && venue) {
-    return {
-      '@type': 'MusicEvent',
-      name,
-      startDate,
-      location: {
-        '@type': 'Place',
-        name: venue,
-      },
-      ...(imageUrl ? {image: imageUrl} : {}),
-    }
-  }
-
-  return {
-    '@type': 'Thing',
+  const item: Record<string, unknown> = {
+    '@type': 'Event',
     name,
+    location: {
+      '@type': 'Place',
+      name: locationName,
+    },
     ...(imageUrl ? {image: imageUrl} : {}),
   }
+
+  if (startDate) item.startDate = startDate
+
+  return item
 }
 
 function articleDescription(doc: EditorialJsonLdDoc): string | undefined {
@@ -155,6 +154,7 @@ export function buildEditorialJsonLd(doc: EditorialJsonLdDoc): Record<string, un
       imageUrl,
       doc.showDate,
       doc.venueName,
+      doc.publishedAt,
     )
   }
 
