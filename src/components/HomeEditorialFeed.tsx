@@ -6,7 +6,13 @@ import {EditorialCard, EditorialCardSkeleton, type EditorialCardItem} from '@/co
 import {loadOlderHomeEditorial} from '@/app/(site)/homeEditorialActions'
 import {HOME_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
 
-export function HomeEditorialFeed({initialItems}: {initialItems: EditorialCardItem[]}) {
+export function HomeEditorialFeed({
+  excludeCarouselIds,
+  initialItems,
+}: {
+  excludeCarouselIds: string[]
+  initialItems: EditorialCardItem[]
+}) {
   const [items, setItems] = useState(initialItems)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialItems.length === HOME_EDITORIAL_PAGE_SIZE)
@@ -15,7 +21,7 @@ export function HomeEditorialFeed({initialItems}: {initialItems: EditorialCardIt
     if (loading) return
     setLoading(true)
     try {
-      const more = await loadOlderHomeEditorial(items.length)
+      const more = await loadOlderHomeEditorial(items.length, excludeCarouselIds)
       setItems((prev) => {
         const seen = new Set(prev.map((i) => i._id))
         const next = [...prev]
@@ -31,7 +37,7 @@ export function HomeEditorialFeed({initialItems}: {initialItems: EditorialCardIt
     } finally {
       setLoading(false)
     }
-  }, [items.length, loading])
+  }, [excludeCarouselIds, items.length, loading])
 
   return (
     <>

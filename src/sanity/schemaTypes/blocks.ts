@@ -79,6 +79,18 @@ export const coverField = () =>
     fields: [defineField({name: 'alt', type: 'string', title: 'Alt text'})],
   })
 
+/** Wide hero image for the homepage carousel; falls back to cover image when empty. */
+export const featureImageField = () =>
+  defineField({
+    name: 'featureImage',
+    title: 'Feature image',
+    description:
+      'Homepage carousel only. Use a 16:9 image and set the hotspot in Studio to frame the subject. Leave empty to use the cover image.',
+    type: 'image',
+    options: {hotspot: true},
+    fields: [defineField({name: 'alt', type: 'string', title: 'Alt text'})],
+  })
+
 export const tagsField = () =>
   defineField({
     name: 'tags',

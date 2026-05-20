@@ -1,5 +1,5 @@
 import {defineField, defineType} from 'sanity'
-import {bodyField, coverField, seoFields, tagsField} from './blocks'
+import {bodyField, coverField, featureImageField, seoFields, tagsField} from './blocks'
 
 export const interview = defineType({
   name: 'interview',
@@ -14,8 +14,6 @@ export const interview = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({name: 'publishedAt', type: 'datetime', validation: (Rule) => Rule.required()}),
-    defineField({name: 'excerpt', type: 'text', rows: 3}),
-    coverField(),
     defineField({
       name: 'author',
       title: 'Author',
@@ -24,8 +22,11 @@ export const interview = defineType({
     }),
     defineField({name: 'subhead', type: 'string', title: 'Deck / subhead'}),
     defineField({name: 'featured', type: 'boolean', initialValue: false}),
-    tagsField(),
+    featureImageField(),
+    coverField(),
+    defineField({name: 'excerpt', type: 'text', rows: 3}),
     bodyField(),
+    tagsField(),
     ...seoFields(),
   ],
   preview: {

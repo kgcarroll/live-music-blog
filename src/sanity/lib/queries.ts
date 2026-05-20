@@ -1,6 +1,6 @@
 import {defineQuery} from 'next-sanity'
 
-const imageProjection = `coverImage{
+const sanityImageProjection = (field: string) => `${field}{
   ...,
   asset->{
     _id,
@@ -11,6 +11,9 @@ const imageProjection = `coverImage{
     }
   }
 }`
+
+const imageProjection = sanityImageProjection('coverImage')
+const featureImageProjection = sanityImageProjection('featureImage')
 
 const galleryImagesProjection = `gallery[]{
   _key,
@@ -104,8 +107,37 @@ const editorialProjection = `{
   }
 }`
 
+const editorialTypesFilter = `_type in ["interview","news","photoPost","review"] && defined(slug.current)`
+
+const homeHeroFields = `
+  ${editorialCardListFields},
+  excerpt,
+  subhead,
+  verdict,
+  featured,
+  ${featureImageProjection}
+`
+
+/** Featured editorial for homepage carousel (newest first). */
+export const HOME_FEATURED_SLIDES = defineQuery(`
+  *[${editorialTypesFilter} && featured == true] | order(publishedAt desc) {
+    ${homeHeroFields}
+  }
+`)
+
+/** Recent editorial used to backfill the carousel to three slides. */
+export const HOME_CAROUSEL_BACKFILL = defineQuery(`
+  *[${editorialTypesFilter}] | order(publishedAt desc)[0...12] {
+    ${homeHeroFields}
+  }
+`)
+
+/** Home grid: excludes the active carousel slides. */
 export const HOME_EDITORIAL_PAGE = defineQuery(`
-  *[_type in ["interview","news","photoPost","review"] && defined(slug.current)] | order(publishedAt desc)[$start...$end] {
+  *[
+    ${editorialTypesFilter} &&
+    !(_id in $excludeIds)
+  ] | order(publishedAt desc)[$start...$end] {
     ${editorialCardListFields}
   }
 `)

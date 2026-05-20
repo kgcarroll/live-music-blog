@@ -1,5 +1,5 @@
 import {defineField, defineType} from 'sanity'
-import {bodyField, coverField, seoFields, tagsField} from './blocks'
+import {bodyField, coverField, featureImageField, seoFields, tagsField} from './blocks'
 
 export const photoPost = defineType({
   name: 'photoPost',
@@ -14,8 +14,6 @@ export const photoPost = defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({name: 'publishedAt', type: 'datetime', validation: (Rule) => Rule.required()}),
-    defineField({name: 'excerpt', type: 'text', rows: 3}),
-    coverField(),
     defineField({
       name: 'author',
       title: 'Author',
@@ -23,6 +21,9 @@ export const photoPost = defineType({
       to: [{type: 'author'}],
     }),
     defineField({name: 'galleryNote', type: 'text', title: 'Gallery note', rows: 2}),
+    defineField({name: 'featured', type: 'boolean', initialValue: false}),
+    featureImageField(),
+    coverField(),
     defineField({
       name: 'gallery',
       title: 'Gallery',
@@ -41,9 +42,9 @@ export const photoPost = defineType({
         },
       ],
     }),
-    defineField({name: 'featured', type: 'boolean', initialValue: false}),
-    tagsField(),
+    defineField({name: 'excerpt', type: 'text', rows: 3}),
     bodyField(),
+    tagsField(),
     ...seoFields(),
   ],
   preview: {
