@@ -31,7 +31,7 @@ export function HomeFeaturedHeroSlide({
 
   return (
     <article className="group relative h-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-sm transition hover:border-amber-500/40">
-      <div className="relative aspect-[16/7.5] w-full min-h-[210px] sm:aspect-[8/3]">
+      <div className="relative w-full max-sm:h-[calc((100vw-2rem)*0.75+7rem)] sm:aspect-[8/3]">
         {heroSrc ? (
           <Image
             src={heroSrc}
@@ -50,7 +50,7 @@ export function HomeFeaturedHeroSlide({
           className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/75 to-zinc-950/15"
           aria-hidden
         />
-        <div className="relative flex h-full flex-col justify-end p-5 pl-10 pr-10 sm:p-8 sm:pl-14 sm:pr-14 md:p-10 md:pl-16 md:pr-16">
+        <div className="relative flex h-full flex-col justify-end p-5 pl-10 pr-10 max-sm:pb-12 sm:p-8 sm:pl-14 sm:pr-14 md:p-10 md:pl-16 md:pr-16">
           <p className="text-xs leading-snug">
             <span className="uppercase tracking-wide text-amber-300">{typeLabel}</span>
             {date ? (
