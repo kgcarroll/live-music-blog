@@ -13,17 +13,14 @@ export default async function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="text-3xl font-bold text-zinc-50">About</h1>
-      <p className="mt-4 text-zinc-400">
-        We cover live music in the Philly area and beyond—photos from the rail, long-form interviews, and honest reviews.
-      </p>
       {data?.aboutPortable?.length ? (
-        <div className="mt-10">
+        <div className="mt-6">
           <ArticleBody value={data.aboutPortable} />
         </div>
       ) : (
-        <p className="mt-8 text-sm text-zinc-500">
-          Optional: create a <strong>Site settings</strong> document in Sanity and add an About body to edit this
-          section without a deploy.
+        <p className="mt-4 text-zinc-400">
+          We cover live music in the Philly area and beyond—photos from the rail, long-form interviews, and honest
+          reviews.
         </p>
       )}
     </div>

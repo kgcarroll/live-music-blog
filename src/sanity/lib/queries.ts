@@ -225,6 +225,23 @@ const settingsImageProjection = `{
   }
 }`
 
+/** All public URLs for sitemap.xml (published perspective only). */
+export const SITEMAP_ENTRIES = defineQuery(`{
+  "editorial": *[_type in ["interview","news","photoPost","review"] && defined(slug.current)]{
+    _type,
+    "slug": slug.current,
+    "lastModified": coalesce(_updatedAt, publishedAt)
+  },
+  "authors": *[_type == "author" && defined(slug.current)]{
+    "slug": slug.current,
+    "lastModified": _updatedAt
+  },
+  "tags": *[_type == "tag" && defined(slug.current)]{
+    "slug": slug.current,
+    "lastModified": _updatedAt
+  }
+}`)
+
 export const SITE_SETTINGS = defineQuery(`
   *[_type == "siteSettings"] | order(_updatedAt desc)[0]{
     siteTitle,
