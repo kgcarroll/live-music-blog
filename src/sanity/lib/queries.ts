@@ -73,6 +73,9 @@ const editorialProjection = `{
     ...,
     _type == "image" => {
       ...,
+      layout,
+      alt,
+      caption,
       asset->{
         _id,
         url,

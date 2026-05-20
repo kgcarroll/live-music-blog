@@ -9,3 +9,44 @@
 body {
   @apply min-h-screen bg-zinc-950 text-zinc-100 antialiased;
 }
+
+/* Portable Text body images: float + wrap (plain CSS so PT siblings can flow around figure). */
+.article-body-flow::after {
+  content: '';
+  display: table;
+  clear: both;
+}
+
+.article-body-flow .article-image--full {
+  clear: both;
+  margin-block: 2rem;
+  width: 100%;
+}
+
+.article-body-flow .article-image--float-left {
+  float: left;
+  clear: none;
+  width: 50%;
+  max-width: 50%;
+  margin: 0.25rem 1.5rem 1rem 0;
+}
+
+.article-body-flow .article-image--float-right {
+  float: right;
+  clear: none;
+  width: 50%;
+  max-width: 50%;
+  margin: 0.25rem 0 1rem 1.5rem;
+}
+
+@media (max-width: 767px) {
+  .article-body-flow .article-image--float-left,
+  .article-body-flow .article-image--float-right {
+    float: none;
+    clear: both;
+    width: 100%;
+    max-width: 100%;
+    margin-block: 1.5rem;
+    margin-inline: 0;
+  }
+}

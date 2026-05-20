@@ -1,5 +1,4 @@
-import {defineArrayMember, defineField, type ArrayOfType} from 'sanity'
-import {imageTextRowBlock} from './portableTextBlocks'
+import {defineArrayMember, defineField} from 'sanity'
 
 /** Content + SEO tabs for interview, news, photoPost, and review documents. */
 export const editorialDocumentGroups = [
@@ -40,9 +39,22 @@ export const bodyField = (group = 'content') =>
         fields: [
           defineField({name: 'alt', type: 'string', title: 'Alt Text', validation: (Rule) => Rule.required()}),
           defineField({name: 'caption', type: 'string', title: 'Caption'}),
+          defineField({
+            name: 'layout',
+            type: 'string',
+            title: 'Layout',
+            initialValue: 'full',
+            options: {
+              layout: 'radio',
+              list: [
+                {title: 'Full width', value: 'full'},
+                {title: 'Float left (50%, text wraps)', value: 'floatLeft'},
+                {title: 'Float right (50%, text wraps)', value: 'floatRight'},
+              ],
+            },
+          }),
         ],
       },
-      imageTextRowBlock() as ArrayOfType<'object'>,
       {
         name: 'youtubeEmbed',
         title: 'YouTube Video',

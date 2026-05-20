@@ -1,12 +1,13 @@
-'use client'
-
 import Image from 'next/image'
 import {urlForImage} from '@/sanity/lib/image'
+
+export type BodyImageLayout = 'full' | 'floatLeft' | 'floatRight'
 
 type BodyImageValue = {
   _type?: string
   alt?: string
   caption?: string
+  layout?: BodyImageLayout | string | null
   asset?: {
     _id?: string
     url?: string | null
@@ -17,6 +18,11 @@ type BodyImageValue = {
   } | null
   hotspot?: unknown
   crop?: unknown
+}
+
+function resolveLayout(value: BodyImageValue): BodyImageLayout {
+  if (value.layout === 'floatLeft' || value.layout === 'floatRight') return value.layout
+  return 'full'
 }
 
 export function SanityImage({
@@ -37,22 +43,34 @@ export function SanityImage({
   const h = Math.min(dims?.height || 900, 1200)
   const src = urlForImage(value as never).width(w).url()
   const lqip = value.asset.metadata?.lqip
+  const layout = embedded ? 'full' : resolveLayout(value)
+
+  const figureClass = embedded
+    ? 'article-image w-full'
+    : layout === 'floatLeft'
+      ? 'article-image article-image--float-left'
+      : layout === 'floatRight'
+        ? 'article-image article-image--float-right'
+        : 'article-image article-image--full'
 
   return (
-    <figure className={embedded ? 'w-full' : 'my-8'}>
+    <figure className={figureClass}>
       <Image
         src={src}
         alt={value.alt || ''}
         width={Math.round(w)}
         height={Math.round(h)}
         sizes={sizes}
-        className="h-auto w-full rounded-lg border border-zinc-800"
+        className="h-auto max-w-full rounded-lg border border-zinc-800"
+        style={{width: '100%', height: 'auto'}}
         placeholder={lqip ? 'blur' : 'empty'}
         blurDataURL={lqip || undefined}
         priority={priority}
       />
       {value.caption ? (
-        <figcaption className="mt-2 text-center text-sm text-zinc-500">{value.caption}</figcaption>
+        <figcaption className="mt-2 text-center text-xs italic text-amber-300/90">
+          {value.caption}
+        </figcaption>
       ) : null}
     </figure>
   )
