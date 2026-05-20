@@ -27,6 +27,18 @@ export const review = defineType({
       title: 'One-Line Verdict',
       description: 'Short summary shown under the title on the review page and in the homepage carousel when this review is featured.',
     }),
+    defineField({
+      name: 'showDate',
+      type: 'datetime',
+      title: 'Show Date',
+      description: 'When the concert happened. Used for review structured data (Google Rich Results).',
+    }),
+    defineField({
+      name: 'venueName',
+      type: 'string',
+      title: 'Venue',
+      description: 'Venue or city for the show, e.g. "Capital One Arena" or "Philadelphia, PA". Used for review structured data.',
+    }),
     defineField({name: 'featured', type: 'boolean', title: 'Featured', initialValue: false}),
     featureImageField(),
     coverField(),

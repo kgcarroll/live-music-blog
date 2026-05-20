@@ -17,6 +17,8 @@ export type EditorialJsonLdDoc = {
   publishedAt?: string | null
   subhead?: string | null
   verdict?: string | null
+  showDate?: string | null
+  venueName?: string | null
   body?: unknown
   author?: {
     name?: string | null
@@ -41,6 +43,36 @@ function jsonLdArticleType(editorialType: string): string {
       return 'Review'
     default:
       return 'Article'
+  }
+}
+
+/** MusicEvent needs startDate + location; otherwise use Thing so Google Review validates. */
+function buildReviewItemReviewed(
+  name: string,
+  imageUrl: string | undefined,
+  showDate?: string | null,
+  venueName?: string | null,
+): Record<string, unknown> {
+  const venue = venueName?.trim()
+  const startDate = showDate?.trim()
+
+  if (startDate && venue) {
+    return {
+      '@type': 'MusicEvent',
+      name,
+      startDate,
+      location: {
+        '@type': 'Place',
+        name: venue,
+      },
+      ...(imageUrl ? {image: imageUrl} : {}),
+    }
+  }
+
+  return {
+    '@type': 'Thing',
+    name,
+    ...(imageUrl ? {image: imageUrl} : {}),
   }
 }
 
@@ -118,12 +150,12 @@ export function buildEditorialJsonLd(doc: EditorialJsonLdDoc): Record<string, un
       normalizeDescription(plainTextFromPortableText(doc.body))
     if (reviewBody) payload.reviewBody = reviewBody
 
-    // Google requires itemReviewed on Review; title is the show (e.g. "Artist at Venue").
-    payload.itemReviewed = {
-      '@type': 'MusicEvent',
-      name: headline.trim(),
-      ...(imageUrl ? {image: imageUrl} : {}),
-    }
+    payload.itemReviewed = buildReviewItemReviewed(
+      headline.trim(),
+      imageUrl,
+      doc.showDate,
+      doc.venueName,
+    )
   }
 
   return payload

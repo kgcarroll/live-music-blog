@@ -63,6 +63,8 @@ const editorialProjection = `{
   subhead,
   galleryNote,
   verdict,
+  showDate,
+  venueName,
   ${galleryImagesProjection},
   ${imageProjection},
   seoTitle,
