@@ -117,6 +117,13 @@ export function buildEditorialJsonLd(doc: EditorialJsonLdDoc): Record<string, un
       normalizeDescription(doc.excerpt) ||
       normalizeDescription(plainTextFromPortableText(doc.body))
     if (reviewBody) payload.reviewBody = reviewBody
+
+    // Google requires itemReviewed on Review; title is the show (e.g. "Artist at Venue").
+    payload.itemReviewed = {
+      '@type': 'MusicEvent',
+      name: headline.trim(),
+      ...(imageUrl ? {image: imageUrl} : {}),
+    }
   }
 
   return payload
