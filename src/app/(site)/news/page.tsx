@@ -2,11 +2,17 @@ import type {Metadata} from 'next'
 import type {TypedObject} from '@portabletext/types'
 import {HubSectionPage} from '@/components/HubSectionPage'
 import type {EditorialCardItem} from '@/components/EditorialCard'
+import {buildHubPageMetadata} from '@/lib/hubMetadata'
 import {sanityFetch} from '@/sanity/lib/live'
 import {SECTION_LIST, SITE_SETTINGS} from '@/sanity/lib/queries'
 
-export const metadata: Metadata = {
-  title: 'News',
+export async function generateMetadata(): Promise<Metadata> {
+  return buildHubPageMetadata({
+    title: 'News',
+    path: '/news',
+    introKey: 'newsHubPortable',
+    fallbackDescription: 'Short updates, announcements, and stories from the pit.',
+  })
 }
 
 export default async function NewsHubPage() {

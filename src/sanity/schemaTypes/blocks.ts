@@ -91,14 +91,20 @@ export const featureImageField = () =>
     fields: [defineField({name: 'alt', type: 'string', title: 'Alt Text'})],
   })
 
-/** Simple rich text for static pages and section hub intros (Site settings). */
-export const pageIntroField = (name: string, title: string, description?: string) =>
+/** Simple rich text for static pages and section hub intros (Site Settings). */
+export const pageIntroField = (
+  name: string,
+  title: string,
+  description?: string,
+  options?: {group?: string},
+) =>
   defineField({
     name,
     title,
     type: 'array',
     description,
     of: [{type: 'block'}],
+    ...(options?.group ? {group: options.group} : {}),
   })
 
 export const tagsField = () =>

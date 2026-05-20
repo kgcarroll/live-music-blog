@@ -1,20 +1,46 @@
+import type {Metadata} from 'next'
 import {HomeEditorialFeed} from '@/components/HomeEditorialFeed'
 import {HomeFeaturedSlideshow} from '@/components/HomeFeaturedSlideshow'
+import {JsonLd} from '@/components/JsonLd'
 import type {EditorialCardItem} from '@/components/EditorialCard'
+import {buildWebSiteJsonLd} from '@/lib/editorialJsonLd'
 import type {HomeFeaturedHero} from '@/lib/homeFeatured'
 import {buildHomeCarouselSlides} from '@/lib/homeCarousel'
 import {HOME_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
+import {buildPageMetadata, ogImageFromSiteSettings, type SiteSettingsOgImage} from '@/lib/pageMetadata'
 import {sanityFetch} from '@/sanity/lib/live'
-import {HOME_CAROUSEL_BACKFILL, HOME_EDITORIAL_PAGE, HOME_FEATURED_SLIDES} from '@/sanity/lib/queries'
+import {HOME_CAROUSEL_BACKFILL, HOME_EDITORIAL_PAGE, HOME_FEATURED_SLIDES, SITE_SETTINGS} from '@/sanity/lib/queries'
 
 /** Fresher home page when you publish in Studio (layout still uses 60s elsewhere). */
 export const revalidate = 30
 
+const HOME_DESCRIPTION =
+  'Interviews, news, photo galleries, and reviews from the Philadelphia area and beyond.'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const {data: settings} = await sanityFetch({query: SITE_SETTINGS, stega: false})
+  const siteTitle = settings?.siteTitle?.trim() || 'Live Music Blog'
+
+  return {
+    ...buildPageMetadata({
+      title: siteTitle,
+      description: HOME_DESCRIPTION,
+      path: '/',
+      ogImage: ogImageFromSiteSettings((settings ?? null) as SiteSettingsOgImage),
+    }),
+    title: {absolute: siteTitle},
+  }
+}
+
 export default async function HomePage() {
-  const [{data: featured}, {data: recent}] = await Promise.all([
+  const [{data: featured}, {data: recent}, {data: settings}] = await Promise.all([
     sanityFetch({query: HOME_FEATURED_SLIDES}),
     sanityFetch({query: HOME_CAROUSEL_BACKFILL}),
+    sanityFetch({query: SITE_SETTINGS, stega: false}),
   ])
+
+  const siteTitle = settings?.siteTitle?.trim() || 'Live Music Blog'
+  const webSiteJsonLd = buildWebSiteJsonLd({siteTitle, description: HOME_DESCRIPTION})
 
   const slides = buildHomeCarouselSlides(
     (featured ?? []) as HomeFeaturedHero[],
@@ -35,6 +61,7 @@ export default async function HomePage() {
 
   return (
     <div>
+      <JsonLd data={webSiteJsonLd} />
       {slides.length > 0 ? <HomeFeaturedSlideshow items={slides} /> : null}
       <section className="mx-auto mb-10 max-w-2xl text-center">
         <h1 className="text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">The latest from the pit.</h1>

@@ -1,6 +1,7 @@
 import type {Metadata} from 'next'
 
 import {editorialHref, editorialTypeLabel} from '@/lib/paths'
+import {normalizeDescription, plainTextFromPortableText} from '@/lib/portableTextPlain'
 import {absoluteSiteUrl} from '@/lib/siteUrl'
 import {urlForImage} from '@/sanity/lib/image'
 
@@ -25,45 +26,6 @@ type EditorialMetadataDoc = {
 
 const OG_IMAGE_WIDTH = 1200
 const OG_IMAGE_HEIGHT = 630
-const DESCRIPTION_MAX_LENGTH = 160
-
-function plainTextFromPortableText(value: unknown): string {
-  if (!Array.isArray(value)) return ''
-
-  return value
-    .map((block: unknown) => {
-      if (block == null || typeof block !== 'object') return ''
-
-      if ('_type' in block && block._type === 'imageTextRow' && 'text' in block) {
-        return plainTextFromPortableText((block as {text?: unknown}).text)
-      }
-
-      if (!('children' in block) || !Array.isArray((block as {children?: unknown}).children)) {
-        return ''
-      }
-
-      return (block as {children: unknown[]}).children
-        .map((child: unknown) => {
-          if (child == null || typeof child !== 'object' || !('text' in child)) return ''
-          const text = (child as {text?: unknown}).text
-          return typeof text === 'string' ? text : ''
-        })
-        .join('')
-    })
-    .filter(Boolean)
-    .join(' ')
-}
-
-function normalizeDescription(value: string | null | undefined): string | undefined {
-  const text = value?.replace(/\s+/g, ' ').trim()
-  if (!text) return undefined
-  if (text.length <= DESCRIPTION_MAX_LENGTH) return text
-
-  const truncated = text.slice(0, DESCRIPTION_MAX_LENGTH - 1)
-  const lastSpace = truncated.lastIndexOf(' ')
-  return `${truncated.slice(0, lastSpace > 80 ? lastSpace : truncated.length).trim()}…`
-}
-
 export function buildEditorialMetadata(doc: EditorialMetadataDoc, fallbackTitle: string): Metadata {
   const title = doc.seoTitle || doc.title || fallbackTitle
   const description =

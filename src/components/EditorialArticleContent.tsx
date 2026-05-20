@@ -3,6 +3,8 @@ import Link from 'next/link'
 import type {TypedObject} from '@portabletext/types'
 import {ArticleBody} from '@/components/ArticleBody'
 import {EditorialCard, type EditorialAuthor, type EditorialCardItem} from '@/components/EditorialCard'
+import {JsonLd} from '@/components/JsonLd'
+import {buildEditorialJsonLd} from '@/lib/editorialJsonLd'
 import {PhotoGalleryMosaic, type PhotoGalleryImage} from '@/components/PhotoGalleryMosaic'
 import {authorHref, editorialHref, editorialTypeLabel, tagHref} from '@/lib/paths'
 import {absoluteSiteUrl} from '@/lib/siteUrl'
@@ -152,8 +154,11 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
   const articlePath = doc.slug ? editorialHref(doc._type, doc.slug) : null
   const articleShareUrl = articlePath ? absoluteSiteUrl(articlePath) : null
 
+  const jsonLd = buildEditorialJsonLd(doc)
+
   return (
     <article className="pb-16">
+      <JsonLd data={jsonLd} />
       <div className="bg-zinc-950/80">
         <div className="mx-auto max-w-3xl px-4 py-10">
           <p className="text-xs leading-snug text-zinc-400">
