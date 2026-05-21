@@ -1,5 +1,7 @@
 import {defineQuery} from 'next-sanity'
 
+import {SITE_SETTINGS_DOCUMENT_ID} from '@/sanity/constants'
+
 const sanityImageProjection = (field: string) => `${field}{
   ...,
   asset->{
@@ -265,7 +267,10 @@ export const SITEMAP_ENTRIES = defineQuery(`{
 }`)
 
 export const SITE_SETTINGS = defineQuery(`
-  *[_type == "siteSettings"] | order(_updatedAt desc)[0]{
+  coalesce(
+    *[_type == "siteSettings" && _id == "${SITE_SETTINGS_DOCUMENT_ID}"][0],
+    *[_type == "siteSettings"] | order(_updatedAt desc)[0]
+  ){
     siteTitle,
     logo ${settingsImageProjection},
     favicon ${settingsImageProjection},

@@ -4,6 +4,7 @@ import {presentationTool} from 'sanity/presentation'
 import {visionTool} from '@sanity/vision'
 import {schemaTypes} from './src/sanity/schemaTypes'
 import {resolve} from './src/sanity/presentation/resolve'
+import {structure} from './src/sanity/structure'
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || 'placeholder'
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
@@ -18,7 +19,7 @@ export default defineConfig({
   basePath: '/studio',
 
   plugins: [
-    structureTool(),
+    structureTool({structure}),
     presentationTool({
       resolve,
       previewUrl: {
@@ -33,5 +34,20 @@ export default defineConfig({
 
   schema: {
     types: schemaTypes,
+  },
+
+  document: {
+    newDocumentOptions: (prev, {creationContext}) => {
+      if (creationContext.type === 'global' || creationContext.type === 'structure') {
+        return prev.filter((option) => option.templateId !== 'siteSettings')
+      }
+      return prev
+    },
+    actions: (prev, {schemaType}) => {
+      if (schemaType === 'siteSettings') {
+        return prev.filter(({action}) => action !== 'delete' && action !== 'duplicate')
+      }
+      return prev
+    },
   },
 })

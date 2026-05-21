@@ -100,13 +100,24 @@ export const coverField = (group = 'content') =>
   })
 
 /** Wide hero image for the homepage carousel; falls back to cover image when empty. */
+export const featuredField = (group = 'content') =>
+  defineField({
+    name: 'featured',
+    type: 'boolean',
+    title: 'Featured',
+    group,
+    initialValue: false,
+    description:
+      'Include in the homepage carousel. See Homepage Carousel in the desk for live order. Up to three slides show on the site: featured posts first, then the newest posts when fewer than three are featured.',
+  })
+
 export const featureImageField = (group = 'content') =>
   defineField({
     name: 'featureImage',
     title: 'Feature Image',
     group,
     description:
-      'Homepage carousel only. Use a 16:9 image and set the hotspot in Studio to frame the subject. Leave empty to use the Cover Image.',
+      'Homepage Carousel only. Use a 16:9 image and set the hotspot in Studio to frame the subject. Leave empty to use the Cover Image.',
     type: 'image',
     options: {hotspot: true},
     fields: [defineField({name: 'alt', type: 'string', title: 'Alt Text'})],

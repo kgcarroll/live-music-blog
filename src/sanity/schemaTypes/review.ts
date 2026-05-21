@@ -1,5 +1,13 @@
 import {defineField, defineType} from 'sanity'
-import {bodyField, coverField, editorialDocumentGroups, featureImageField, seoFields, tagsField} from './blocks'
+import {
+  bodyField,
+  coverField,
+  editorialDocumentGroups,
+  featuredField,
+  featureImageField,
+  seoFields,
+  tagsField,
+} from './blocks'
 
 export const review = defineType({
   name: 'review',
@@ -44,7 +52,7 @@ export const review = defineType({
       description:
         'Short summary shown under the title on the review page and in the homepage carousel when this review is featured.',
     }),
-    defineField({name: 'featured', type: 'boolean', title: 'Featured', group: 'content', initialValue: false}),
+    featuredField(),
     featureImageField(),
     coverField(),
     defineField({name: 'excerpt', type: 'text', title: 'Excerpt', group: 'content', rows: 3}),
@@ -69,12 +77,13 @@ export const review = defineType({
     }),
   ],
   preview: {
-    select: {title: 'title', media: 'coverImage', subtitle: 'publishedAt'},
-    prepare({title, media, subtitle}) {
+    select: {title: 'title', media: 'coverImage', subtitle: 'publishedAt', featured: 'featured'},
+    prepare({title, media, subtitle, featured}) {
+      const date = subtitle ? new Date(subtitle).toLocaleDateString() : ''
       return {
         title,
         media,
-        subtitle: subtitle ? new Date(subtitle).toLocaleDateString() : '',
+        subtitle: [featured ? 'Featured' : null, date].filter(Boolean).join(' · '),
       }
     },
   },

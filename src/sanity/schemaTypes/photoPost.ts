@@ -1,5 +1,13 @@
 import {defineField, defineType} from 'sanity'
-import {bodyField, coverField, editorialDocumentGroups, featureImageField, seoFields, tagsField} from './blocks'
+import {
+  bodyField,
+  coverField,
+  editorialDocumentGroups,
+  featuredField,
+  featureImageField,
+  seoFields,
+  tagsField,
+} from './blocks'
 
 export const photoPost = defineType({
   name: 'photoPost',
@@ -37,7 +45,7 @@ export const photoPost = defineType({
       to: [{type: 'author'}],
     }),
     defineField({name: 'galleryNote', type: 'text', title: 'Gallery Note', group: 'content', rows: 2}),
-    defineField({name: 'featured', type: 'boolean', title: 'Featured', group: 'content', initialValue: false}),
+    featuredField(),
     featureImageField(),
     coverField(),
     defineField({
@@ -65,12 +73,13 @@ export const photoPost = defineType({
     ...seoFields(),
   ],
   preview: {
-    select: {title: 'title', media: 'coverImage', subtitle: 'publishedAt'},
-    prepare({title, media, subtitle}) {
+    select: {title: 'title', media: 'coverImage', subtitle: 'publishedAt', featured: 'featured'},
+    prepare({title, media, subtitle, featured}) {
+      const date = subtitle ? new Date(subtitle).toLocaleDateString() : ''
       return {
         title,
         media,
-        subtitle: subtitle ? new Date(subtitle).toLocaleDateString() : '',
+        subtitle: [featured ? 'Featured' : null, date].filter(Boolean).join(' · '),
       }
     },
   },
