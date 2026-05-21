@@ -2,6 +2,7 @@ import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {presentationTool} from 'sanity/presentation'
 import {visionTool} from '@sanity/vision'
+import {media} from 'sanity-plugin-media'
 import {schemaTypes} from './src/sanity/schemaTypes'
 import {resolve} from './src/sanity/presentation/resolve'
 import {structure} from './src/sanity/structure'
@@ -20,6 +21,7 @@ export default defineConfig({
 
   plugins: [
     structureTool({structure}),
+    media(),
     presentationTool({
       resolve,
       previewUrl: {

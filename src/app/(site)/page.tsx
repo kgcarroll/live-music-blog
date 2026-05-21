@@ -4,12 +4,12 @@ import {HomeFeaturedSlideshow} from '@/components/HomeFeaturedSlideshow'
 import {JsonLd} from '@/components/JsonLd'
 import type {EditorialCardItem} from '@/components/EditorialCard'
 import {buildWebSiteJsonLd} from '@/lib/editorialJsonLd'
-import type {HomeFeaturedHero} from '@/lib/homeFeatured'
-import {buildHomeCarouselSlides} from '@/lib/homeCarousel'
+import {fetchHomeCarouselSourceData} from '@/lib/fetchHomeCarousel'
 import {HOME_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
 import {buildPageMetadata, ogImageFromSiteSettings, type SiteSettingsOgImage} from '@/lib/pageMetadata'
+import {client} from '@/sanity/lib/client'
 import {sanityFetch} from '@/sanity/lib/live'
-import {HOME_CAROUSEL_BACKFILL, HOME_EDITORIAL_PAGE, HOME_FEATURED_SLIDES, SITE_SETTINGS} from '@/sanity/lib/queries'
+import {HOME_EDITORIAL_PAGE, SITE_SETTINGS} from '@/sanity/lib/queries'
 
 /** Fresher home page when you publish in Studio (layout still uses 60s elsewhere). */
 export const revalidate = 30
@@ -33,19 +33,17 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [{data: featured}, {data: recent}, {data: settings}] = await Promise.all([
-    sanityFetch({query: HOME_FEATURED_SLIDES}),
-    sanityFetch({query: HOME_CAROUSEL_BACKFILL}),
+  const [{slides}, {data: settings}] = await Promise.all([
+    fetchHomeCarouselSourceData(client, {
+      featuredPerspective: 'published',
+      recentPerspective: 'published',
+      useCdn: false,
+    }),
     sanityFetch({query: SITE_SETTINGS, stega: false}),
   ])
 
   const siteTitle = settings?.siteTitle?.trim() || 'Live Music Blog'
   const webSiteJsonLd = buildWebSiteJsonLd({siteTitle, description: HOME_DESCRIPTION})
-
-  const slides = buildHomeCarouselSlides(
-    (featured ?? []) as HomeFeaturedHero[],
-    (recent ?? []) as HomeFeaturedHero[],
-  )
   const excludeCarouselIds = slides.map((item) => item._id)
 
   const {data: grid} = await sanityFetch({

@@ -1,11 +1,15 @@
 import {CogIcon, StarIcon} from '@sanity/icons'
 import type {StructureResolver} from 'sanity/structure'
 
-import {EDITORIAL_DOCUMENT_TYPES, SITE_SETTINGS_DOCUMENT_ID} from './constants'
+import {
+  SITE_SETTINGS_DOCUMENT_ID,
+  STRUCTURE_HIDDEN_DOCUMENT_TYPES,
+} from './constants'
+import {homepageCarouselList} from './structure/homepageCarousel'
 
-const EDITORIAL_CAROUSEL_FILTER = `_type in [${EDITORIAL_DOCUMENT_TYPES.map((type) => `"${type}"`).join(',')}] && defined(slug.current)`
+const hiddenStructureTypes = new Set<string>(STRUCTURE_HIDDEN_DOCUMENT_TYPES)
 
-export const structure: StructureResolver = (S) =>
+export const structure: StructureResolver = (S, context) =>
   S.list()
     .title('Content')
     .items([
@@ -23,16 +27,7 @@ export const structure: StructureResolver = (S) =>
         .title('Homepage Carousel')
         .id('homepage-carousel')
         .icon(StarIcon)
-        .child(
-          S.documentList()
-            .id('homepage-carousel-list')
-            .title('Homepage Carousel')
-            .filter(EDITORIAL_CAROUSEL_FILTER)
-            .defaultOrdering([
-              {field: 'featured', direction: 'desc'},
-              {field: 'publishedAt', direction: 'desc'},
-            ]),
-        ),
+        .child(() => homepageCarouselList(S, context)),
       S.divider(),
-      ...S.documentTypeListItems().filter((item) => item.getId() !== 'siteSettings'),
+      ...S.documentTypeListItems().filter((item) => !hiddenStructureTypes.has(item.getId() ?? '')),
     ])

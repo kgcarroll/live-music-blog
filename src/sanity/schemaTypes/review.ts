@@ -1,3 +1,4 @@
+import {ThumbsUpIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
 import {
   bodyField,
@@ -13,6 +14,7 @@ export const review = defineType({
   name: 'review',
   title: 'Review',
   type: 'document',
+  icon: ThumbsUpIcon,
   groups: editorialDocumentGroups,
   fields: [
     defineField({

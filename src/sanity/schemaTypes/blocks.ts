@@ -108,7 +108,7 @@ export const featuredField = (group = 'content') =>
     group,
     initialValue: false,
     description:
-      'Include in the homepage carousel. See Homepage Carousel in the desk for live order. Up to three slides show on the site: featured posts first, then the newest posts when fewer than three are featured.',
+      'Include in the homepage carousel (see Homepage Carousel in the desk). Featured posts take precedence. With one or two featured, the carousel fills out to three slides with the newest posts. With three or more featured, every featured post appears (publish for it to show on the live site).',
   })
 
 export const featureImageField = (group = 'content') =>

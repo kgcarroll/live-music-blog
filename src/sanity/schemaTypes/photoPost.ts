@@ -1,3 +1,4 @@
+import {ImageIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
 import {
   bodyField,
@@ -13,6 +14,7 @@ export const photoPost = defineType({
   name: 'photoPost',
   title: 'Photos',
   type: 'document',
+  icon: ImageIcon,
   groups: editorialDocumentGroups,
   fields: [
     defineField({

@@ -132,7 +132,7 @@ export const HOME_FEATURED_SLIDES = defineQuery(`
   }
 `)
 
-/** Recent editorial used to backfill the carousel to three slides. */
+/** Recent editorial used to backfill the carousel when there are fewer than three featured slides. */
 export const HOME_CAROUSEL_BACKFILL = defineQuery(`
   *[${editorialTypesFilter}] | order(publishedAt desc)[0...12] {
     ${homeHeroFields}

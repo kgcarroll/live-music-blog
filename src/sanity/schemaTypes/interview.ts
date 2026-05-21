@@ -1,3 +1,4 @@
+import {MicrophoneIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
 import {
   bodyField,
@@ -13,6 +14,7 @@ export const interview = defineType({
   name: 'interview',
   title: 'Interview',
   type: 'document',
+  icon: MicrophoneIcon,
   groups: editorialDocumentGroups,
   fields: [
     defineField({

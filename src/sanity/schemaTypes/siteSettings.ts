@@ -1,3 +1,4 @@
+import {CogIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
 import {pageIntroField} from './blocks'
 
@@ -5,6 +6,7 @@ export const siteSettings = defineType({
   name: 'siteSettings',
   title: 'Site Settings',
   type: 'document',
+  icon: CogIcon,
   groups: [
     {name: 'site', title: 'Site', default: true},
     {name: 'social', title: 'Social'},
