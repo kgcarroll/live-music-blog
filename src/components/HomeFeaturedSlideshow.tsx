@@ -72,7 +72,7 @@ export function HomeFeaturedSlideshow({items}: {items: HomeFeaturedHero[]}) {
 
     const onPointerDown = (event: PointerEvent) => {
       if (event.button !== 0) return
-      if ((event.target as HTMLElement).closest('button')) return
+      if ((event.target as HTMLElement).closest('button, a')) return
 
       dragStart.current = {x: event.clientX, y: event.clientY}
       didSwipe.current = false
@@ -120,7 +120,7 @@ export function HomeFeaturedSlideshow({items}: {items: HomeFeaturedHero[]}) {
         didSwipe.current = false
         return
       }
-      if ((event.target as HTMLElement).closest('button')) return
+      if ((event.target as HTMLElement).closest('button, a')) return
 
       const slide = (event.target as HTMLElement).closest('[data-hero-href]')
       const href = slide?.getAttribute('data-hero-href')

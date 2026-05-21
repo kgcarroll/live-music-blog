@@ -34,9 +34,6 @@ export function HomeFeaturedHeroSlide({
       data-hero-href={href}
       className="group relative h-full cursor-pointer overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-sm transition hover:border-amber-500/40"
     >
-      <Link href={href} className="sr-only">
-        {item.title}
-      </Link>
       <div className="relative w-full max-sm:h-[calc((100vw-2rem)*0.75+7rem)] sm:aspect-[8/3]">
         {heroSrc ? (
           <Image
@@ -72,8 +69,13 @@ export function HomeFeaturedHeroSlide({
               </>
             ) : null}
           </p>
-          <h2 className="mt-3 max-w-3xl text-2xl font-bold leading-tight tracking-tight text-zinc-50 transition group-hover:text-amber-200 sm:text-3xl md:text-4xl">
-            {item.title}
+          <h2 className="mt-3 max-w-3xl text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
+            <Link
+              href={href}
+              className="text-zinc-50 transition hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 rounded-sm group-hover:text-amber-200"
+            >
+              {item.title}
+            </Link>
           </h2>
           {deck ? (
             <p className="mt-3 max-w-2xl line-clamp-2 text-sm leading-relaxed text-zinc-300 sm:line-clamp-3 sm:text-base">
