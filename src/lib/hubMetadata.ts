@@ -5,7 +5,12 @@ import {normalizeDescription, plainTextFromPortableText} from '@/lib/portableTex
 import {sanityFetch} from '@/sanity/lib/live'
 import {SITE_SETTINGS} from '@/sanity/lib/queries'
 
-type HubIntroKey = 'interviewsHubPortable' | 'newsHubPortable' | 'photosHubPortable' | 'reviewsHubPortable'
+type HubIntroKey =
+  | 'interviewsHubPortable'
+  | 'newsHubPortable'
+  | 'photosHubPortable'
+  | 'reviewsHubPortable'
+  | 'authorsHubPortable'
 
 export async function buildHubPageMetadata({
   title,

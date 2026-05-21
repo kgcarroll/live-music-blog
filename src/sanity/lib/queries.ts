@@ -281,6 +281,7 @@ export const SITE_SETTINGS = defineQuery(`
     interviewsHubPortable,
     newsHubPortable,
     photosHubPortable,
-    reviewsHubPortable
+    reviewsHubPortable,
+    authorsHubPortable
   }
 `)

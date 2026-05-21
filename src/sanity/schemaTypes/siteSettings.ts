@@ -100,5 +100,11 @@ export const siteSettings = defineType({
       'Intro above the grid on /reviews. Also used for SEO description when set.',
       {group: 'hubs'},
     ),
+    pageIntroField(
+      'authorsHubPortable',
+      'Authors Page Intro',
+      'Intro above the list on /authors. Also used for SEO description when set.',
+      {group: 'hubs'},
+    ),
   ],
 })

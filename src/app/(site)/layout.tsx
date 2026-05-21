@@ -1,4 +1,5 @@
 import {SkipLink} from '@/components/SkipLink'
+import {SiteFooter} from '@/components/SiteFooter'
 import {SiteHeader} from '@/components/SiteHeader'
 import {resolveHeaderLogo, type SanitySettingsLogo} from '@/lib/resolveHeaderLogo'
 import {sanityFetch} from '@/sanity/lib/live'
@@ -30,9 +31,7 @@ export default async function SiteLayout({children}: {children: React.ReactNode}
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
         {children}
       </main>
-      <footer className="border-t border-zinc-900 py-8 text-center text-xs text-zinc-500">
-        Copyright {new Date().getFullYear()} {siteTitle}
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

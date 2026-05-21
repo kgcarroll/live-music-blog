@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import type {TypedObject} from '@portabletext/types'
-import {editorialHref, editorialTypeLabel} from '@/lib/paths'
+import {authorHref, editorialHref, editorialTypeLabel} from '@/lib/paths'
 import {urlForImage} from '@/sanity/lib/image'
 
 export type EditorialAuthor = {
@@ -73,7 +73,8 @@ export function EditorialCard({item}: {item: EditorialCardItem}) {
         })
       : null
   const typeLabel = editorialTypeLabel(item._type)
-  const authorByline = item.author?.name?.trim() || null
+  const authorName = item.author?.name?.trim() || null
+  const authorSlug = item.author?.slug?.trim() || null
 
   return (
     <article className="group flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border border-zinc-800 bg-zinc-900/40 shadow-sm transition hover:border-amber-500/40">
@@ -115,8 +116,20 @@ export function EditorialCard({item}: {item: EditorialCardItem}) {
             {item.title}
           </h2>
         </Link>
-        {authorByline ? (
-          <p className="mt-auto shrink-0 text-xs leading-snug text-zinc-500">By {authorByline}</p>
+        {authorName ? (
+          <p className="mt-auto shrink-0 text-xs leading-snug text-zinc-500">
+            By{' '}
+            {authorSlug ? (
+              <Link
+                href={authorHref(authorSlug)}
+                className="transition-colors hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 rounded-sm"
+              >
+                {authorName}
+              </Link>
+            ) : (
+              authorName
+            )}
+          </p>
         ) : null}
       </div>
     </article>
