@@ -1,18 +1,23 @@
 import type {TypedObject} from '@portabletext/types'
 import {ArticleBody} from '@/components/ArticleBody'
-import {EditorialCard, type EditorialCardItem} from '@/components/EditorialCard'
+import {ListingEditorialFeed} from '@/components/ListingEditorialFeed'
+import type {EditorialCardItem} from '@/components/EditorialCard'
 
 export function HubSectionPage({
   title,
   intro,
   fallbackIntro,
-  items,
+  sectionType,
+  initialItems,
+  initialHasMore,
   emptyMessage,
 }: {
   title: string
   intro?: TypedObject[] | null
   fallbackIntro: string
-  items: EditorialCardItem[]
+  sectionType: string
+  initialItems: EditorialCardItem[]
+  initialHasMore: boolean
   emptyMessage: string
 }) {
   return (
@@ -25,12 +30,13 @@ export function HubSectionPage({
       ) : (
         <p className="mt-3 max-w-2xl text-zinc-400">{fallbackIntro}</p>
       )}
-      <div className="mt-10 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-        {items.map((item) => (
-          <EditorialCard key={item._id} item={item} />
-        ))}
-      </div>
-      {!items.length ? <p className="mt-8 text-sm text-zinc-500">{emptyMessage}</p> : null}
+      <ListingEditorialFeed
+        mode="section"
+        sectionType={sectionType}
+        initialItems={initialItems}
+        initialHasMore={initialHasMore}
+        emptyMessage={emptyMessage}
+      />
     </div>
   )
 }

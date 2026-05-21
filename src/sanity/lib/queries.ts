@@ -147,8 +147,15 @@ export const HOME_EDITORIAL_PAGE = defineQuery(`
   }
 `)
 
+/** @deprecated Prefer SECTION_EDITORIAL_PAGE for paginated hub grids. */
 export const SECTION_LIST = defineQuery(`
   *[_type == $type && defined(slug.current)] | order(publishedAt desc) {
+    ${editorialCardListFields}
+  }
+`)
+
+export const SECTION_EDITORIAL_PAGE = defineQuery(`
+  *[_type == $type && defined(slug.current)] | order(publishedAt desc)[$start...$end] {
     ${editorialCardListFields}
   }
 `)
@@ -214,6 +221,16 @@ export const POSTS_BY_TAG_ID = defineQuery(`
     defined(slug.current) &&
     $tagId in tags[]._ref
   ] | order(publishedAt desc) {
+    ${editorialCardListFields}
+  }
+`)
+
+export const POSTS_BY_TAG_ID_PAGE = defineQuery(`
+  *[
+    _type in ["interview","news","photoPost","review"] &&
+    defined(slug.current) &&
+    $tagId in tags[]._ref
+  ] | order(publishedAt desc) [$start...$end] {
     ${editorialCardListFields}
   }
 `)

@@ -3,9 +3,11 @@ import type {Metadata} from 'next'
 import type {TypedObject} from '@portabletext/types'
 
 import {ArticleBody} from '@/components/ArticleBody'
-import {EditorialCard, type EditorialCardItem} from '@/components/EditorialCard'
+import {ListingEditorialFeed} from '@/components/ListingEditorialFeed'
+import type {EditorialCardItem} from '@/components/EditorialCard'
+import {TAG_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
 import {sanityFetch} from '@/sanity/lib/live'
-import {POSTS_BY_TAG_ID, TAG_BY_SLUG, TAG_SLUGS} from '@/sanity/lib/queries'
+import {POSTS_BY_TAG_ID_PAGE, TAG_BY_SLUG, TAG_SLUGS} from '@/sanity/lib/queries'
 
 type Props = {params: Promise<{slug: string}>}
 
@@ -49,11 +51,13 @@ export default async function TagHubPage({params}: Props) {
   const tag = (data ?? null) as TagHub | null
   if (!tag?._id || !tag.slug) notFound()
 
-  const {data: posts} = await sanityFetch({
-    query: POSTS_BY_TAG_ID,
-    params: {tagId: tag._id},
+  const {data: rows} = await sanityFetch({
+    query: POSTS_BY_TAG_ID_PAGE,
+    params: {tagId: tag._id, start: 0, end: TAG_EDITORIAL_PAGE_SIZE + 1},
   })
-  const items = (posts ?? []) as EditorialCardItem[]
+
+  const items = ((rows ?? []) as EditorialCardItem[]).slice(0, TAG_EDITORIAL_PAGE_SIZE)
+  const hasMore = (rows ?? []).length > TAG_EDITORIAL_PAGE_SIZE
 
   return (
     <div>
@@ -63,12 +67,13 @@ export default async function TagHubPage({params}: Props) {
           <ArticleBody value={tag.description} />
         </div>
       ) : null}
-      <div className="mt-10 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-        {items.map((item) => (
-          <EditorialCard key={item._id} item={item} />
-        ))}
-      </div>
-      {!items.length ? <p className="mt-8 text-sm text-zinc-500">No published articles for this tag yet.</p> : null}
+      <ListingEditorialFeed
+        mode="tag"
+        tagId={tag._id}
+        initialItems={items}
+        initialHasMore={hasMore}
+        emptyMessage="No published articles for this tag yet."
+      />
     </div>
   )
 }
