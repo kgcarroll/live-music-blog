@@ -5,6 +5,7 @@ import {usePathname} from 'next/navigation'
 
 import type {HeaderLogo} from '@/lib/resolveHeaderLogo'
 import {SiteLogoMark} from '@/components/SiteLogoMark'
+import {SpotifyIcon} from '@/components/SpotifyIcon'
 import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import {createPortal} from 'react-dom'
 
@@ -55,21 +56,6 @@ function IconInstagram({className}: {className?: string}) {
       <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-function IconSpotify({className}: {className?: string}) {
-  return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.52 17.35c-.24.38-.75.5-1.13.26-3.09-1.78-6.98-2.18-11.59-1.19-.44.1-.89-.17-1-.61-.1-.45.17-.9.61-1 5.04-1.08 9.36-.65 12.72 1.31.38.22.5.75.29 1.23zm1.47-3.49c-.3.48-.94.63-1.42.33-3.54-2.06-8.93-2.67-13.1-1.46-.55.17-1.13-.13-1.3-.68-.17-.55.13-1.13.68-1.3 4.69-1.43 10.55-.78 14.48 1.57.48.28.63.94.34 1.42zm.17-3.7c-4.25-2.52-11.28-2.75-15.38-1.52-.65.2-1.34-.17-1.54-.82-.2-.65.17-1.34.82-1.54 4.47-1.35 12.09-1.09 16.98 1.75.58.34.77 1.1.43 1.68-.34.57-1.1.76-1.68.42z" />
     </svg>
   )
 }
@@ -134,7 +120,7 @@ function HeaderAsideLinks({
           className={asideIconLinkClass}
           aria-label="Spotify (opens in a new tab)"
         >
-          <IconSpotify className={asideIconClass} />
+          <SpotifyIcon className={`${asideIconClass} size-5`} />
         </a>
       ) : null}
       <Link

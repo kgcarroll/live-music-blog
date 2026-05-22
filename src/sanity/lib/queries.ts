@@ -202,6 +202,19 @@ export const POSTS_BY_AUTHOR_SLUG = defineQuery(`
   }
 `)
 
+export const ALL_TAGS = defineQuery(`
+  *[_type == "tag" && defined(slug.current)] | order(title asc) {
+    _id,
+    title,
+    "slug": slug.current,
+    "count": count(*[
+      _type in ["interview","news","photoPost","review"] &&
+      defined(slug.current) &&
+      ^._id in tags[]._ref
+    ])
+  }
+`)
+
 export const TAG_BY_SLUG = defineQuery(`
   *[_type == "tag" && slug.current == $slug][0]{
     _id,
@@ -282,6 +295,7 @@ export const SITE_SETTINGS = defineQuery(`
     newsHubPortable,
     photosHubPortable,
     reviewsHubPortable,
-    authorsHubPortable
+    authorsHubPortable,
+    tagsHubPortable
   }
 `)

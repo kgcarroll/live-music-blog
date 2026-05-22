@@ -1,5 +1,7 @@
 import {defineArrayMember, defineField} from 'sanity'
 
+import {getSpotifyEmbed, spotifyEmbedTypeLabel} from '@/lib/spotify'
+
 /** Content + SEO tabs for interview, news, photoPost, and review documents. */
 export const editorialDocumentGroups = [
   {name: 'content', title: 'Content', default: true},
@@ -82,6 +84,44 @@ export const bodyField = (group = 'content') =>
             return {
               title: title || 'YouTube Video',
               subtitle,
+            }
+          },
+        },
+      },
+      {
+        name: 'spotifyEmbed',
+        title: 'Spotify',
+        type: 'object',
+        fields: [
+          defineField({
+            name: 'url',
+            title: 'Spotify URL',
+            type: 'url',
+            description: 'Paste an open.spotify.com link to a track, album, playlist, episode, or show.',
+            validation: (Rule) =>
+              Rule.required().custom((url) => {
+                if (!url || typeof url !== 'string') return true
+                return getSpotifyEmbed(url) ? true : 'Use a valid Spotify share or embed URL'
+              }),
+          }),
+          defineField({
+            name: 'title',
+            title: 'Accessible Title',
+            type: 'string',
+            initialValue: 'Spotify player',
+          }),
+        ],
+        preview: {
+          select: {title: 'title', url: 'url'},
+          prepare({title, url}) {
+            const embed = getSpotifyEmbed(typeof url === 'string' ? url : undefined)
+            return {
+              title: title || 'Spotify',
+              subtitle: embed
+                ? `${spotifyEmbedTypeLabel(embed.type)} · ${typeof url === 'string' ? url : ''}`
+                : typeof url === 'string'
+                  ? url
+                  : 'Add a Spotify URL',
             }
           },
         },

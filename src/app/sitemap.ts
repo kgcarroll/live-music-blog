@@ -12,6 +12,7 @@ const STATIC_PATHS = [
   '/photos',
   '/reviews',
   '/authors',
+  '/tags',
   '/about',
   '/contact',
 ] as const

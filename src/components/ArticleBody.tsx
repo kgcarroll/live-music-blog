@@ -1,11 +1,18 @@
 import {PortableText, type PortableTextComponents} from '@portabletext/react'
 import type {TypedObject} from '@portabletext/types'
+import {Suspense} from 'react'
 import {SanityImage} from '@/components/SanityImage'
+import {SpotifyEmbedFromUrl} from '@/components/SpotifyEmbedFromUrl'
 import {YouTubeEmbed} from '@/components/YouTubeEmbed'
 import {createPortableTextComponents} from '@/lib/portableTextComponents'
 import {getYouTubeVideoId} from '@/lib/youtube'
 
 type YouTubeEmbedValue = {
+  url?: unknown
+  title?: unknown
+}
+
+type SpotifyEmbedValue = {
   url?: unknown
   title?: unknown
 }
@@ -40,6 +47,27 @@ const articlePortableTextComponents: PortableTextComponents = {
       return (
         <div className="my-8">
           <YouTubeEmbed videoId={videoId} title={typeof embed.title === 'string' ? embed.title : null} />
+        </div>
+      )
+    },
+    spotifyEmbed: ({value: embedValue}) => {
+      const embed = embedValue as SpotifyEmbedValue
+      const url = typeof embed.url === 'string' ? embed.url.trim() : ''
+      if (!url) return null
+
+      return (
+        <div className="my-8">
+          <Suspense
+            fallback={
+              <div
+                className="mx-auto w-full max-w-[456px] animate-pulse rounded-xl bg-zinc-900"
+                style={{height: 152}}
+                aria-hidden
+              />
+            }
+          >
+            <SpotifyEmbedFromUrl url={url} title={typeof embed.title === 'string' ? embed.title : null} />
+          </Suspense>
         </div>
       )
     },
