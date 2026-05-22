@@ -4,8 +4,8 @@ export const VENUES_MAP_CENTER = {lng: -75.1652, lat: 39.9526} as const
 /** Fixed zoom on load (Mapbox; higher = closer). */
 export const VENUES_MAP_ZOOM = 11
 
-/** Map panel height on /venues. */
-export const VENUES_MAP_HEIGHT_CLASS = 'h-[min(52vh,400px)]'
+/** Map panel height on /venues (shorter on mobile so the page scrolls past it easily). */
+export const VENUES_MAP_HEIGHT_CLASS = 'h-[min(36vh,260px)] sm:h-[min(52vh,400px)]'
 
 /**
  * Rough tri-state box around Philly. Drops bad Ticketmaster coordinates (e.g. Europe)

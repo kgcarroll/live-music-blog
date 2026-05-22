@@ -53,6 +53,7 @@ export function VenuesMap({venues}: {venues: VenueMapPin[]}) {
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [VENUES_MAP_CENTER.lng, VENUES_MAP_CENTER.lat],
       zoom: VENUES_MAP_ZOOM,
+      cooperativeGestures: true,
     })
     map.addControl(new mapboxgl.NavigationControl({showCompass: false}), 'top-right')
     map.addControl(new mapboxgl.AttributionControl({compact: true}))
@@ -180,7 +181,7 @@ export function VenuesMap({venues}: {venues: VenueMapPin[]}) {
   return (
     <div
       ref={containerRef}
-      className={`${VENUES_MAP_HEIGHT_CLASS} w-full overflow-hidden rounded-xl border border-zinc-800`}
+      className={`${VENUES_MAP_HEIGHT_CLASS} w-full touch-pan-y overflow-hidden rounded-xl border border-zinc-800`}
       role="region"
       aria-label="Map of venues with upcoming concerts"
     />
