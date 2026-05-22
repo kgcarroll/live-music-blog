@@ -12,6 +12,7 @@ type HubIntroKey =
   | 'reviewsHubPortable'
   | 'authorsHubPortable'
   | 'tagsHubPortable'
+  | 'scheduleHubPortable'
 
 export async function buildHubPageMetadata({
   title,

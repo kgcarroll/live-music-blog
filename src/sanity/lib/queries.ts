@@ -301,6 +301,7 @@ export const SITE_SETTINGS = defineQuery(`
     photosHubPortable,
     reviewsHubPortable,
     authorsHubPortable,
-    tagsHubPortable
+    tagsHubPortable,
+    scheduleHubPortable
   }
 `)
