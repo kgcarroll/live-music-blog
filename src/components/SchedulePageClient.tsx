@@ -46,7 +46,11 @@ export function SchedulePageClient({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-bold text-zinc-50">Schedule</h1>
-        <ScheduleViewToggle view={view} onChange={setViewAndStore} />
+        <ScheduleViewToggle
+          view={view}
+          onChange={setViewAndStore}
+          ariaLabel="Schedule layout"
+        />
       </div>
       {children}
       <ScheduleEventsFeed

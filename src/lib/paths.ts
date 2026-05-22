@@ -45,3 +45,7 @@ const ARTICLE_PATH = /^\/(interviews|news|photos|reviews)\/[^/]+$/
 export function isArticlePath(pathname: string) {
   return ARTICLE_PATH.test(pathname)
 }
+
+export function venueHref(venueSlug: string) {
+  return `/venues/${encodeURIComponent(venueSlug)}`
+}

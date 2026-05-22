@@ -7,6 +7,7 @@ const footerLinks = [
   {href: '/photos', label: 'Photos'},
   {href: '/reviews', label: 'Reviews'},
   {href: '/schedule', label: 'Schedule'},
+  {href: '/venues', label: 'Venues'},
   {href: '/about', label: 'About'},
   {href: '/contact', label: 'Contact'},
   {href: '/search', label: 'Search'},

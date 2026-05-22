@@ -44,15 +44,17 @@ function IconList({className}: {className?: string}) {
 export function ScheduleViewToggle({
   view,
   onChange,
+  ariaLabel = 'Layout',
 }: {
   view: ScheduleViewMode
   onChange: (view: ScheduleViewMode) => void
+  ariaLabel?: string
 }) {
   return (
     <div
       className="inline-flex shrink-0 rounded-md border border-zinc-700 p-0.5"
       role="group"
-      aria-label="Schedule layout"
+      aria-label={ariaLabel}
     >
       <button
         type="button"

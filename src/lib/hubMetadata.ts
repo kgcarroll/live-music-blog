@@ -13,6 +13,7 @@ type HubIntroKey =
   | 'authorsHubPortable'
   | 'tagsHubPortable'
   | 'scheduleHubPortable'
+  | 'venuesHubPortable'
 
 export async function buildHubPageMetadata({
   title,

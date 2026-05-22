@@ -118,5 +118,11 @@ export const siteSettings = defineType({
       'Intro above the concert grid on /schedule. Also used for SEO description when set.',
       {group: 'hubs'},
     ),
+    pageIntroField(
+      'venuesHubPortable',
+      'Venues Page Intro',
+      'Intro above the map on /venues. Also used for SEO description when set.',
+      {group: 'hubs'},
+    ),
   ],
 })
