@@ -7,6 +7,7 @@ import {JsonLd} from '@/components/JsonLd'
 import {buildEditorialJsonLd} from '@/lib/editorialJsonLd'
 import {PhotoGalleryMosaic, type PhotoGalleryImage} from '@/components/PhotoGalleryMosaic'
 import {authorHref, editorialHref, editorialTypeLabel, tagHref} from '@/lib/paths'
+import {formatReadingTime, plainTextFromPortableText, readingTimeMinutes} from '@/lib/readingTime'
 import {absoluteSiteUrl} from '@/lib/siteUrl'
 import {urlForImage} from '@/sanity/lib/image'
 
@@ -96,26 +97,6 @@ function XIcon() {
   )
 }
 
-function plainTextFromPortableText(value: TypedObject[] | null | undefined): string {
-  if (!value?.length) return ''
-
-  return value
-    .map((block) => {
-      if (!('children' in block) || !Array.isArray(block.children)) return ''
-      return block.children
-        .map((child: unknown) => {
-          if (child == null || typeof child !== 'object' || !('text' in child)) return ''
-          const text = (child as {text?: unknown}).text
-          return typeof text === 'string' ? text : ''
-        })
-        .join('')
-    })
-    .filter(Boolean)
-    .join(' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
 function excerptText(text: string): {text: string; truncated: boolean} {
   if (text.length <= AUTHOR_BIO_EXCERPT_CHARS) return {text, truncated: false}
   const sliced = text.slice(0, AUTHOR_BIO_EXCERPT_CHARS)
@@ -136,6 +117,14 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
         })
       : null
   const typeLabel = editorialTypeLabel(doc._type)
+  const readMinutes = readingTimeMinutes(
+    doc.body,
+    doc.excerpt,
+    doc.subhead,
+    doc.galleryNote,
+    doc.verdict,
+  )
+  const readTimeLabel = readMinutes != null ? formatReadingTime(readMinutes) : null
 
   const dims = doc.coverImage?.asset?.metadata?.dimensions
   const w = Math.min(dims?.width || 1600, 1600)
@@ -171,6 +160,14 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
                 <time className="tabular-nums text-zinc-400" dateTime={doc.publishedAt ?? undefined}>
                   {metaDate}
                 </time>
+              </>
+            ) : null}
+            {readTimeLabel ? (
+              <>
+                <span className="mx-1.5 text-zinc-600" aria-hidden="true">
+                  |
+                </span>
+                <span className="tabular-nums text-zinc-400">{readTimeLabel}</span>
               </>
             ) : null}
           </p>

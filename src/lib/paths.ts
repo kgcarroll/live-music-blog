@@ -38,3 +38,10 @@ export function authorHref(slug: string) {
 export function tagHref(slug: string) {
   return `/tags/${slug}`
 }
+
+const ARTICLE_PATH = /^\/(interviews|news|photos|reviews)\/[^/]+$/
+
+/** True for individual editorial article URLs (not section hubs). */
+export function isArticlePath(pathname: string) {
+  return ARTICLE_PATH.test(pathname)
+}

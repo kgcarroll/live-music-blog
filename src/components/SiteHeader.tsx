@@ -4,6 +4,7 @@ import Link from 'next/link'
 import {usePathname} from 'next/navigation'
 
 import type {HeaderLogo} from '@/lib/resolveHeaderLogo'
+import {ReadProgressBar} from '@/components/ReadProgressBar'
 import {SiteLogoMark} from '@/components/SiteLogoMark'
 import {SpotifyIcon} from '@/components/SpotifyIcon'
 import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
@@ -361,6 +362,7 @@ export function SiteHeader({
             </div>
           </div>
         </div>
+        <ReadProgressBar />
       </header>
       <div className="h-[92px] md:h-[136px]" aria-hidden="true" />
       {mobileMenu ? createPortal(mobileMenu, document.body) : null}
