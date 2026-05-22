@@ -1,5 +1,6 @@
 import {notFound} from 'next/navigation'
 import type {Metadata} from 'next'
+import Link from 'next/link'
 import type {TypedObject} from '@portabletext/types'
 import {ArticleBody} from '@/components/ArticleBody'
 import {AuthorEditorialFeed} from '@/components/AuthorEditorialFeed'
@@ -58,6 +59,15 @@ export default async function AuthorPostsPage({params}: Props) {
 
   return (
     <div>
+      <p className="mb-3">
+        <Link
+          href="/authors"
+          className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-amber-300/90 transition hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+        >
+          <span aria-hidden="true">←</span>
+          All authors
+        </Link>
+      </p>
       <h1 className="text-3xl font-bold text-zinc-50">{authorData.name}</h1>
       {authorData.bio?.length ? (
         <div className="mt-6">

@@ -191,7 +191,12 @@ export const ALL_AUTHORS = defineQuery(`
   *[_type == "author" && defined(slug.current)] | order(name asc) {
     _id,
     name,
-    "slug": slug.current
+    "slug": slug.current,
+    "count": count(*[
+      _type in ["interview","news","photoPost","review"] &&
+      defined(slug.current) &&
+      author._ref == ^._id
+    ])
   }
 `)
 

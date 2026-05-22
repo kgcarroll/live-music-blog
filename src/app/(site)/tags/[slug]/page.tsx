@@ -1,5 +1,6 @@
 import {notFound} from 'next/navigation'
 import type {Metadata} from 'next'
+import Link from 'next/link'
 import type {TypedObject} from '@portabletext/types'
 
 import {ArticleBody} from '@/components/ArticleBody'
@@ -61,6 +62,15 @@ export default async function TagHubPage({params}: Props) {
 
   return (
     <div>
+      <p className="mb-3">
+        <Link
+          href="/tags"
+          className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-amber-300/90 transition hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+        >
+          <span aria-hidden="true">←</span>
+          All tags
+        </Link>
+      </p>
       <h1 className="text-3xl font-bold text-zinc-50">{tag.title}</h1>
       {tag.description?.length ? (
         <div className="mt-6 max-w-3xl">

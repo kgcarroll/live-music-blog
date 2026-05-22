@@ -21,6 +21,7 @@ type AuthorListItem = {
   _id: string
   name?: string | null
   slug?: string | null
+  count?: number | null
 }
 
 export default async function AuthorsPage() {
@@ -52,14 +53,15 @@ export default async function AuthorsPage() {
       )}
 
       {authors.length ? (
-        <ul className="mt-8 divide-y divide-zinc-800 overflow-hidden rounded-xl border border-zinc-800">
+        <ul className="mt-8 flex flex-wrap gap-2">
           {authors.map((author) => (
             <li key={author._id}>
               <Link
                 href={authorHref(author.slug!.trim())}
-                className="block px-4 py-3 text-base font-medium text-zinc-50 transition hover:bg-zinc-900/60 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400/50"
+                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700 px-3 py-1 text-sm text-zinc-300 transition hover:border-amber-500/50 hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
               >
-                {author.name?.trim()}
+                <span>{author.name?.trim()}</span>
+                <span className="tabular-nums text-zinc-500">({author.count ?? 0})</span>
               </Link>
             </li>
           ))}
