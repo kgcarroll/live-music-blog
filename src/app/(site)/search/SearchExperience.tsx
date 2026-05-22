@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import {useSearchParams} from 'next/navigation'
-import {useCallback, useEffect, useMemo, useRef} from 'react'
+import {useCallback, useEffect, useMemo, useRef, type MouseEvent} from 'react'
 import {liteClient as algoliasearch} from 'algoliasearch/lite'
 import type {Hit, UiState} from 'instantsearch.js'
 import type {SendEventForHits} from 'instantsearch.js/es/lib/utils'
@@ -15,6 +15,7 @@ import {
   Snippet,
   useInstantSearch,
 } from 'react-instantsearch'
+import {usePagination} from 'react-instantsearch-core'
 import {
   InstantSearchNext,
   type InstantSearchNextRouting,
@@ -26,7 +27,16 @@ import {editorialHref, editorialTypeLabel} from '@/lib/paths'
 
 export type EditorialSearchRecord = EditorialAlgoliaRecord
 
-type SearchRouteState = {q?: string}
+/** Algolia hits per search page (see `<Configure hitsPerPage />`). */
+export const SEARCH_HITS_PER_PAGE = 10
+
+type SearchRouteState = {q?: string; page?: number}
+
+function parseRoutePage(value: string | number | undefined): number | undefined {
+  if (value == null || value === '') return undefined
+  const page = typeof value === 'number' ? value : parseInt(String(value), 10)
+  return Number.isFinite(page) && page > 1 ? page : undefined
+}
 
 function SearchHit({hit, sendEvent: _sendEvent}: {hit: Hit<EditorialSearchRecord>; sendEvent: SendEventForHits}) {
   const href = editorialHref(hit.editorialType, hit.slug)
@@ -154,6 +164,90 @@ function SearchHitsEmpty() {
   )
 }
 
+const paginationControlClass =
+  'inline-flex h-8 w-8 items-center justify-center text-zinc-400 transition hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50'
+const paginationControlDisabledClass =
+  'inline-flex h-8 w-8 cursor-not-allowed items-center justify-center text-zinc-600'
+const paginationPageClass =
+  'inline-flex h-8 min-w-8 items-center justify-center px-1 text-sm text-zinc-400 transition hover:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50'
+const paginationPageSelectedClass =
+  'inline-flex h-8 min-w-8 items-center justify-center px-1 text-sm font-medium text-amber-300'
+
+function navigateToPage(
+  event: MouseEvent,
+  refine: (page: number) => void,
+  page: number,
+) {
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+  event.preventDefault()
+  refine(page)
+}
+
+function SearchPagination() {
+  const {pages, currentRefinement, refine, isFirstPage, isLastPage, nbPages, createURL} =
+    usePagination({padding: 2})
+
+  if (nbPages <= 1) return null
+
+  const previousControl = isFirstPage ? (
+    <span className={paginationControlDisabledClass} aria-disabled="true">
+      <span aria-hidden="true">←</span>
+    </span>
+  ) : (
+    <a
+      href={createURL(currentRefinement - 1)}
+      className={paginationControlClass}
+      aria-label="Previous page"
+      onClick={(event) => navigateToPage(event, refine, currentRefinement - 1)}
+    >
+      <span aria-hidden="true">←</span>
+    </a>
+  )
+
+  const nextControl = isLastPage ? (
+    <span className={paginationControlDisabledClass} aria-disabled="true">
+      <span aria-hidden="true">→</span>
+    </span>
+  ) : (
+    <a
+      href={createURL(currentRefinement + 1)}
+      className={paginationControlClass}
+      aria-label="Next page"
+      onClick={(event) => navigateToPage(event, refine, currentRefinement + 1)}
+    >
+      <span aria-hidden="true">→</span>
+    </a>
+  )
+
+  return (
+    <nav
+      className="mt-8 grid w-full grid-cols-[1fr_auto_1fr] items-center"
+      aria-label="Search results pages"
+    >
+      <div className="flex justify-end">{previousControl}</div>
+      <ul className="flex list-none items-center justify-center gap-0.5 p-0">
+        {pages.map((page) => {
+          const isSelected = page === currentRefinement
+          return (
+            <li key={page}>
+              <a
+                href={createURL(page)}
+                className={isSelected ? paginationPageSelectedClass : paginationPageClass}
+                aria-label={`Page ${page + 1}`}
+                aria-current={isSelected ? 'page' : undefined}
+                onClick={(event) => navigateToPage(event, refine, page)}
+              >
+                {page + 1}
+              </a>
+            </li>
+          )
+        })}
+      </ul>
+      <div className="flex justify-start">{nextControl}</div>
+    </nav>
+  )
+}
+
 function SearchHitsSection() {
   const {results, status, indexUiState} = useInstantSearch()
   const hits = results?.hits ?? []
@@ -190,6 +284,7 @@ function SearchHitsSection() {
           </p>
         ) : null}
       </div>
+      <SearchPagination />
     </section>
   )
 }
@@ -259,8 +354,10 @@ export function SearchExperience() {
   const {appId, searchKey, indexName} = getAlgoliaPublicEnv()
   const searchParams = useSearchParams()
   const initialQueryRef = useRef<string | null>(null)
+  const initialPageRef = useRef<number | undefined>(undefined)
   if (initialQueryRef.current === null) {
     initialQueryRef.current = searchParams.get('q')?.trim() ?? ''
+    initialPageRef.current = parseRoutePage(searchParams.get('page') ?? undefined)
   }
 
   const searchClient = useMemo(
@@ -272,15 +369,22 @@ export function SearchExperience() {
     return {
       stateMapping: {
         stateToRoute(uiState) {
-          const q = uiState[indexName]?.query
-          return typeof q === 'string' && q.trim() ? {q} : {}
+          const indexState = uiState[indexName]
+          const route: SearchRouteState = {}
+          const q = indexState?.query
+          if (typeof q === 'string' && q.trim()) route.q = q.trim()
+          const page = indexState?.page
+          if (typeof page === 'number' && page > 1) route.page = page
+          return route
         },
         routeToState(routeState) {
           const raw = routeState.q
           const q = typeof raw === 'string' ? raw : ''
+          const page = parseRoutePage(routeState.page)
           return {
             [indexName]: {
               query: q,
+              ...(page ? {page} : {}),
             },
           } as UiState
         },
@@ -294,7 +398,13 @@ export function SearchExperience() {
 
   const initialUiState = useMemo((): UiState => {
     const q = initialQueryRef.current ?? ''
-    return {[indexName]: {query: q}}
+    const page = initialPageRef.current
+    return {
+      [indexName]: {
+        query: q,
+        ...(page ? {page} : {}),
+      },
+    }
   }, [indexName])
 
   if (!searchClient || !indexName) {
@@ -332,7 +442,7 @@ export function SearchExperience() {
     >
       <SearchInitialBrowse />
       <Configure
-        hitsPerPage={15}
+        hitsPerPage={SEARCH_HITS_PER_PAGE}
         attributesToHighlight={['title']}
         attributesToSnippet={['excerpt:20', 'bodyText:24']}
       />
