@@ -5,6 +5,7 @@ import {draftMode} from 'next/headers'
 import {VisualEditing} from 'next-sanity/visual-editing'
 import {SanityLive, sanityFetch} from '@/sanity/lib/live'
 import {DisableDraftMode} from '@/components/DisableDraftMode'
+import {VercelAnalytics} from '@/components/VercelAnalytics'
 import {urlForImage} from '@/sanity/lib/image'
 import {SITE_SETTINGS} from '@/sanity/lib/queries'
 import './globals.css'
@@ -63,6 +64,7 @@ export default async function RootLayout({children}: {children: React.ReactNode}
             <DisableDraftMode />
           </>
         ) : null}
+        <VercelAnalytics />
       </body>
     </html>
   )
