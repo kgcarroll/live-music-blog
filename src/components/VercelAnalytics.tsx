@@ -1,6 +1,7 @@
 'use client'
 
 import {Analytics, type BeforeSend, type BeforeSendEvent} from '@vercel/analytics/react'
+import {SpeedInsights} from '@vercel/speed-insights/next'
 
 const beforeSend: BeforeSend = (event: BeforeSendEvent) => {
   try {
@@ -13,5 +14,10 @@ const beforeSend: BeforeSend = (event: BeforeSendEvent) => {
 }
 
 export function VercelAnalytics() {
-  return <Analytics beforeSend={beforeSend} />
+  return (
+    <>
+      <Analytics beforeSend={beforeSend} />
+      <SpeedInsights />
+    </>
+  )
 }
