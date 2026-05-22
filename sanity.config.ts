@@ -12,7 +12,7 @@ const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
 
 export default defineConfig({
   name: 'default',
-  title: 'Live Music Blog',
+  title: 'PML Studio',
 
   projectId,
   dataset,
