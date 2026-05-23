@@ -2,8 +2,10 @@ import {PortableText, type PortableTextComponents} from '@portabletext/react'
 import type {TypedObject} from '@portabletext/types'
 import {Suspense} from 'react'
 import {SanityImage} from '@/components/SanityImage'
+import {InstagramEmbed} from '@/components/InstagramEmbed'
 import {SpotifyEmbedFromUrl} from '@/components/SpotifyEmbedFromUrl'
 import {YouTubeEmbed} from '@/components/YouTubeEmbed'
+import {getInstagramEmbedInfo} from '@/lib/instagram'
 import {createPortableTextComponents} from '@/lib/portableTextComponents'
 import {getYouTubeVideoId} from '@/lib/youtube'
 
@@ -13,6 +15,11 @@ type YouTubeEmbedValue = {
 }
 
 type SpotifyEmbedValue = {
+  url?: unknown
+  title?: unknown
+}
+
+type InstagramEmbedValue = {
   url?: unknown
   title?: unknown
 }
@@ -68,6 +75,18 @@ const articlePortableTextComponents: PortableTextComponents = {
           >
             <SpotifyEmbedFromUrl url={url} title={typeof embed.title === 'string' ? embed.title : null} />
           </Suspense>
+        </div>
+      )
+    },
+    instagramEmbed: ({value: embedValue}) => {
+      const embed = embedValue as InstagramEmbedValue
+      const url = typeof embed.url === 'string' ? embed.url.trim() : ''
+      const info = getInstagramEmbedInfo(url)
+      if (!info) return null
+
+      return (
+        <div className="my-8">
+          <InstagramEmbed embed={info} title={typeof embed.title === 'string' ? embed.title : null} />
         </div>
       )
     },

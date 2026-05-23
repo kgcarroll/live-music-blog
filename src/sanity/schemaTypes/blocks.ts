@@ -8,12 +8,23 @@ export const editorialDocumentGroups = [
   {name: 'seo', title: 'SEO'},
 ]
 
+const bodyEmbedTypeNames = ['youtubeEmbed', 'spotifyEmbed', 'instagramEmbed'] as const
+
 export const bodyField = (group = 'content') =>
   defineField({
     name: 'body',
     title: 'Body',
     type: 'array',
     group,
+    options: {
+      insertMenu: {
+        groups: [
+          {name: 'text', title: 'Text', of: ['block']},
+          {name: 'media', title: 'Media', of: ['image']},
+          {name: 'embeds', title: 'Embeds', of: [...bodyEmbedTypeNames]},
+        ],
+      },
+    },
     of: [
       {
         type: 'block',
@@ -126,6 +137,7 @@ export const bodyField = (group = 'content') =>
           },
         },
       },
+      defineArrayMember({type: 'instagramEmbed'}),
     ],
   })
 
