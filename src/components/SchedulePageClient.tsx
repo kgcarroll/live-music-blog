@@ -5,7 +5,7 @@ import {ScheduleEventsFeed} from '@/components/ScheduleEventsFeed'
 import {ScheduleViewToggle, type ScheduleViewMode} from '@/components/ScheduleViewToggle'
 import type {ScheduleEvent} from '@/lib/ticketmaster'
 
-const VIEW_STORAGE_KEY = 'schedule-view'
+const VIEW_STORAGE_KEY = 'events-view'
 
 function readStoredView(): ScheduleViewMode {
   try {
@@ -45,11 +45,11 @@ export function SchedulePageClient({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-bold text-zinc-50">Schedule</h1>
+        <h1 className="text-3xl font-bold text-zinc-50">Events</h1>
         <ScheduleViewToggle
           view={view}
           onChange={setViewAndStore}
-          ariaLabel="Schedule layout"
+          ariaLabel="Events layout"
         />
       </div>
       {children}

@@ -1,7 +1,7 @@
 'use client'
 
 import {useCallback, useState} from 'react'
-import {loadMoreScheduleEvents} from '@/app/(site)/schedule/scheduleActions'
+import {loadMoreScheduleEvents} from '@/app/(site)/events/eventsActions'
 import {ScheduleEventCard, ScheduleEventCardSkeleton} from '@/components/ScheduleEventCard'
 import {ScheduleEventListItem, ScheduleEventListSkeleton} from '@/components/ScheduleEventListItem'
 import type {ScheduleViewMode} from '@/components/ScheduleViewToggle'

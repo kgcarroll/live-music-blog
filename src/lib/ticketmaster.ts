@@ -5,6 +5,7 @@ import {
   SCHEDULE_PAGE_SIZE,
   SCHEDULE_REVALIDATE_SECONDS,
 } from '@/lib/schedule'
+import {assignUniqueEventSlugs, eventSlugFromEvent} from '@/lib/eventSlug'
 import {assignUniqueVenueSlugs} from '@/lib/venueSlug'
 import {
   isVenueWithinMapRegion,
@@ -14,6 +15,7 @@ import {
 
 export type ScheduleEvent = {
   id: string
+  slug: string
   name: string
   url: string
   imageUrl: string | null
@@ -23,9 +25,16 @@ export type ScheduleEvent = {
   localDate: string | null
   localTime: string | null
   timezone: string | null
+  venueId: string | null
   venueName: string | null
   venueCity: string | null
   venueState: string | null
+}
+
+export type EventDetail = ScheduleEvent & {
+  pleaseNote: string | null
+  info: string | null
+  priceSummary: string | null
 }
 
 export type ScheduleEventsPageResult = {
@@ -49,6 +58,9 @@ type TicketmasterEvent = {
   id?: string
   name?: string
   url?: string
+  info?: string
+  pleaseNote?: string
+  priceRanges?: {type?: string; currency?: string; min?: number; max?: number}[]
   images?: TicketmasterImage[]
   dates?: {
     start?: {
@@ -108,6 +120,7 @@ export type VenueMapPin = {
   nextShowName: string | null
   nextShowWhen: string | null
   nextShowUrl: string | null
+  nextShowSlug: string | null
 }
 
 export type VenuesMapResult = {
@@ -138,6 +151,10 @@ export type VenueEventsResult = {
   hasMore: boolean
   error?: 'not_configured' | 'api_error'
 }
+
+type TicketmasterEventResponse = TicketmasterEvent
+
+type ScheduleEventCore = Omit<ScheduleEvent, 'slug'>
 
 type TicketmasterEventsResponse = {
   _embedded?: {events?: TicketmasterEvent[]}
@@ -234,6 +251,7 @@ function venueFromEmbedded(raw: TicketmasterVenueEmbedded): VenueMapPin | null {
     nextShowName: null,
     nextShowWhen: null,
     nextShowUrl: null,
+    nextShowSlug: null,
   }
 
   if (!isVenueWithinMapRegion(pin)) return null
@@ -314,32 +332,35 @@ function eventSortKey(event: ScheduleEvent): number {
 }
 
 function considerEarlierNextShow(
-  byVenueId: Map<string, ScheduleEvent>,
+  byVenueId: Map<string, ScheduleEventCore>,
+  event: ScheduleEventCore,
   venueId: string,
-  event: ScheduleEvent,
 ) {
   const current = byVenueId.get(venueId)
-  if (!current || eventSortKey(event) < eventSortKey(current)) {
+  const a = {...event, slug: eventSlugFromEvent(event)}
+  const b = current ? {...current, slug: eventSlugFromEvent(current)} : null
+  if (!b || eventSortKey(a) < eventSortKey(b)) {
     byVenueId.set(venueId, event)
   }
 }
 
 function nextShowFieldsFromEvent(event: ScheduleEvent | undefined): Pick<
   VenueMapPin,
-  'nextShowName' | 'nextShowWhen' | 'nextShowUrl'
+  'nextShowName' | 'nextShowWhen' | 'nextShowUrl' | 'nextShowSlug'
 > {
   if (!event) {
-    return {nextShowName: null, nextShowWhen: null, nextShowUrl: null}
+    return {nextShowName: null, nextShowWhen: null, nextShowUrl: null, nextShowSlug: null}
   }
   const when = formatScheduleEventWhen(event)
   return {
     nextShowName: event.name,
     nextShowWhen: when.label,
     nextShowUrl: event.url,
+    nextShowSlug: event.slug,
   }
 }
 
-function normalizeEvent(raw: TicketmasterEvent): ScheduleEvent | null {
+function normalizeEventCore(raw: TicketmasterEvent): ScheduleEventCore | null {
   const id = raw.id?.trim()
   const name = raw.name?.trim()
   const url = raw.url?.trim()
@@ -361,9 +382,39 @@ function normalizeEvent(raw: TicketmasterEvent): ScheduleEvent | null {
     localDate: start?.localDate ?? null,
     localTime: start?.localTime ?? null,
     timezone: raw.dates?.timezone ?? null,
+    venueId: venue?.id?.trim() || null,
     venueName: venue?.name?.trim() || null,
     venueCity: venue?.city?.name?.trim() || null,
     venueState: venue?.state?.stateCode?.trim() || null,
+  }
+}
+
+function formatPriceSummary(
+  ranges: TicketmasterEvent['priceRanges'] | undefined,
+): string | null {
+  if (!ranges?.length) return null
+  const standard = ranges.find((r) => r.type === 'standard') ?? ranges[0]
+  const min = standard?.min
+  const max = standard?.max
+  const currency = standard?.currency ?? 'USD'
+  if (min == null && max == null) return null
+  const symbol = currency === 'USD' ? '$' : `${currency} `
+  if (min != null && max != null && min !== max) {
+    return `${symbol}${min}–${symbol}${max}`
+  }
+  const value = min ?? max
+  return value != null ? `${symbol}${value}` : null
+}
+
+function eventDetailFromRaw(raw: TicketmasterEvent): EventDetail | null {
+  const core = normalizeEventCore(raw)
+  if (!core) return null
+  return {
+    ...core,
+    slug: eventSlugFromEvent(core),
+    pleaseNote: raw.pleaseNote?.trim() || null,
+    info: raw.info?.trim() || null,
+    priceSummary: formatPriceSummary(raw.priceRanges),
   }
 }
 
@@ -373,13 +424,78 @@ export async function fetchScheduleEventsPage(page: number): Promise<ScheduleEve
     return {events: [], hasMore: false, error}
   }
 
-  const events = rawEvents
-    .map(normalizeEvent)
-    .filter((event): event is ScheduleEvent => event != null)
+  const events = await enrichEventsWithSlugs(
+    rawEvents
+      .map(normalizeEventCore)
+      .filter((event): event is ScheduleEventCore => event != null),
+  )
 
   const hasMore = totalPages > 0 ? page < totalPages - 1 : events.length === SCHEDULE_PAGE_SIZE
 
   return {events, hasMore}
+}
+
+type EventIndex = {
+  events: ScheduleEvent[]
+  bySlug: Map<string, ScheduleEvent>
+  byId: Map<string, ScheduleEvent>
+  error?: 'not_configured' | 'api_error'
+}
+
+async function loadAllScheduleEvents(): Promise<{events: ScheduleEvent[]; error?: 'not_configured' | 'api_error'}> {
+  const byId = new Map<string, ScheduleEventCore>()
+
+  for (let page = 0; page < VENUES_MAX_EVENT_PAGES; page++) {
+    const {events: rawEvents, totalPages, error} = await fetchMusicEventsJson(
+      page,
+      VENUES_EVENT_FETCH_SIZE,
+    )
+    if (error) {
+      return {events: [], error}
+    }
+
+    for (const raw of rawEvents) {
+      const event = normalizeEventCore(raw)
+      if (!event || byId.has(event.id)) continue
+      byId.set(event.id, event)
+    }
+
+    if (totalPages <= 0 || page >= totalPages - 1) break
+  }
+
+  const events = assignUniqueEventSlugs(
+    [...byId.values()].sort(
+      (a, b) =>
+        eventSortKey({...a, slug: eventSlugFromEvent(a)}) -
+        eventSortKey({...b, slug: eventSlugFromEvent(b)}),
+    ),
+  )
+  return {events}
+}
+
+/** Cached per request so schedule, venues, and event pages share one Ticketmaster scan. */
+export const getEventIndex = cache(async (): Promise<EventIndex> => {
+  const result = await loadAllScheduleEvents()
+  if (result.error) {
+    return {events: [], bySlug: new Map(), byId: new Map(), error: result.error}
+  }
+  return {
+    events: result.events,
+    bySlug: new Map(result.events.map((event) => [event.slug, event])),
+    byId: new Map(result.events.map((event) => [event.id, event])),
+  }
+})
+
+async function enrichEventsWithSlugs(cores: ScheduleEventCore[]): Promise<ScheduleEvent[]> {
+  if (!cores.length) return []
+  const index = await getEventIndex()
+  if (index.error) {
+    return cores.map((core) => ({...core, slug: eventSlugFromEvent(core)}))
+  }
+  return cores.map((core) => {
+    const indexed = index.byId.get(core.id)
+    return indexed ?? {...core, slug: eventSlugFromEvent(core)}
+  })
 }
 
 type VenueIndex = {
@@ -405,7 +521,7 @@ export const getVenueIndex = cache(async (): Promise<VenueIndex> => {
 /** Unique venues with lat/lng from upcoming music events in the DMA (option B). */
 async function loadVenuesFromUpcomingMusic(): Promise<VenuesMapResult> {
   const byId = new Map<string, VenueMapPin>()
-  const nextEventByVenueId = new Map<string, ScheduleEvent>()
+  const nextEventByVenueId = new Map<string, ScheduleEventCore>()
 
   for (let page = 0; page < VENUES_MAX_EVENT_PAGES; page++) {
     const {events: rawEvents, totalPages, error} = await fetchMusicEventsJson(
@@ -421,10 +537,10 @@ async function loadVenuesFromUpcomingMusic(): Promise<VenuesMapResult> {
       if (!embedded) continue
       const pin = venueFromEmbedded(embedded)
       if (!pin) continue
-      const event = normalizeEvent(raw)
+      const event = normalizeEventCore(raw)
       if (!event) continue
       const eventImage = pickEventImage(raw.images)
-      considerEarlierNextShow(nextEventByVenueId, pin.id, event)
+      considerEarlierNextShow(nextEventByVenueId, event, pin.id)
       const existing = byId.get(pin.id)
       if (existing) {
         existing.upcomingEventCount += 1
@@ -448,12 +564,18 @@ async function loadVenuesFromUpcomingMusic(): Promise<VenuesMapResult> {
     if (totalPages <= 0 || page >= totalPages - 1) break
   }
 
+  const eventIndex = await getEventIndex()
+
   const venues = assignUniqueVenueSlugs(
     [...byId.values()]
-      .map((pin) => ({
-        ...pin,
-        ...nextShowFieldsFromEvent(nextEventByVenueId.get(pin.id)),
-      }))
+      .map((pin) => {
+        const nextCore = nextEventByVenueId.get(pin.id)
+        const nextEvent = nextCore ? eventIndex.byId.get(nextCore.id) : undefined
+        return {
+          ...pin,
+          ...nextShowFieldsFromEvent(nextEvent),
+        }
+      })
       .sort((a, b) => a.name.localeCompare(b.name)),
   )
   return {venues}
@@ -557,13 +679,101 @@ export async function fetchVenueEventsPage(
     return {events: [], hasMore: false, error}
   }
 
-  const events = rawEvents
-    .map(normalizeEvent)
-    .filter((event): event is ScheduleEvent => event != null)
+  const events = await enrichEventsWithSlugs(
+    rawEvents
+      .map(normalizeEventCore)
+      .filter((event): event is ScheduleEventCore => event != null),
+  )
 
   const hasMore = totalPages > 0 ? page < totalPages - 1 : events.length === SCHEDULE_PAGE_SIZE
 
   return {events, hasMore}
+}
+
+export async function fetchEventMatchBySlug(
+  slugOrId: string,
+): Promise<
+  | {event: ScheduleEvent; matchedBy: 'slug' | 'id'}
+  | null
+  | 'not_configured'
+  | 'api_error'
+> {
+  const key = decodeURIComponent(slugOrId.trim())
+  if (!key) return null
+
+  const index = await getEventIndex()
+  if (index.error) return index.error
+
+  const bySlug = index.bySlug.get(key)
+  if (bySlug) return {event: bySlug, matchedBy: 'slug'}
+
+  const byId = index.byId.get(key)
+  if (byId) return {event: byId, matchedBy: 'id'}
+
+  return null
+}
+
+export async function fetchEventDetailById(
+  eventId: string,
+): Promise<EventDetail | null | 'not_configured' | 'api_error'> {
+  const apikey = getApiKey()
+  if (!apikey) return 'not_configured'
+
+  const id = eventId.trim()
+  if (!id) return null
+
+  let response: Response
+  try {
+    response = await fetch(
+      `https://app.ticketmaster.com/discovery/v2/events/${encodeURIComponent(id)}.json?apikey=${apikey}&locale=en-us`,
+      {next: {revalidate: SCHEDULE_REVALIDATE_SECONDS}},
+    )
+  } catch {
+    return 'api_error'
+  }
+
+  if (response.status === 404) return null
+  if (!response.ok) return 'api_error'
+
+  let json: TicketmasterEventResponse
+  try {
+    json = (await response.json()) as TicketmasterEventResponse
+  } catch {
+    return 'api_error'
+  }
+
+  const detail = eventDetailFromRaw(json)
+  if (!detail) return null
+
+  const index = await getEventIndex()
+  if (!index.error) {
+    const indexed = index.byId.get(detail.id)
+    if (indexed) {
+      return {...detail, slug: indexed.slug}
+    }
+  }
+
+  return detail
+}
+
+/** Upcoming shows related to this event (same venue first, then soonest others). */
+export async function fetchRelatedEvents(
+  event: ScheduleEvent,
+  limit = 3,
+): Promise<ScheduleEvent[]> {
+  const index = await getEventIndex()
+  if (index.error) return []
+
+  const candidates = index.events.filter((candidate) => candidate.id !== event.id)
+  const sameVenue = event.venueId
+    ? candidates.filter((candidate) => candidate.venueId === event.venueId)
+    : []
+  const otherVenue = candidates.filter(
+    (candidate) => !event.venueId || candidate.venueId !== event.venueId,
+  )
+  const byDate = (a: ScheduleEvent, b: ScheduleEvent) => eventSortKey(a) - eventSortKey(b)
+
+  return [...sameVenue.sort(byDate), ...otherVenue.sort(byDate)].slice(0, limit)
 }
 
 export function formatVenueAddress(venue: VenueDetail): string | null {

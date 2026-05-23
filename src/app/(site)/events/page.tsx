@@ -11,15 +11,15 @@ export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildHubPageMetadata({
-    title: 'Schedule',
-    path: '/schedule',
+    title: 'Events',
+    path: '/events',
     introKey: 'scheduleHubPortable',
     fallbackDescription:
       'Upcoming concerts in the greater Philadelphia area from Ticketmaster, updated regularly.',
   })
 }
 
-export default async function SchedulePage() {
+export default async function EventsPage() {
   const [{data: settings}, schedule] = await Promise.all([
     sanityFetch({query: SITE_SETTINGS}),
     fetchScheduleEventsPage(0),

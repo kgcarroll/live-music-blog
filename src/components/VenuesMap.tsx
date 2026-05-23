@@ -4,7 +4,7 @@ import mapboxgl from 'mapbox-gl'
 import {useEffect, useMemo, useRef} from 'react'
 
 import type {VenueMapPin} from '@/lib/ticketmaster'
-import {venueHref} from '@/lib/paths'
+import {eventHref, venueHref} from '@/lib/paths'
 import {
   isVenueWithinMapRegion,
   VENUES_MAP_CENTER,
@@ -33,6 +33,7 @@ function venuesToGeoJson(venues: VenueMapPin[]): GeoJSON.FeatureCollection {
         nextShowName: venue.nextShowName ?? '',
         nextShowWhen: venue.nextShowWhen ?? '',
         nextShowUrl: venue.nextShowUrl ?? '',
+        nextShowSlug: venue.nextShowSlug ?? '',
       },
     })),
   }
@@ -120,7 +121,7 @@ export function VenuesMap({venues}: {venues: VenueMapPin[]}) {
       map.on('click', 'unclustered-point', (event) => {
         const feature = event.features?.[0]
         if (!feature || feature.geometry.type !== 'Point') return
-        const {slug, name, city, state, imageUrl, nextShowName, nextShowWhen, nextShowUrl} =
+        const {slug, name, city, state, imageUrl, nextShowName, nextShowWhen, nextShowSlug} =
           feature.properties as {
             slug: string
             name: string
@@ -129,12 +130,12 @@ export function VenuesMap({venues}: {venues: VenueMapPin[]}) {
             imageUrl: string
             nextShowName: string
             nextShowWhen: string
-            nextShowUrl: string
+            nextShowSlug: string
           }
         const popup = new mapboxgl.Popup({offset: 12, closeButton: false, maxWidth: '340px'})
           .setLngLat(feature.geometry.coordinates as [number, number])
           .setHTML(
-            venuePopupHtml({slug, name, city, state, imageUrl, nextShowName, nextShowWhen, nextShowUrl}),
+            venuePopupHtml({slug, name, city, state, imageUrl, nextShowName, nextShowWhen, nextShowSlug}),
           )
           .addTo(map)
       })
@@ -216,7 +217,7 @@ function venuePopupHtml({
   imageUrl,
   nextShowName,
   nextShowWhen,
-  nextShowUrl,
+  nextShowSlug,
 }: {
   slug: string
   name: string
@@ -225,7 +226,7 @@ function venuePopupHtml({
   imageUrl: string
   nextShowName: string
   nextShowWhen: string
-  nextShowUrl: string
+  nextShowSlug: string
 }): string {
   const place = [city, state].filter(Boolean).join(', ')
   const safeName = escapeHtml(name)
@@ -233,7 +234,7 @@ function venuePopupHtml({
 
   const showName = nextShowName.trim()
   const showWhen = nextShowWhen.trim()
-  const showUrl = safeHttpUrl(nextShowUrl)
+  const showSlug = nextShowSlug.trim()
   const hasShow = Boolean(showName && showWhen)
 
   const squareImageMarkup = safeImage
@@ -243,8 +244,9 @@ function venuePopupHtml({
   let showRowMarkup = ''
   if (hasShow) {
     const safeShowName = escapeHtml(showName)
-    const titleMarkup = showUrl
-      ? `<a href="${escapeHtml(showUrl)}" target="_blank" rel="noopener noreferrer" style="display:block;font-size:14px;font-weight:600;line-height:1.35;color:#18181b;text-decoration:none">${safeShowName}</a>`
+    const showHref = showSlug ? eventHref(showSlug) : ''
+    const titleMarkup = showHref
+      ? `<a href="${escapeHtml(showHref)}" style="display:block;font-size:14px;font-weight:600;line-height:1.35;color:#18181b;text-decoration:none">${safeShowName}</a>`
       : `<span style="display:block;font-size:14px;font-weight:600;line-height:1.35;color:#18181b">${safeShowName}</span>`
     const showText = `<div style="min-width:0;flex:1"><p style="margin:0 0 6px;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#71717a">Next show</p>${titleMarkup}<p style="margin:4px 0 0;font-size:13px;line-height:1.4;color:#52525b">${escapeHtml(showWhen)}</p></div>`
     showRowMarkup = `<div style="margin-top:10px;display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:#f4f4f5">${squareImageMarkup}${showText}</div>`

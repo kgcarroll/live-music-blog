@@ -49,3 +49,7 @@ export function isArticlePath(pathname: string) {
 export function venueHref(venueSlug: string) {
   return `/venues/${encodeURIComponent(venueSlug)}`
 }
+
+export function eventHref(eventSlug: string) {
+  return `/events/${encodeURIComponent(eventSlug)}`
+}

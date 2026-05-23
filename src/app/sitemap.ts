@@ -11,7 +11,7 @@ const STATIC_PATHS = [
   '/news',
   '/photos',
   '/reviews',
-  '/schedule',
+  '/events',
   '/venues',
   '/authors',
   '/tags',
