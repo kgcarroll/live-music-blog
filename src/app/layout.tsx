@@ -52,6 +52,12 @@ export default async function RootLayout({children}: {children: React.ReactNode}
   const draft = await draftMode()
   return (
     <html lang="en" className={inter.variable}>
+      <head>
+        <meta
+          name="impact-site-verification"
+          {...({value: 'b3561db6-112d-4a2b-951c-4faa61a53f4d'} as Record<string, string>)}
+        />
+      </head>
       <body className="flex min-h-screen flex-col bg-zinc-950 font-sans">
         {/* SanityLive uses dynamic(ssr:false); Suspense avoids a misleading dev overlay. */}
         <Suspense fallback={null}>
