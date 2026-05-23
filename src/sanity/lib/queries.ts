@@ -255,6 +255,8 @@ export const POSTS_BY_TAG_ID_PAGE = defineQuery(`
 
 const settingsImageProjection = `{
   alt,
+  hotspot,
+  crop,
   asset->{
     _id,
     url,
@@ -290,6 +292,7 @@ export const SITE_SETTINGS = defineQuery(`
     siteTitle,
     logo ${settingsImageProjection},
     favicon ${settingsImageProjection},
+    homepageOgImage ${settingsImageProjection},
     venuesMapEnabled,
     homepageCarouselEventSeed,
     homepageCarouselEventSlug,

@@ -6,7 +6,11 @@ import type {EditorialCardItem} from '@/components/EditorialCard'
 import {buildWebSiteJsonLd} from '@/lib/editorialJsonLd'
 import {fetchHomeCarouselSourceData} from '@/lib/fetchHomeCarousel'
 import {HOME_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
-import {buildPageMetadata, ogImageFromSiteSettings, type SiteSettingsOgImage} from '@/lib/pageMetadata'
+import {
+  buildPageMetadata,
+  homepageOgImageFromSiteSettings,
+  type SiteSettingsOgImage,
+} from '@/lib/pageMetadata'
 import {client} from '@/sanity/lib/client'
 import {sanityFetch} from '@/sanity/lib/live'
 import {HOME_EDITORIAL_PAGE, SITE_SETTINGS} from '@/sanity/lib/queries'
@@ -26,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: siteTitle,
       description: HOME_DESCRIPTION,
       path: '/',
-      ogImage: ogImageFromSiteSettings((settings ?? null) as SiteSettingsOgImage),
+      ogImage: homepageOgImageFromSiteSettings((settings ?? null) as SiteSettingsOgImage),
     }),
     title: {absolute: siteTitle},
   }

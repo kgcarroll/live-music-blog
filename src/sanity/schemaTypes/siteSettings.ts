@@ -49,6 +49,23 @@ export const siteSettings = defineType({
       options: {hotspot: false},
     }),
     defineField({
+      name: 'homepageOgImage',
+      title: 'Homepage Social Share Image',
+      type: 'image',
+      group: 'site',
+      description:
+        'Open Graph / Twitter preview for the homepage (Facebook, iMessage, Slack, etc.). Use 1200×630 or larger with a 1.91:1 crop. Set the hotspot to frame the subject. If empty, the site logo is used.',
+      options: {hotspot: true},
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alt Text',
+          description: 'Describes the image for accessibility and social previews.',
+        }),
+      ],
+    }),
+    defineField({
       name: 'venuesMapEnabled',
       type: 'boolean',
       title: 'Venues map enabled',
