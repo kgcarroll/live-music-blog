@@ -22,10 +22,12 @@ export function VenuesPageClient({
   children,
   venues,
   emptyMessage,
+  mapEnabled = true,
 }: {
   children: ReactNode
   venues: VenueMapPin[]
   emptyMessage: string
+  mapEnabled?: boolean
 }) {
   const [view, setView] = useState<ScheduleViewMode>('grid')
 
@@ -47,13 +49,15 @@ export function VenuesPageClient({
   return (
     <div>
       <div>
-        {hasVenues ? (
+        {mapEnabled && hasVenues ? (
           <VenuesMapLazy venues={venues} />
-        ) : (
+        ) : !hasVenues ? (
           <p className="text-sm text-zinc-500">{emptyMessage}</p>
-        )}
+        ) : null}
       </div>
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+      <div
+        className={`flex flex-wrap items-center justify-between gap-3 ${mapEnabled && hasVenues ? 'mt-8' : ''}`}
+      >
         <h1 className="text-3xl font-bold text-zinc-50">Venues</h1>
         {hasVenues ? (
           <ScheduleViewToggle

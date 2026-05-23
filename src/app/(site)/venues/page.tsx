@@ -37,9 +37,10 @@ export default async function VenuesPage() {
   }
 
   const venues = venuesResult.venues
+  const mapEnabled = settings?.venuesMapEnabled !== false
 
   return (
-    <VenuesPageClient venues={venues} emptyMessage={emptyMessage}>
+    <VenuesPageClient venues={venues} emptyMessage={emptyMessage} mapEnabled={mapEnabled}>
       {intro?.length ? (
         <div className="mt-6 max-w-2xl">
           <ArticleBody value={intro} />

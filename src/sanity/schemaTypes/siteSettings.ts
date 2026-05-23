@@ -48,6 +48,15 @@ export const siteSettings = defineType({
       options: {hotspot: false},
     }),
     defineField({
+      name: 'venuesMapEnabled',
+      type: 'boolean',
+      title: 'Venues map enabled',
+      group: 'site',
+      description:
+        'When off, /venues shows the venue list only and does not load Mapbox (saves map tile loads).',
+      initialValue: true,
+    }),
+    defineField({
       name: 'instagramUrl',
       type: 'url',
       title: 'Instagram URL',
