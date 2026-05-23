@@ -10,15 +10,60 @@ import {SpotifyIcon} from '@/components/SpotifyIcon'
 import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import {createPortal} from 'react-dom'
 
-const links = [
-  {href: '/', label: 'Home'},
+const aboutLinks = [
   {href: '/about', label: 'About'},
   {href: '/contact', label: 'Contact'},
-  {href: '/interviews', label: 'Interviews'},
+] as const
+
+const aboutSubmenuLinks = [{href: '/contact', label: 'Contact'}] as const
+
+function isNavLinkActive(pathname: string, href: string) {
+  if (href === '/') return pathname === '/'
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
+
+const trailingNavLinks = [
+  {href: '/events', label: 'Events'},
+  {href: '/venues', label: 'Venues'},
+] as const
+
+const reviewsSubmenuLinks = [
   {href: '/news', label: 'News'},
+  {href: '/interviews', label: 'Interviews'},
   {href: '/photos', label: 'Photos'},
+] as const
+
+function isReviewsSectionActive(pathname: string) {
+  return (
+    isNavLinkActive(pathname, '/reviews') ||
+    reviewsSubmenuLinks.some((link) => isNavLinkActive(pathname, link.href))
+  )
+}
+
+function isAboutSectionActive(pathname: string) {
+  return pathname === '/about' || pathname === '/contact'
+}
+
+function isAboutCaretActive(pathname: string) {
+  return pathname === '/contact'
+}
+
+function isReviewsCaretActive(pathname: string) {
+  return reviewsSubmenuLinks.some((link) => isNavLinkActive(pathname, link.href))
+}
+
+/** Mobile menu keeps dropdown sections as separate top-level items. */
+const mobileLinks = [
+  {href: '/', label: 'Home'},
+  ...aboutLinks,
   {href: '/reviews', label: 'Reviews'},
-]
+  ...reviewsSubmenuLinks,
+  ...trailingNavLinks,
+] as const
+
+const navLinkClass =
+  'text-zinc-300 transition-[opacity,color] duration-200'
+const navLinkActiveClass = '!opacity-100 text-amber-200'
 
 /** Tailwind `md` breakpoint — mobile menu only mounts below this width. */
 const MOBILE_NAV_MQ = '(max-width: 767px)'
@@ -101,7 +146,7 @@ function HeaderAsideLinks({
   onNavigate?: () => void
 }) {
   return (
-    <div className={`flex shrink-0 items-center gap-2 ${className ?? ''}`}>
+    <div className={`flex shrink-0 items-center gap-2 md:gap-1 ${className ?? ''}`}>
       {instagram ? (
         <a
           href={instagram}
@@ -134,6 +179,202 @@ function HeaderAsideLinks({
         <IconSearch className={asideIconClass} />
       </Link>
     </div>
+  )
+}
+
+function IconChevronDown({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  )
+}
+
+function NavSplitDropdown({
+  pathname,
+  href,
+  label,
+  menuId,
+  menuAriaLabel,
+  submenuLinks,
+  isSectionActive,
+  isCaretActive,
+}: {
+  pathname: string
+  href: string
+  label: string
+  menuId: string
+  menuAriaLabel: string
+  submenuLinks: readonly {href: string; label: string}[]
+  isSectionActive: (pathname: string) => boolean
+  isCaretActive: (pathname: string) => boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const [menuPosition, setMenuPosition] = useState<{top: number; left: number} | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const closeTimerRef = useRef<number | null>(null)
+  const sectionActive = isSectionActive(pathname)
+  const caretActive = isCaretActive(pathname)
+
+  const clearCloseTimer = () => {
+    if (closeTimerRef.current != null) {
+      window.clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }
+
+  const updateMenuPosition = () => {
+    const root = rootRef.current
+    if (!root) return
+    const rect = root.getBoundingClientRect()
+    setMenuPosition({
+      top: rect.bottom + 8,
+      left: rect.left,
+    })
+  }
+
+  const openMenu = () => {
+    clearCloseTimer()
+    updateMenuPosition()
+    setOpen(true)
+  }
+
+  const scheduleClose = () => {
+    clearCloseTimer()
+    closeTimerRef.current = window.setTimeout(() => setOpen(false), 120)
+  }
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (!open) return
+    updateMenuPosition()
+    window.addEventListener('scroll', updateMenuPosition, true)
+    window.addEventListener('resize', updateMenuPosition)
+    return () => {
+      window.removeEventListener('scroll', updateMenuPosition, true)
+      window.removeEventListener('resize', updateMenuPosition)
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node
+      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return
+      setOpen(false)
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('pointerdown', onPointerDown)
+    window.addEventListener('keydown', onKeyDown)
+    return () => {
+      window.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  useEffect(() => {
+    return () => clearCloseTimer()
+  }, [])
+
+  const dropdownMenu =
+    mounted && open && menuPosition
+      ? createPortal(
+          <div
+            ref={menuRef}
+            id={menuId}
+            role="menu"
+            aria-label={menuAriaLabel}
+            style={{top: menuPosition.top, left: menuPosition.left}}
+            className="fixed z-50 min-w-[10rem] transition-[opacity,visibility,transform] duration-200 visible translate-y-0 opacity-100"
+            onMouseEnter={openMenu}
+            onMouseLeave={scheduleClose}
+          >
+            <ul className="overflow-hidden rounded-md border border-zinc-800 bg-zinc-950 py-1 shadow-lg shadow-black/40">
+              {submenuLinks.map((link) => {
+                const active = isNavLinkActive(pathname, link.href)
+                return (
+                  <li key={link.href} role="none">
+                    <Link
+                      href={link.href}
+                      role="menuitem"
+                      aria-current={active ? 'page' : undefined}
+                      className={`block px-4 py-2 text-left text-sm font-medium uppercase tracking-wide text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-amber-200 ${
+                        active ? 'text-amber-200' : ''
+                      }`}
+                      onClick={() => setOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>,
+          document.body,
+        )
+      : null
+
+  return (
+    <>
+      <div ref={rootRef} className="inline-flex items-center gap-0.5">
+        <Link
+          href={href}
+          aria-current={isNavLinkActive(pathname, href) ? 'page' : undefined}
+          className={`${navLinkClass} ${sectionActive ? navLinkActiveClass : ''}`}
+        >
+          {label}
+        </Link>
+        <button
+          ref={buttonRef}
+          type="button"
+          className={`inline-flex items-center justify-center rounded-sm p-0.5 ${navLinkClass} ${
+            caretActive ? navLinkActiveClass : ''
+          }`}
+          aria-expanded={open}
+          aria-haspopup="true"
+          aria-controls={menuId}
+          aria-label={`${label} menu`}
+          onMouseEnter={openMenu}
+          onMouseLeave={scheduleClose}
+          onFocus={openMenu}
+          onBlur={(event) => {
+            const next = event.relatedTarget as Node | null
+            if (menuRef.current?.contains(next) || rootRef.current?.contains(next)) return
+            setOpen(false)
+          }}
+          onClick={() => {
+            updateMenuPosition()
+            setOpen((value) => !value)
+          }}
+        >
+          <IconChevronDown className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+      {dropdownMenu}
+    </>
   )
 }
 
@@ -257,8 +498,8 @@ export function SiteHeader({
           aria-label="Mobile main"
         >
           <ul className="flex flex-col [&:has(a:hover)_a]:opacity-35 [&:has(a:hover)_a:hover]:!opacity-100 [&:has(a:hover)_a:hover]:text-amber-200">
-            {links.map((l) => {
-              const active = pathname === l.href
+            {mobileLinks.map((l) => {
+              const active = isNavLinkActive(pathname, l.href)
               return (
                 <li key={l.href} className="border-b border-zinc-800/90">
                   <Link
@@ -292,7 +533,7 @@ export function SiteHeader({
       <header className="fixed inset-x-0 top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4">
           <div
-            className={`flex flex-col overflow-hidden transition-[max-height,padding] duration-300 ease-out md:items-center md:gap-2 ${
+            className={`flex flex-col overflow-hidden transition-[max-height,padding] duration-300 ease-out md:overflow-visible md:items-center md:gap-2 ${
               showLogo ? 'max-h-24 md:max-h-36 md:pb-4 md:pt-4' : 'max-h-24 md:max-h-20 md:pb-8 md:pt-3'
             }`}
           >
@@ -336,28 +577,59 @@ export function SiteHeader({
                 </div>
               </div>
             </div>
-            <div className="hidden w-full md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(max-content,1fr)] md:items-center md:gap-x-3 md:py-1">
-              <div className="min-w-0" aria-hidden="true" />
+            <div className="relative hidden w-full md:block md:py-1">
               <nav
-                className="flex min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-2 py-1 text-sm font-medium uppercase tracking-wide lg:gap-x-8 [&:has(a:hover)_a]:opacity-35 [&:has(a:hover)_a:hover]:!opacity-100 [&:has(a:hover)_a:hover]:text-amber-200"
+                className="mx-auto flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-2 px-[6.5rem] py-1 text-sm font-medium uppercase tracking-wide lg:gap-x-5 lg:px-28 [&:has(a:hover)_a]:opacity-35 [&:has(a:hover)_a:hover]:!opacity-100 [&:has(a:hover)_a:hover]:text-amber-200 [&:has(button:hover)_button]:opacity-35 [&:has(button:hover)_button:hover]:!opacity-100 [&:has(button:hover)_button:hover]:text-amber-200"
                 aria-label="Main"
               >
-                {links.map((l) => {
-                  const active = pathname === l.href
+                <Link
+                  href="/"
+                  aria-current={isNavLinkActive(pathname, '/') ? 'page' : undefined}
+                  className={navLinkClass}
+                >
+                  Home
+                </Link>
+                <NavSplitDropdown
+                  pathname={pathname}
+                  href="/about"
+                  label="About"
+                  menuId="about-nav-menu"
+                  menuAriaLabel="About"
+                  submenuLinks={aboutSubmenuLinks}
+                  isSectionActive={isAboutSectionActive}
+                  isCaretActive={isAboutCaretActive}
+                />
+                <NavSplitDropdown
+                  pathname={pathname}
+                  href="/reviews"
+                  label="Reviews"
+                  menuId="reviews-nav-menu"
+                  menuAriaLabel="Reviews"
+                  submenuLinks={reviewsSubmenuLinks}
+                  isSectionActive={isReviewsSectionActive}
+                  isCaretActive={isReviewsCaretActive}
+                />
+                {trailingNavLinks.map((l) => {
+                  const active = isNavLinkActive(pathname, l.href)
                   return (
                     <Link
                       key={l.href}
                       href={l.href}
                       aria-current={active ? 'page' : undefined}
-                      className="text-zinc-300 transition-[opacity,color] duration-200"
+                      className={navLinkClass}
                     >
                       {l.label}
                     </Link>
                   )
                 })}
               </nav>
-              <div className="flex min-w-0 items-center justify-end">
-                <HeaderAsideLinks instagram={instagram} spotify={spotify} pathname={pathname} />
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
+                <HeaderAsideLinks
+                  instagram={instagram}
+                  spotify={spotify}
+                  pathname={pathname}
+                  className="pointer-events-auto shrink-0"
+                />
               </div>
             </div>
           </div>

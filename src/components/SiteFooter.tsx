@@ -2,14 +2,14 @@ import Link from 'next/link'
 
 const footerLinks = [
   {href: '/', label: 'Home'},
-  {href: '/interviews', label: 'Interviews'},
-  {href: '/news', label: 'News'},
-  {href: '/photos', label: 'Photos'},
-  {href: '/reviews', label: 'Reviews'},
-  {href: '/events', label: 'Events'},
-  {href: '/venues', label: 'Venues'},
   {href: '/about', label: 'About'},
   {href: '/contact', label: 'Contact'},
+  {href: '/reviews', label: 'Reviews'},
+  {href: '/news', label: 'News'},
+  {href: '/interviews', label: 'Interviews'},
+  {href: '/photos', label: 'Photos'},
+  {href: '/events', label: 'Events'},
+  {href: '/venues', label: 'Venues'},
   {href: '/search', label: 'Search'},
 ] as const
 
