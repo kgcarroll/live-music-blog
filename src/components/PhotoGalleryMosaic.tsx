@@ -252,7 +252,7 @@ export function PhotoGalleryMosaic({images}: {images: PhotoGalleryImage[]}) {
     ) : null
 
   return (
-    <div className="mx-auto mt-10 max-w-5xl px-4">
+    <div className="mx-auto mt-6 max-w-5xl px-4">
       <div className="columns-2 gap-x-3 sm:gap-x-4 md:columns-3 md:gap-x-5">
         {items.map((img, i) => {
           const dims = img.asset?.metadata?.dimensions

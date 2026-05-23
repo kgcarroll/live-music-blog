@@ -51,13 +51,16 @@ type EditorialTag = {
 
 const AUTHOR_BIO_EXCERPT_CHARS = 240
 
+/** Vertical gap between major article blocks (hero, excerpt, body, etc.). */
+const ARTICLE_BLOCK_GAP = 'mt-6'
+
 function ArticleShareLinks({title, url}: {title: string | null; url: string}) {
   const shareText = title?.trim() || 'Live Music Blog'
   const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
   const xUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`
 
   return (
-    <nav className="mt-5 flex items-center gap-3" aria-label="Share this article">
+    <nav className="flex items-center gap-3" aria-label="Share this article">
       <span className="text-xs font-medium uppercase tracking-wide text-amber-300">Share</span>
       <a
         href={facebookUrl}
@@ -149,51 +152,57 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
     <article className="pb-16">
       <JsonLd data={jsonLd} />
       <div className="bg-zinc-950/80">
-        <div className="mx-auto max-w-3xl px-4 py-10">
-          <p className="text-xs leading-snug text-zinc-400">
-            <span className="uppercase tracking-wide text-amber-300">{typeLabel}</span>
-            {metaDate ? (
-              <>
-                <span className="mx-1.5 text-zinc-600" aria-hidden="true">
-                  |
-                </span>
-                <time className="tabular-nums text-zinc-400" dateTime={doc.publishedAt ?? undefined}>
-                  {metaDate}
-                </time>
-              </>
+        <div className="mx-auto max-w-3xl px-4 pt-8">
+          <div className="flex flex-col gap-4">
+            <p className="text-xs leading-snug text-zinc-400">
+              <span className="uppercase tracking-wide text-amber-300">{typeLabel}</span>
+              {metaDate ? (
+                <>
+                  <span className="mx-1.5 text-zinc-600" aria-hidden="true">
+                    |
+                  </span>
+                  <time className="tabular-nums text-zinc-400" dateTime={doc.publishedAt ?? undefined}>
+                    {metaDate}
+                  </time>
+                </>
+              ) : null}
+              {readTimeLabel ? (
+                <>
+                  <span className="mx-1.5 text-zinc-600" aria-hidden="true">
+                    |
+                  </span>
+                  <span className="tabular-nums text-zinc-400">{readTimeLabel}</span>
+                </>
+              ) : null}
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl">
+              {doc.title}
+            </h1>
+            <p className="text-sm text-zinc-400">
+              Written by{' '}
+              {doc.author?.name?.trim() && doc.author?.slug?.trim() ? (
+                <Link
+                  href={authorHref(doc.author.slug.trim())}
+                  className="text-zinc-400 transition-colors hover:text-amber-200"
+                >
+                  {doc.author.name.trim()}
+                </Link>
+              ) : (
+                <span className="text-zinc-400">Editorial</span>
+              )}
+            </p>
+            {articleShareUrl ? <ArticleShareLinks title={doc.title} url={articleShareUrl} /> : null}
+            {doc.subhead ? <p className="text-lg text-zinc-400">{doc.subhead}</p> : null}
+            {doc.galleryNote ? <p className="text-lg text-zinc-400">{doc.galleryNote}</p> : null}
+            {doc.verdict ? (
+              <p className="text-lg font-medium text-amber-200/90">{doc.verdict}</p>
             ) : null}
-            {readTimeLabel ? (
-              <>
-                <span className="mx-1.5 text-zinc-600" aria-hidden="true">
-                  |
-                </span>
-                <span className="tabular-nums text-zinc-400">{readTimeLabel}</span>
-              </>
-            ) : null}
-          </p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl md:text-5xl">{doc.title}</h1>
-          <p className="mt-3 text-sm text-zinc-400">
-            Written by{' '}
-            {doc.author?.name?.trim() && doc.author?.slug?.trim() ? (
-              <Link
-                href={authorHref(doc.author.slug.trim())}
-                className="text-zinc-400 transition-colors hover:text-amber-200"
-              >
-                {doc.author.name.trim()}
-              </Link>
-            ) : (
-              <span className="text-zinc-400">Editorial</span>
-            )}
-          </p>
-          {articleShareUrl ? <ArticleShareLinks title={doc.title} url={articleShareUrl} /> : null}
-          {doc.subhead ? <p className="mt-4 text-lg text-zinc-400">{doc.subhead}</p> : null}
-          {doc.galleryNote ? <p className="mt-4 text-lg text-zinc-400">{doc.galleryNote}</p> : null}
-          {doc.verdict ? <p className="mt-4 text-lg font-medium text-amber-200/90">{doc.verdict}</p> : null}
+          </div>
         </div>
       </div>
 
       {heroSrc ? (
-        <div className="mx-auto mt-0 max-w-5xl px-4 pt-8">
+        <div className={`mx-auto max-w-5xl px-4 ${ARTICLE_BLOCK_GAP}`}>
           <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
             <Image
               src={heroSrc}
@@ -215,15 +224,19 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
       ) : null}
 
       {doc.excerpt ? (
-        <p className="mx-auto mt-10 max-w-3xl px-4 text-lg leading-relaxed text-zinc-300">{doc.excerpt}</p>
+        <p
+          className={`mx-auto max-w-3xl px-4 text-lg leading-relaxed text-zinc-300 ${ARTICLE_BLOCK_GAP}`}
+        >
+          {doc.excerpt}
+        </p>
       ) : null}
 
-      <div className="mx-auto mt-10 max-w-3xl px-4">
+      <div className={`mx-auto max-w-3xl px-4 ${ARTICLE_BLOCK_GAP}`}>
         <ArticleBody value={doc.body || undefined} />
       </div>
 
       {authorBio.text && authorName && authorSlug ? (
-        <aside className="mx-auto mt-8 max-w-3xl px-4" aria-label={`About ${authorName}`}>
+        <aside className={`mx-auto max-w-3xl px-4 ${ARTICLE_BLOCK_GAP}`} aria-label={`About ${authorName}`}>
           <p className="text-xs italic leading-relaxed text-zinc-500">
             <span>
               {authorBio.text}
@@ -243,7 +256,7 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
       ) : null}
 
       {tags.length ? (
-        <section className="mx-auto mt-10 max-w-3xl px-4" aria-label="Article tags">
+        <section className={`mx-auto max-w-3xl px-4 ${ARTICLE_BLOCK_GAP}`} aria-label="Article tags">
           <h2 className="text-xs font-medium uppercase tracking-wide text-zinc-500">Tags</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {tags.map((tag) => (
