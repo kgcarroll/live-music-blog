@@ -46,7 +46,14 @@ export const interview = defineType({
       group: 'content',
       to: [{type: 'author'}],
     }),
-    defineField({name: 'subhead', type: 'string', title: 'Deck / Subhead', group: 'content'}),
+    defineField({
+      name: 'verdict',
+      type: 'string',
+      title: 'One-Line Verdict',
+      group: 'content',
+      description:
+        'Short summary shown under the title on the interview page and in the homepage carousel when this interview is featured.',
+    }),
     featuredField(),
     featureImageField(),
     coverField(),

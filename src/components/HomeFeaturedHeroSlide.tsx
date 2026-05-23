@@ -27,7 +27,7 @@ export function HomeFeaturedHeroSlide({
   const lqip = heroImage?.asset?.metadata?.lqip
   const heroSrc =
     heroImage?.asset?._id ? urlForImage(heroImage as never).width(2400).fit('max').url() : null
-  const deck = item.subhead?.trim() || item.excerpt?.trim() || item.verdict?.trim() || null
+  const deck = item.verdict?.trim() || item.excerpt?.trim() || null
 
   return (
     <article

@@ -5,7 +5,6 @@ export const EDITORIAL_TYPES = ['interview', 'news', 'photoPost', 'review'] as c
 
 export type HomeFeaturedHero = EditorialCardItem & {
   excerpt?: string | null
-  subhead?: string | null
   verdict?: string | null
   featured?: boolean | null
   featureImage?: EditorialCardItem['coverImage'] | null

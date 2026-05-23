@@ -15,7 +15,6 @@ export type EditorialJsonLdDoc = {
   seoTitle?: string | null
   seoDescription?: string | null
   publishedAt?: string | null
-  subhead?: string | null
   verdict?: string | null
   showDate?: string | null
   venueName?: string | null
@@ -80,7 +79,6 @@ function articleDescription(doc: EditorialJsonLdDoc): string | undefined {
     normalizeDescription(doc.seoDescription) ||
     normalizeDescription(doc.excerpt) ||
     normalizeDescription(doc.verdict) ||
-    normalizeDescription(doc.subhead) ||
     normalizeDescription(plainTextFromPortableText(doc.body)) ||
     normalizeDescription(doc.title)
   )

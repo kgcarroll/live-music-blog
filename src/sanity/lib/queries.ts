@@ -62,7 +62,6 @@ const editorialProjection = `{
   ${authorEmbed},
   ${tagsProjection},
   featured,
-  subhead,
   galleryNote,
   verdict,
   showDate,
@@ -119,7 +118,6 @@ const editorialTypesFilter = `_type in ["interview","news","photoPost","review"]
 const homeHeroFields = `
   ${editorialCardListFields},
   excerpt,
-  subhead,
   verdict,
   featured,
   ${featureImageProjection}

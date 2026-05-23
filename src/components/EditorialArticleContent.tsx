@@ -20,7 +20,6 @@ export type EditorialDoc = {
   excerpt?: string | null
   author?: EditorialAuthor | null
   tags?: EditorialTag[] | null
-  subhead?: string | null
   galleryNote?: string | null
   gallery?: PhotoGalleryImage[] | null
   verdict?: string | null
@@ -123,7 +122,6 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
   const readMinutes = readingTimeMinutes(
     doc.body,
     doc.excerpt,
-    doc.subhead,
     doc.galleryNote,
     doc.verdict,
   )
@@ -192,7 +190,6 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
               )}
             </p>
             {articleShareUrl ? <ArticleShareLinks title={doc.title} url={articleShareUrl} /> : null}
-            {doc.subhead ? <p className="text-lg text-zinc-400">{doc.subhead}</p> : null}
             {doc.galleryNote ? <p className="text-lg text-zinc-400">{doc.galleryNote}</p> : null}
             {doc.verdict ? (
               <p className="text-lg font-medium text-amber-200/90">{doc.verdict}</p>
