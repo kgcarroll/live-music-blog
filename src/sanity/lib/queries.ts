@@ -291,6 +291,8 @@ export const SITE_SETTINGS = defineQuery(`
     logo ${settingsImageProjection},
     favicon ${settingsImageProjection},
     venuesMapEnabled,
+    homepageCarouselEventSeed,
+    homepageCarouselEventSlug,
     instagramUrl,
     spotifyUrl,
     aboutPortable,

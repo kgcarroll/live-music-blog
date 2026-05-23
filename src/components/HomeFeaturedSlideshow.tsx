@@ -2,7 +2,9 @@
 
 import {useRouter} from 'next/navigation'
 import {useCallback, useEffect, useRef, useState} from 'react'
-import type {HomeFeaturedHero} from '@/lib/homeFeatured'
+import type {HomeCarouselSlide} from '@/lib/homeFeatured'
+import {homeCarouselSlideHref, homeCarouselSlideKey} from '@/lib/homeFeatured'
+import {HomeFeaturedEventSlide} from '@/components/HomeFeaturedEventSlide'
 import {HomeFeaturedHeroSlide} from '@/components/HomeFeaturedHeroSlide'
 
 const AUTO_ADVANCE_MS = 7000
@@ -11,9 +13,9 @@ const DRAG_INTENT_PX = 10
 const WHEEL_THRESHOLD_PX = 40
 const WHEEL_COOLDOWN_MS = 450
 
-export function HomeFeaturedSlideshow({items}: {items: HomeFeaturedHero[]}) {
+export function HomeFeaturedSlideshow({items}: {items: HomeCarouselSlide[]}) {
   const router = useRouter()
-  const slides = items.filter((item) => item.slug)
+  const slides = items.filter((slide) => homeCarouselSlideHref(slide))
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -150,7 +152,7 @@ export function HomeFeaturedSlideshow({items}: {items: HomeFeaturedHero[]}) {
     <section
       className="relative mb-10"
       aria-roledescription="carousel"
-      aria-label="Featured stories"
+      aria-label="Featured stories and events"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocusCapture={() => setPaused(true)}
@@ -164,11 +166,11 @@ export function HomeFeaturedSlideshow({items}: {items: HomeFeaturedHero[]}) {
         ref={viewportRef}
         className="relative touch-pan-y select-none overflow-hidden rounded-2xl cursor-grab active:cursor-grabbing"
       >
-        {slides.map((item, slideIndex) => {
+        {slides.map((slide, slideIndex) => {
           const isActive = slideIndex === index
           return (
             <div
-              key={item._id}
+              key={homeCarouselSlideKey(slide)}
               className={`transition-opacity duration-500 ${
                 isActive
                   ? 'relative z-10 opacity-100'
@@ -176,7 +178,11 @@ export function HomeFeaturedSlideshow({items}: {items: HomeFeaturedHero[]}) {
               }`}
               aria-hidden={!isActive}
             >
-              <HomeFeaturedHeroSlide item={item} priority={slideIndex === 0} />
+              {slide.kind === 'editorial' ? (
+                <HomeFeaturedHeroSlide item={slide.item} priority={slideIndex === 0} />
+              ) : (
+                <HomeFeaturedEventSlide event={slide.item} priority={slideIndex === 0} />
+              )}
             </div>
           )
         })}
@@ -204,9 +210,9 @@ export function HomeFeaturedSlideshow({items}: {items: HomeFeaturedHero[]}) {
 
         {count > 1 ? (
           <div className="pointer-events-none absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-2">
-            {slides.map((item, dotIndex) => (
+            {slides.map((slide, dotIndex) => (
               <button
-                key={item._id}
+                key={homeCarouselSlideKey(slide)}
                 type="button"
                 className={`pointer-events-auto h-2 w-2 rounded-full transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 ${
                   dotIndex === index ? 'bg-amber-300' : 'bg-zinc-500/80 hover:bg-zinc-300'

@@ -1,5 +1,6 @@
 import {CogIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
+import {PinnedCarouselEventInput} from '@/sanity/components/PinnedCarouselEventInput'
 import {pageIntroField} from './blocks'
 
 export const siteSettings = defineType({
@@ -55,6 +56,27 @@ export const siteSettings = defineType({
       description:
         'When off, /venues shows the venue list only and does not load Mapbox (saves map tile loads).',
       initialValue: true,
+    }),
+    defineField({
+      name: 'homepageCarouselEventSeed',
+      type: 'number',
+      title: 'Reshuffle Homepage Concert Slide',
+      group: 'site',
+      initialValue: 0,
+      validation: (Rule) => Rule.integer().min(0),
+      description:
+        'Used only when no concert slug is pinned below. The homepage includes one random upcoming concert (with image) per day. To pick a different show, change this number (for example add 1) and publish Site Settings.',
+    }),
+    defineField({
+      name: 'homepageCarouselEventSlug',
+      type: 'string',
+      title: 'Pinned Homepage Concert Slide',
+      group: 'site',
+      components: {
+        input: PinnedCarouselEventInput,
+      },
+      description:
+        'Choose an upcoming concert with a Ticketmaster image, or leave unset for a random show. Publish Site Settings to apply. Takes precedence over reshuffle.',
     }),
     defineField({
       name: 'instagramUrl',

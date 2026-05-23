@@ -1,7 +1,7 @@
 import type {SanityClient} from '@sanity/client'
 
-import type {HomeFeaturedHero} from '@/lib/homeFeatured'
-import {buildHomeCarouselSlides} from '@/lib/homeCarousel'
+import {buildHomeCarouselSlidesWithEvent} from '@/lib/homeCarouselEvent'
+import type {HomeCarouselSlide, HomeFeaturedHero} from '@/lib/homeFeatured'
 import {HOME_CAROUSEL_BACKFILL, HOME_FEATURED_SLIDES} from '@/sanity/lib/queries'
 
 type CarouselFetchPerspective = 'published' | 'drafts' | 'raw'
@@ -9,7 +9,11 @@ type CarouselFetchPerspective = 'published' | 'drafts' | 'raw'
 export type HomeCarouselSourceData = {
   featured: HomeFeaturedHero[]
   recent: HomeFeaturedHero[]
-  slides: HomeFeaturedHero[]
+  /** Editorial-only slides (featured + backfill), for Studio carousel list. */
+  editorialSlides: HomeFeaturedHero[]
+  slides: HomeCarouselSlide[]
+  eventIncluded: boolean
+  eventPinned: boolean
 }
 
 export async function fetchHomeCarouselSourceData(
@@ -18,12 +22,18 @@ export async function fetchHomeCarouselSourceData(
     featuredPerspective?: CarouselFetchPerspective
     recentPerspective?: CarouselFetchPerspective
     useCdn?: boolean
+    /** From Site Settings — increment to reshuffle the homepage concert slide. */
+    carouselEventSeed?: number | null
+    /** From Site Settings — when set, pin this event slug (must have image). */
+    pinnedEventSlug?: string | null
   } = {},
 ): Promise<HomeCarouselSourceData> {
   const {
     featuredPerspective = 'published',
     recentPerspective = 'published',
     useCdn = false,
+    carouselEventSeed,
+    pinnedEventSlug,
   } = options
 
   const fetchClient = useCdn ? client : client.withConfig({useCdn: false})
@@ -35,7 +45,18 @@ export async function fetchHomeCarouselSourceData(
 
   const featuredRows = featured ?? []
   const recentRows = recent ?? []
-  const slides = buildHomeCarouselSlides(featuredRows, recentRows)
+  const {editorialSlides, slides, eventIncluded, eventPinned} =
+    await buildHomeCarouselSlidesWithEvent(featuredRows, recentRows, {
+      carouselEventSeed,
+      pinnedEventSlug,
+    })
 
-  return {featured: featuredRows, recent: recentRows, slides}
+  return {
+    featured: featuredRows,
+    recent: recentRows,
+    editorialSlides,
+    slides,
+    eventIncluded,
+    eventPinned,
+  }
 }

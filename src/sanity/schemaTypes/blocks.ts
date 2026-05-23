@@ -148,7 +148,7 @@ export const featuredField = (group = 'content') =>
     group,
     initialValue: false,
     description:
-      'Include in the homepage carousel (see Homepage Carousel in the desk). Featured posts take precedence. With one or two featured, the carousel fills out to three slides with the newest posts. With three or more featured, every featured post appears (publish for it to show on the live site).',
+      'Include in the homepage carousel (see Homepage Carousel in the desk). Featured posts take precedence. With one or two featured, the carousel fills out to three editorial slides with the newest posts; a fourth slide is a daily Ticketmaster concert pick (when configured). With three or more featured, every featured post appears, plus the concert slide (publish for posts to show on the live site).',
   })
 
 export const featureImageField = (group = 'content') =>

@@ -27,7 +27,7 @@ export const structure: StructureResolver = (S, context) =>
         .title('Homepage Carousel')
         .id('homepage-carousel')
         .icon(StarIcon)
-        .child(() => homepageCarouselList(S, context)),
+        .child(() => homepageCarouselList(S)),
       S.divider(),
       ...S.documentTypeListItems().filter((item) => !hiddenStructureTypes.has(item.getId() ?? '')),
     ])

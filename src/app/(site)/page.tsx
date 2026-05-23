@@ -33,18 +33,29 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [{slides}, {data: settings}] = await Promise.all([
-    fetchHomeCarouselSourceData(client, {
-      featuredPerspective: 'published',
-      recentPerspective: 'published',
-      useCdn: false,
-    }),
-    sanityFetch({query: SITE_SETTINGS, stega: false}),
-  ])
+  const {data: settings} = await sanityFetch({query: SITE_SETTINGS, stega: false})
+  const carouselEventSeed =
+    typeof settings?.homepageCarouselEventSeed === 'number'
+      ? settings.homepageCarouselEventSeed
+      : 0
+  const pinnedEventSlug =
+    typeof settings?.homepageCarouselEventSlug === 'string'
+      ? settings.homepageCarouselEventSlug
+      : null
+
+  const {slides} = await fetchHomeCarouselSourceData(client, {
+    featuredPerspective: 'published',
+    recentPerspective: 'published',
+    useCdn: false,
+    carouselEventSeed,
+    pinnedEventSlug,
+  })
 
   const siteTitle = settings?.siteTitle?.trim() || 'Live Music Blog'
   const webSiteJsonLd = buildWebSiteJsonLd({siteTitle, description: HOME_DESCRIPTION})
-  const excludeCarouselIds = slides.map((item) => item._id)
+  const excludeCarouselIds = slides
+    .filter((slide) => slide.kind === 'editorial')
+    .map((slide) => slide.item._id)
 
   const {data: grid} = await sanityFetch({
     query: HOME_EDITORIAL_PAGE,
