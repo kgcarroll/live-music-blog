@@ -7,22 +7,11 @@ import type {DocumentActionComponent} from 'sanity'
 
 import {studioApiOrigin} from '@/lib/studioHomeCarousel'
 
-function getSendSecret(): string | undefined {
-  return process.env.NEXT_PUBLIC_NEWSLETTER_SEND_SECRET?.trim()
-}
-
 async function postNewsletterSend(documentId: string, test: boolean) {
-  const secret = getSendSecret()
-  if (!secret) {
-    throw new Error('NEXT_PUBLIC_NEWSLETTER_SEND_SECRET is not set (must match NEWSLETTER_SEND_SECRET).')
-  }
-
-  const response = await fetch(`${studioApiOrigin()}/api/newsletter/send`, {
+  const response = await fetch(`${studioApiOrigin()}/api/studio/newsletter-send`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${secret}`,
-    },
+    headers: {'Content-Type': 'application/json'},
+    credentials: 'same-origin',
     body: JSON.stringify({documentId, test}),
   })
 
