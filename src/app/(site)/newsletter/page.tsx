@@ -52,10 +52,8 @@ export default async function NewsletterIndexPage() {
                     className="group flex gap-4 rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 transition hover:border-amber-500/40"
                   >
                     {issue.coverImage ? (
-                      <div className="h-20 w-28 shrink-0 overflow-hidden rounded-lg">
-                        <div className="h-full w-full [&_img]:h-full [&_img]:w-full [&_img]:object-cover [&_img]:transition [&_img]:duration-300 group-hover:[&_img]:scale-[1.02]">
-                          <SanityImage value={issue.coverImage} sizes="112px" />
-                        </div>
+                      <div className="size-20 shrink-0 overflow-hidden rounded-lg border border-zinc-800">
+                        <SanityImage value={issue.coverImage} sizes="80px" variant="cover" />
                       </div>
                     ) : null}
                     <div className="min-w-0">
