@@ -297,6 +297,7 @@ export const SITE_SETTINGS = defineQuery(`
     homepageCarouselEventSeed,
     homepageCarouselEventSlug,
     instagramUrl,
+    facebookUrl,
     spotifyUrl,
     aboutPortable,
     contactPortable,

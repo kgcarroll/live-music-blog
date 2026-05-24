@@ -103,6 +103,13 @@ export const siteSettings = defineType({
       description: 'Profile link, e.g. https://www.instagram.com/yourhandle/',
     }),
     defineField({
+      name: 'facebookUrl',
+      type: 'url',
+      title: 'Facebook URL',
+      group: 'social',
+      description: 'Page or profile link, e.g. https://www.facebook.com/yourpage/',
+    }),
+    defineField({
       name: 'spotifyUrl',
       type: 'url',
       title: 'Spotify URL',

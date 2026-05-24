@@ -6,6 +6,7 @@ import {usePathname} from 'next/navigation'
 import type {HeaderLogo} from '@/lib/resolveHeaderLogo'
 import {ReadProgressBar} from '@/components/ReadProgressBar'
 import {SiteLogoMark} from '@/components/SiteLogoMark'
+import {FacebookIcon} from '@/components/FacebookIcon'
 import {SpotifyIcon} from '@/components/SpotifyIcon'
 import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import {createPortal} from 'react-dom'
@@ -134,12 +135,14 @@ const asideIconClass =
 /** Social links and search icon (search is always shown). */
 function HeaderAsideLinks({
   instagram,
+  facebook,
   spotify,
   pathname,
   className,
   onNavigate,
 }: {
   instagram: string | null
+  facebook: string | null
   spotify: string | null
   pathname: string
   className?: string
@@ -156,6 +159,17 @@ function HeaderAsideLinks({
           aria-label="Instagram (opens in a new tab)"
         >
           <IconInstagram className={asideIconClass} />
+        </a>
+      ) : null}
+      {facebook ? (
+        <a
+          href={facebook}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={asideIconLinkClass}
+          aria-label="Facebook (opens in a new tab)"
+        >
+          <FacebookIcon className={`${asideIconClass} size-5`} />
         </a>
       ) : null}
       {spotify ? (
@@ -383,11 +397,11 @@ export function SiteHeader({
   logo,
   siteTitle,
 }: {
-  social: {instagram: string | null; spotify: string | null}
+  social: {instagram: string | null; facebook: string | null; spotify: string | null}
   logo: HeaderLogo | null
   siteTitle: string
 }) {
-  const {instagram, spotify} = social
+  const {instagram, facebook, spotify} = social
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [showLogo, setShowLogo] = useState(true)
@@ -519,6 +533,7 @@ export function SiteHeader({
           <div className="flex w-full max-w-6xl justify-end">
             <HeaderAsideLinks
               instagram={instagram}
+              facebook={facebook}
               spotify={spotify}
               pathname={pathname}
               onNavigate={() => setOpen(false)}
@@ -556,7 +571,12 @@ export function SiteHeader({
                   <SiteLogoMark logo={logo} siteTitle={siteTitle} />
                 </Link>
                 <div className="flex shrink-0 items-center gap-2 md:hidden">
-                  <HeaderAsideLinks instagram={instagram} spotify={spotify} pathname={pathname} />
+                  <HeaderAsideLinks
+                    instagram={instagram}
+                    facebook={facebook}
+                    spotify={spotify}
+                    pathname={pathname}
+                  />
                   <button
                     type="button"
                     className="inline-flex items-center justify-center rounded-md border border-zinc-700 p-2 text-zinc-100"
@@ -626,6 +646,7 @@ export function SiteHeader({
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center">
                 <HeaderAsideLinks
                   instagram={instagram}
+                  facebook={facebook}
                   spotify={spotify}
                   pathname={pathname}
                   className="pointer-events-auto shrink-0"
