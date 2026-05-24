@@ -1,4 +1,5 @@
 import type {HomeCarouselSlide, HomeFeaturedHero} from '@/lib/homeFeatured'
+import {HOME_CAROUSEL_EVENT_SLOT_KEY} from '@/lib/homeFeatured'
 import {formatScheduleEventWhen, formatScheduleVenue} from '@/lib/ticketmaster'
 
 export type StudioHomeCarouselEventItem = {
@@ -19,8 +20,39 @@ export type StudioHomeCarouselResponse = {
   editorialSlides: HomeFeaturedHero[]
   eventIncluded: boolean
   eventPinned: boolean
-  carouselEventSeed: number
   pinnedEventSlug: string | null
+  slideOrder: string[]
+  hasDraftSlideOrder: boolean
+}
+
+export function studioHomeCarouselSlideOrderKey(slide: StudioHomeCarouselSlide): string {
+  if (slide.kind === 'editorial') return slide.item._id
+  return HOME_CAROUSEL_EVENT_SLOT_KEY
+}
+
+export function reorderStudioHomeCarouselSlides(
+  slides: StudioHomeCarouselSlide[],
+  fromIndex: number,
+  toIndex: number,
+): StudioHomeCarouselSlide[] {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= slides.length ||
+    toIndex >= slides.length
+  ) {
+    return slides
+  }
+
+  const next = [...slides]
+  const [moved] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, moved)
+  return next
+}
+
+export function studioHomeCarouselOrderKeys(slides: StudioHomeCarouselSlide[]): string[] {
+  return slides.map(studioHomeCarouselSlideOrderKey)
 }
 
 export function serializeStudioHomeCarouselSlides(

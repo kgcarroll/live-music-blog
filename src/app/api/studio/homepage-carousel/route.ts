@@ -1,6 +1,7 @@
 import {NextResponse} from 'next/server'
 
 import {fetchHomeCarouselSourceData} from '@/lib/fetchHomeCarousel'
+import {normalizeHomeCarouselSlideOrder} from '@/lib/homeFeatured'
 import {
   serializeStudioHomeCarouselSlides,
   type StudioHomeCarouselResponse,
@@ -11,8 +12,12 @@ import {SITE_SETTINGS} from '@/sanity/lib/queries'
 export const dynamic = 'force-dynamic'
 
 type SiteSettingsCarousel = {
-  homepageCarouselEventSeed?: number | null
   homepageCarouselEventSlug?: string | null
+  homepageCarouselSlideOrder?: string[] | null
+}
+
+function normalizeSlideOrder(value: unknown): string[] {
+  return normalizeHomeCarouselSlideOrder(value) ?? []
 }
 
 export async function GET() {
@@ -23,21 +28,26 @@ export async function GET() {
       {perspective: 'published', useCdn: false},
     )
 
-    const carouselEventSeed =
-      typeof settings?.homepageCarouselEventSeed === 'number'
-        ? settings.homepageCarouselEventSeed
-        : 0
     const pinnedEventSlug =
       typeof settings?.homepageCarouselEventSlug === 'string'
         ? settings.homepageCarouselEventSlug
         : null
+    const publishedSlideOrder = normalizeSlideOrder(settings?.homepageCarouselSlideOrder)
+
+    const draftSettings = await client.fetch<SiteSettingsCarousel>(
+      SITE_SETTINGS,
+      {},
+      {perspective: 'drafts', useCdn: false},
+    )
+    const draftSlideOrder = normalizeSlideOrder(draftSettings?.homepageCarouselSlideOrder)
+    const displaySlideOrder = draftSlideOrder.length ? draftSlideOrder : publishedSlideOrder
 
     const published = await fetchHomeCarouselSourceData(client, {
       featuredPerspective: 'published',
       recentPerspective: 'published',
       useCdn: false,
-      carouselEventSeed,
       pinnedEventSlug,
+      slideOrder: displaySlideOrder.length ? displaySlideOrder : null,
     })
 
     const body: StudioHomeCarouselResponse = {
@@ -45,8 +55,11 @@ export async function GET() {
       editorialSlides: published.editorialSlides,
       eventIncluded: published.eventIncluded,
       eventPinned: published.eventPinned,
-      carouselEventSeed,
       pinnedEventSlug,
+      slideOrder: displaySlideOrder,
+      hasDraftSlideOrder:
+        draftSlideOrder.length > 0 &&
+        JSON.stringify(draftSlideOrder) !== JSON.stringify(publishedSlideOrder),
     }
 
     return NextResponse.json(body)

@@ -1,6 +1,6 @@
 import type {HomeCarouselSlide} from '@/lib/homeFeatured'
+import {applyHomeCarouselSlideOrder, type HomeFeaturedHero} from '@/lib/homeFeatured'
 import {buildHomeCarouselSlides} from '@/lib/homeCarousel'
-import type {HomeFeaturedHero} from '@/lib/homeFeatured'
 import {getEventIndex, type ScheduleEvent} from '@/lib/ticketmaster'
 
 /** UTC calendar day seed so the same event and slot persist for ~24h (works with ISR). */
@@ -9,18 +9,6 @@ export function homeCarouselDailySeed(date = new Date()): number {
   const m = date.getUTCMonth() + 1
   const d = date.getUTCDate()
   return y * 10_000 + m * 100 + d
-}
-
-/** Combines the daily seed with Site Settings reshuffle counter. */
-export function homeCarouselSelectionSeed(
-  dailySeed: number,
-  rotationSeed: number | null | undefined,
-): number {
-  const rotation =
-    typeof rotationSeed === 'number' && Number.isFinite(rotationSeed)
-      ? Math.max(0, Math.floor(rotationSeed))
-      : 0
-  return dailySeed + rotation * 1_000_003
 }
 
 function mulberry32(seed: number) {
@@ -90,8 +78,8 @@ export async function buildHomeCarouselSlidesWithEvent(
   featured: HomeFeaturedHero[],
   recent: HomeFeaturedHero[],
   options?: {
-    carouselEventSeed?: number | null
     pinnedEventSlug?: string | null
+    slideOrder?: string[] | null
   },
 ): Promise<{
   editorialSlides: HomeFeaturedHero[]
@@ -105,15 +93,13 @@ export async function buildHomeCarouselSlidesWithEvent(
     item,
   }))
 
-  const seed = homeCarouselSelectionSeed(
-    homeCarouselDailySeed(),
-    options?.carouselEventSeed,
-  )
+  const seed = homeCarouselDailySeed()
+  const slideOrder = options?.slideOrder?.filter(Boolean)
   const index = await getEventIndex()
   if (index.error) {
     return {
       editorialSlides: editorialRows,
-      slides: editorialSlides,
+      slides: applyHomeCarouselSlideOrder(editorialSlides, slideOrder),
       eventIncluded: false,
       eventPinned: false,
     }
@@ -124,13 +110,16 @@ export async function buildHomeCarouselSlidesWithEvent(
   if (!event) {
     return {
       editorialSlides: editorialRows,
-      slides: editorialSlides,
+      slides: applyHomeCarouselSlideOrder(editorialSlides, slideOrder),
       eventIncluded: false,
       eventPinned: false,
     }
   }
 
-  const slides = insertEventSlideAtDailyPosition(editorialSlides, event, seed)
+  const eventSlide: HomeCarouselSlide = {kind: 'event', item: event}
+  const slides = slideOrder?.length
+    ? applyHomeCarouselSlideOrder([...editorialSlides, eventSlide], slideOrder)
+    : insertEventSlideAtDailyPosition(editorialSlides, event, seed)
   return {
     editorialSlides: editorialRows,
     slides,

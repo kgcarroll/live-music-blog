@@ -40,7 +40,7 @@ export function HomepageCarouselEventPanel({options}: Props) {
         </Text>
         <Text size={1} muted>
           This show comes from Ticketmaster, not a Sanity post. It appears in the homepage carousel
-          mix on the live site. {pinned ? 'Change or clear the pin in Site Settings.' : 'Pin a specific show in Site Settings, or use reshuffle to change the random pick.'}
+          mix on the live site. {pinned ? 'Change or clear the pin in Site Settings.' : 'Pin a specific show in Site Settings, or leave unset for a random pick each day.'}
         </Text>
 
         <Card padding={3} radius={2} border>

@@ -75,14 +75,13 @@ export const siteSettings = defineType({
       initialValue: true,
     }),
     defineField({
-      name: 'homepageCarouselEventSeed',
-      type: 'number',
-      title: 'Reshuffle Homepage Concert Slide',
+      name: 'homepageCarouselSlideOrder',
+      type: 'array',
+      title: 'Homepage Carousel Slide Order',
       group: 'site',
-      initialValue: 0,
-      validation: (Rule) => Rule.integer().min(0),
-      description:
-        'Used only when no concert slug is pinned below. The homepage includes one random upcoming concert (with image) per day. To pick a different show, change this number (for example add 1) and publish Site Settings.',
+      hidden: true,
+      of: [{type: 'string'}],
+      description: 'Managed from the Homepage Carousel desk. Publish Site Settings to apply.',
     }),
     defineField({
       name: 'homepageCarouselEventSlug',
@@ -93,7 +92,7 @@ export const siteSettings = defineType({
         input: PinnedCarouselEventInput,
       },
       description:
-        'Choose an upcoming concert with a Ticketmaster image, or leave unset for a random show. Publish Site Settings to apply. Takes precedence over reshuffle.',
+        'Choose an upcoming concert with a Ticketmaster image, or leave unset for a random show each day. Publish Site Settings to apply.',
     }),
     defineField({
       name: 'instagramUrl',

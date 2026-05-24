@@ -131,7 +131,7 @@ export function PinnedCarouselEventInput(props: StringInputProps) {
             </Card>
           ) : (
             <Text size={1} muted>
-              No concert pinned — the homepage uses a random show (see reshuffle below).
+              No concert pinned — the homepage uses a random upcoming show each day.
             </Text>
           )}
 

@@ -2,7 +2,7 @@ import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {presentationTool} from 'sanity/presentation'
 import {visionTool} from '@sanity/vision'
-import {media} from 'sanity-plugin-media'
+import {media, mediaAssetSource} from 'sanity-plugin-media'
 import {schemaTypes} from './src/sanity/schemaTypes'
 import {resolve} from './src/sanity/presentation/resolve'
 import {structure} from './src/sanity/structure'
@@ -18,6 +18,12 @@ export default defineConfig({
   dataset,
 
   basePath: '/studio',
+
+  form: {
+    image: {
+      assetSources: () => [mediaAssetSource],
+    },
+  },
 
   plugins: [
     structureTool({structure}),

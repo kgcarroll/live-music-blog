@@ -137,10 +137,11 @@ export const HOME_CAROUSEL_BACKFILL = defineQuery(`
   }
 `)
 
-/** Home grid: excludes the active carousel slides. */
+/** Home grid: excludes carousel slides and all featured posts (hero-only). */
 export const HOME_EDITORIAL_PAGE = defineQuery(`
   *[
     ${editorialTypesFilter} &&
+    (featured != true) &&
     !(_id in $excludeIds)
   ] | order(publishedAt desc)[$start...$end] {
     ${editorialCardListFields}
@@ -294,8 +295,8 @@ export const SITE_SETTINGS = defineQuery(`
     favicon ${settingsImageProjection},
     homepageOgImage ${settingsImageProjection},
     venuesMapEnabled,
-    homepageCarouselEventSeed,
     homepageCarouselEventSlug,
+    homepageCarouselSlideOrder,
     instagramUrl,
     facebookUrl,
     spotifyUrl,

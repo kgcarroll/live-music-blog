@@ -22,18 +22,18 @@ export async function fetchHomeCarouselSourceData(
     featuredPerspective?: CarouselFetchPerspective
     recentPerspective?: CarouselFetchPerspective
     useCdn?: boolean
-    /** From Site Settings — increment to reshuffle the homepage concert slide. */
-    carouselEventSeed?: number | null
     /** From Site Settings — when set, pin this event slug (must have image). */
     pinnedEventSlug?: string | null
+    /** From Site Settings — custom slide order keys. */
+    slideOrder?: string[] | null
   } = {},
 ): Promise<HomeCarouselSourceData> {
   const {
     featuredPerspective = 'published',
     recentPerspective = 'published',
     useCdn = false,
-    carouselEventSeed,
     pinnedEventSlug,
+    slideOrder,
   } = options
 
   const fetchClient = useCdn ? client : client.withConfig({useCdn: false})
@@ -47,8 +47,8 @@ export async function fetchHomeCarouselSourceData(
   const recentRows = recent ?? []
   const {editorialSlides, slides, eventIncluded, eventPinned} =
     await buildHomeCarouselSlidesWithEvent(featuredRows, recentRows, {
-      carouselEventSeed,
       pinnedEventSlug,
+      slideOrder,
     })
 
   return {

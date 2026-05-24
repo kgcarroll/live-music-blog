@@ -5,6 +5,7 @@ import {JsonLd} from '@/components/JsonLd'
 import type {EditorialCardItem} from '@/components/EditorialCard'
 import {buildWebSiteJsonLd} from '@/lib/editorialJsonLd'
 import {fetchHomeCarouselSourceData} from '@/lib/fetchHomeCarousel'
+import {normalizeHomeCarouselSlideOrder} from '@/lib/homeFeatured'
 import {HOME_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
 import {
   buildPageMetadata,
@@ -38,21 +39,18 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const {data: settings} = await sanityFetch({query: SITE_SETTINGS, stega: false})
-  const carouselEventSeed =
-    typeof settings?.homepageCarouselEventSeed === 'number'
-      ? settings.homepageCarouselEventSeed
-      : 0
   const pinnedEventSlug =
     typeof settings?.homepageCarouselEventSlug === 'string'
       ? settings.homepageCarouselEventSlug
       : null
+  const slideOrder = normalizeHomeCarouselSlideOrder(settings?.homepageCarouselSlideOrder)
 
   const {slides} = await fetchHomeCarouselSourceData(client, {
     featuredPerspective: 'published',
     recentPerspective: 'published',
     useCdn: false,
-    carouselEventSeed,
     pinnedEventSlug,
+    slideOrder,
   })
 
   const siteTitle = settings?.siteTitle?.trim() || 'Live Music Blog'
