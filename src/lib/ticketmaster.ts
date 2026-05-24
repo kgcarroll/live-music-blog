@@ -1,4 +1,3 @@
-import {createHash} from 'node:crypto'
 import {unstable_cache} from 'next/cache'
 import {cache} from 'react'
 import {
@@ -172,7 +171,11 @@ function getApiKey(): string | null {
 function getTicketmasterApiKeyFingerprint(): string {
   const key = getApiKey()
   if (!key) return 'none'
-  return createHash('sha256').update(key).digest('hex').slice(0, 12)
+  let hash = 0
+  for (let i = 0; i < key.length; i++) {
+    hash = (hash * 31 + key.charCodeAt(i)) | 0
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0')
 }
 
 /** Feed is cached at a higher level; avoid caching 429/error responses per URL. */
