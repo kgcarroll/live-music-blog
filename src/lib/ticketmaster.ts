@@ -7,6 +7,7 @@ import {
   SCHEDULE_REVALIDATE_SECONDS,
 } from '@/lib/schedule'
 import {assignUniqueEventSlugs, eventSlugFromEvent} from '@/lib/eventSlug'
+import {persistTicketmasterFeedStatus} from '@/lib/ticketmasterFeedStatus'
 import {assignUniqueVenueSlugs} from '@/lib/venueSlug'
 import {
   isVenueWithinMapRegion,
@@ -299,7 +300,12 @@ async function fetchMusicEventsJson(
   page: number,
   size: number,
   venueId?: string,
-): Promise<{events: TicketmasterEvent[]; totalPages: number; error?: 'not_configured' | 'api_error'}> {
+): Promise<{
+  events: TicketmasterEvent[]
+  totalPages: number
+  error?: 'not_configured' | 'api_error' | 'rate_limit'
+  httpStatus?: number
+}> {
   const apikey = getApiKey()
   if (!apikey) {
     return {events: [], totalPages: 0, error: 'not_configured'}
@@ -318,19 +324,22 @@ async function fetchMusicEventsJson(
   }
 
   if (!response.ok) {
-    return {events: [], totalPages: 0, error: 'api_error'}
+    const httpStatus = response.status
+    const error = httpStatus === 429 ? 'rate_limit' : 'api_error'
+    return {events: [], totalPages: 0, error, httpStatus}
   }
 
   let json: TicketmasterEventsResponse
   try {
     json = (await response.json()) as TicketmasterEventsResponse
   } catch {
-    return {events: [], totalPages: 0, error: 'api_error'}
+    return {events: [], totalPages: 0, error: 'api_error', httpStatus: response.status}
   }
 
   return {
     events: json._embedded?.events ?? [],
     totalPages: json.page?.totalPages ?? 0,
+    httpStatus: response.status,
   }
 }
 
@@ -509,16 +518,39 @@ function buildVenuesFromRawEvents(
 
 /** One paginated Discovery scan; builds both event and venue indexes. */
 async function loadTicketmasterFeedFromApi(): Promise<TicketmasterFeed> {
+  const attemptAt = new Date().toISOString()
+  const fingerprint = getTicketmasterApiKeyFingerprint()
+  const dmaId = getDmaId()
+
   if (!getApiKey()) {
+    await persistTicketmasterFeedStatus({
+      lastAttemptAt: attemptAt,
+      lastError: 'not_configured',
+      apiKeyFingerprint: fingerprint,
+      dmaId,
+    })
     return {events: [], venues: [], error: 'not_configured'}
   }
 
   const rawEvents: TicketmasterEvent[] = []
+  let pagesFetched = 0
+  let lastHttpStatus: number | undefined
 
   for (let page = 0; page < VENUES_MAX_EVENT_PAGES; page++) {
-    const {events, totalPages, error} = await fetchMusicEventsJson(page, VENUES_EVENT_FETCH_SIZE)
+    const {events, totalPages, error, httpStatus} = await fetchMusicEventsJson(page, VENUES_EVENT_FETCH_SIZE)
+    pagesFetched += 1
+    if (httpStatus != null) lastHttpStatus = httpStatus
+
     if (error) {
-      return {events: [], venues: [], error}
+      await persistTicketmasterFeedStatus({
+        lastAttemptAt: attemptAt,
+        lastError: error,
+        lastHttpStatus: httpStatus ?? null,
+        pagesFetched,
+        apiKeyFingerprint: fingerprint,
+        dmaId,
+      })
+      return {events: [], venues: [], error: error === 'rate_limit' ? 'api_error' : error}
     }
 
     rawEvents.push(...events)
@@ -529,6 +561,18 @@ async function loadTicketmasterFeedFromApi(): Promise<TicketmasterFeed> {
   const events = buildScheduleEventsFromRaw(rawEvents)
   const eventsById = new Map(events.map((event) => [event.id, event]))
   const venues = buildVenuesFromRawEvents(rawEvents, eventsById)
+
+  await persistTicketmasterFeedStatus({
+    lastAttemptAt: attemptAt,
+    lastSuccessAt: attemptAt,
+    lastError: null,
+    lastHttpStatus: lastHttpStatus ?? 200,
+    eventCount: events.length,
+    venueCount: venues.length,
+    pagesFetched,
+    apiKeyFingerprint: fingerprint,
+    dmaId,
+  })
 
   return {events, venues}
 }

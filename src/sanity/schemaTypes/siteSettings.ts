@@ -3,6 +3,70 @@ import {defineField, defineType} from 'sanity'
 import {PinnedCarouselEventInput} from '@/sanity/components/PinnedCarouselEventInput'
 import {pageIntroField} from './blocks'
 
+const ticketmasterFeedStatusFields = [
+  defineField({
+    name: 'lastAttemptAt',
+    type: 'datetime',
+    title: 'Last attempt',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'lastSuccessAt',
+    type: 'datetime',
+    title: 'Last success',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'lastError',
+    type: 'string',
+    title: 'Last error',
+    readOnly: true,
+    options: {
+      list: [
+        {title: 'Rate limited (429)', value: 'rate_limit'},
+        {title: 'API error', value: 'api_error'},
+        {title: 'Not configured', value: 'not_configured'},
+      ],
+    },
+  }),
+  defineField({
+    name: 'lastHttpStatus',
+    type: 'number',
+    title: 'Last HTTP status',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'eventCount',
+    type: 'number',
+    title: 'Events in feed',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'venueCount',
+    type: 'number',
+    title: 'Venues in feed',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'pagesFetched',
+    type: 'number',
+    title: 'API pages fetched',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'apiKeyFingerprint',
+    type: 'string',
+    title: 'API key fingerprint',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'dmaId',
+    type: 'string',
+    title: 'DMA id',
+    readOnly: true,
+  }),
+]
+
 export const siteSettings = defineType({
   name: 'siteSettings',
   title: 'Site Settings',
@@ -93,6 +157,13 @@ export const siteSettings = defineType({
       },
       description:
         'Choose an upcoming concert with a Ticketmaster image, or leave unset for a random show each day. Publish Site Settings to apply.',
+    }),
+    defineField({
+      name: 'ticketmasterFeedStatus',
+      type: 'object',
+      title: 'Ticketmaster feed status',
+      hidden: true,
+      fields: ticketmasterFeedStatusFields,
     }),
     defineField({
       name: 'instagramUrl',
