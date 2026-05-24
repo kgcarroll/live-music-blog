@@ -1,3 +1,4 @@
+import {unstable_cache} from 'next/cache'
 import {cache} from 'react'
 import {
   SCHEDULE_DAYS_AHEAD,
@@ -418,21 +419,130 @@ function eventDetailFromRaw(raw: TicketmasterEvent): EventDetail | null {
   }
 }
 
-export async function fetchScheduleEventsPage(page: number): Promise<ScheduleEventsPageResult> {
-  const {events: rawEvents, totalPages, error} = await fetchMusicEventsJson(page, SCHEDULE_PAGE_SIZE)
-  if (error) {
-    return {events: [], hasMore: false, error}
+type TicketmasterFeed = {
+  events: ScheduleEvent[]
+  venues: VenueMapPin[]
+  error?: 'not_configured' | 'api_error'
+}
+
+function buildScheduleEventsFromRaw(rawEvents: TicketmasterEvent[]): ScheduleEvent[] {
+  const byId = new Map<string, ScheduleEventCore>()
+
+  for (const raw of rawEvents) {
+    const event = normalizeEventCore(raw)
+    if (!event || byId.has(event.id)) continue
+    byId.set(event.id, event)
   }
 
-  const events = await enrichEventsWithSlugs(
-    rawEvents
-      .map(normalizeEventCore)
-      .filter((event): event is ScheduleEventCore => event != null),
+  return assignUniqueEventSlugs(
+    [...byId.values()].sort(
+      (a, b) =>
+        eventSortKey({...a, slug: eventSlugFromEvent(a)}) -
+        eventSortKey({...b, slug: eventSlugFromEvent(b)}),
+    ),
   )
+}
 
-  const hasMore = totalPages > 0 ? page < totalPages - 1 : events.length === SCHEDULE_PAGE_SIZE
+function buildVenuesFromRawEvents(
+  rawEvents: TicketmasterEvent[],
+  eventsById: Map<string, ScheduleEvent>,
+): VenueMapPin[] {
+  const byId = new Map<string, VenueMapPin>()
+  const nextEventByVenueId = new Map<string, ScheduleEventCore>()
 
-  return {events, hasMore}
+  for (const raw of rawEvents) {
+    const embedded = raw._embedded?.venues?.[0]
+    if (!embedded) continue
+    const pin = venueFromEmbedded(embedded)
+    if (!pin) continue
+    const event = normalizeEventCore(raw)
+    if (!event) continue
+    const eventImage = pickEventImage(raw.images)
+    considerEarlierNextShow(nextEventByVenueId, event, pin.id)
+    const existing = byId.get(pin.id)
+    if (existing) {
+      existing.upcomingEventCount += 1
+      if (!existing.imageUrl && eventImage) {
+        existing.imageUrl = eventImage.url
+        existing.imageWidth = eventImage.width
+        existing.imageHeight = eventImage.height
+      }
+    } else {
+      byId.set(pin.id, {
+        ...pin,
+        upcomingEventCount: 1,
+        imageUrl: eventImage?.url ?? null,
+        imageWidth: eventImage?.width ?? null,
+        imageHeight: eventImage?.height ?? null,
+        ...nextShowFieldsFromEvent(undefined),
+      })
+    }
+  }
+
+  return assignUniqueVenueSlugs(
+    [...byId.values()]
+      .map((pin) => {
+        const nextCore = nextEventByVenueId.get(pin.id)
+        const nextEvent = nextCore ? eventsById.get(nextCore.id) : undefined
+        return {
+          ...pin,
+          ...nextShowFieldsFromEvent(nextEvent),
+        }
+      })
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  )
+}
+
+/** One paginated Discovery scan; builds both event and venue indexes. */
+async function loadTicketmasterFeedFromApi(): Promise<TicketmasterFeed> {
+  if (!getApiKey()) {
+    return {events: [], venues: [], error: 'not_configured'}
+  }
+
+  const rawEvents: TicketmasterEvent[] = []
+
+  for (let page = 0; page < VENUES_MAX_EVENT_PAGES; page++) {
+    const {events, totalPages, error} = await fetchMusicEventsJson(page, VENUES_EVENT_FETCH_SIZE)
+    if (error) {
+      return {events: [], venues: [], error}
+    }
+
+    rawEvents.push(...events)
+
+    if (totalPages <= 0 || page >= totalPages - 1) break
+  }
+
+  const events = buildScheduleEventsFromRaw(rawEvents)
+  const eventsById = new Map(events.map((event) => [event.id, event]))
+  const venues = buildVenuesFromRawEvents(rawEvents, eventsById)
+
+  return {events, venues}
+}
+
+const getTicketmasterFeedCached = unstable_cache(
+  loadTicketmasterFeedFromApi,
+  ['ticketmaster-feed', getDmaId()],
+  {revalidate: SCHEDULE_REVALIDATE_SECONDS, tags: ['ticketmaster-feed']},
+)
+
+/** Cross-request cache (ISR window) + per-request dedupe via React cache below. */
+const getTicketmasterFeed = cache(getTicketmasterFeedCached)
+
+function paginateScheduleEvents(events: ScheduleEvent[], page: number): ScheduleEventsPageResult {
+  const start = Math.max(0, page) * SCHEDULE_PAGE_SIZE
+  const slice = events.slice(start, start + SCHEDULE_PAGE_SIZE)
+  return {
+    events: slice,
+    hasMore: start + slice.length < events.length,
+  }
+}
+
+export async function fetchScheduleEventsPage(page: number): Promise<ScheduleEventsPageResult> {
+  const feed = await getTicketmasterFeed()
+  if (feed.error) {
+    return {events: [], hasMore: false, error: feed.error}
+  }
+  return paginateScheduleEvents(feed.events, page)
 }
 
 type EventIndex = {
@@ -442,61 +552,18 @@ type EventIndex = {
   error?: 'not_configured' | 'api_error'
 }
 
-async function loadAllScheduleEvents(): Promise<{events: ScheduleEvent[]; error?: 'not_configured' | 'api_error'}> {
-  const byId = new Map<string, ScheduleEventCore>()
-
-  for (let page = 0; page < VENUES_MAX_EVENT_PAGES; page++) {
-    const {events: rawEvents, totalPages, error} = await fetchMusicEventsJson(
-      page,
-      VENUES_EVENT_FETCH_SIZE,
-    )
-    if (error) {
-      return {events: [], error}
-    }
-
-    for (const raw of rawEvents) {
-      const event = normalizeEventCore(raw)
-      if (!event || byId.has(event.id)) continue
-      byId.set(event.id, event)
-    }
-
-    if (totalPages <= 0 || page >= totalPages - 1) break
-  }
-
-  const events = assignUniqueEventSlugs(
-    [...byId.values()].sort(
-      (a, b) =>
-        eventSortKey({...a, slug: eventSlugFromEvent(a)}) -
-        eventSortKey({...b, slug: eventSlugFromEvent(b)}),
-    ),
-  )
-  return {events}
-}
-
 /** Cached per request so schedule, venues, and event pages share one Ticketmaster scan. */
 export const getEventIndex = cache(async (): Promise<EventIndex> => {
-  const result = await loadAllScheduleEvents()
-  if (result.error) {
-    return {events: [], bySlug: new Map(), byId: new Map(), error: result.error}
+  const feed = await getTicketmasterFeed()
+  if (feed.error) {
+    return {events: [], bySlug: new Map(), byId: new Map(), error: feed.error}
   }
   return {
-    events: result.events,
-    bySlug: new Map(result.events.map((event) => [event.slug, event])),
-    byId: new Map(result.events.map((event) => [event.id, event])),
+    events: feed.events,
+    bySlug: new Map(feed.events.map((event) => [event.slug, event])),
+    byId: new Map(feed.events.map((event) => [event.id, event])),
   }
 })
-
-async function enrichEventsWithSlugs(cores: ScheduleEventCore[]): Promise<ScheduleEvent[]> {
-  if (!cores.length) return []
-  const index = await getEventIndex()
-  if (index.error) {
-    return cores.map((core) => ({...core, slug: eventSlugFromEvent(core)}))
-  }
-  return cores.map((core) => {
-    const indexed = index.byId.get(core.id)
-    return indexed ?? {...core, slug: eventSlugFromEvent(core)}
-  })
-}
 
 type VenueIndex = {
   venues: VenueMapPin[]
@@ -507,79 +574,16 @@ type VenueIndex = {
 
 /** Cached per request so hub + detail pages share one Ticketmaster scan. */
 export const getVenueIndex = cache(async (): Promise<VenueIndex> => {
-  const result = await loadVenuesFromUpcomingMusic()
-  if (result.error) {
-    return {venues: [], bySlug: new Map(), byId: new Map(), error: result.error}
+  const feed = await getTicketmasterFeed()
+  if (feed.error) {
+    return {venues: [], bySlug: new Map(), byId: new Map(), error: feed.error}
   }
   return {
-    venues: result.venues,
-    bySlug: new Map(result.venues.map((venue) => [venue.slug, venue])),
-    byId: new Map(result.venues.map((venue) => [venue.id, venue])),
+    venues: feed.venues,
+    bySlug: new Map(feed.venues.map((venue) => [venue.slug, venue])),
+    byId: new Map(feed.venues.map((venue) => [venue.id, venue])),
   }
 })
-
-/** Unique venues with lat/lng from upcoming music events in the DMA (option B). */
-async function loadVenuesFromUpcomingMusic(): Promise<VenuesMapResult> {
-  const byId = new Map<string, VenueMapPin>()
-  const nextEventByVenueId = new Map<string, ScheduleEventCore>()
-
-  for (let page = 0; page < VENUES_MAX_EVENT_PAGES; page++) {
-    const {events: rawEvents, totalPages, error} = await fetchMusicEventsJson(
-      page,
-      VENUES_EVENT_FETCH_SIZE,
-    )
-    if (error) {
-      return {venues: [], error}
-    }
-
-    for (const raw of rawEvents) {
-      const embedded = raw._embedded?.venues?.[0]
-      if (!embedded) continue
-      const pin = venueFromEmbedded(embedded)
-      if (!pin) continue
-      const event = normalizeEventCore(raw)
-      if (!event) continue
-      const eventImage = pickEventImage(raw.images)
-      considerEarlierNextShow(nextEventByVenueId, event, pin.id)
-      const existing = byId.get(pin.id)
-      if (existing) {
-        existing.upcomingEventCount += 1
-        if (!existing.imageUrl && eventImage) {
-          existing.imageUrl = eventImage.url
-          existing.imageWidth = eventImage.width
-          existing.imageHeight = eventImage.height
-        }
-      } else {
-        byId.set(pin.id, {
-          ...pin,
-          upcomingEventCount: 1,
-          imageUrl: eventImage?.url ?? null,
-          imageWidth: eventImage?.width ?? null,
-          imageHeight: eventImage?.height ?? null,
-          ...nextShowFieldsFromEvent(undefined),
-        })
-      }
-    }
-
-    if (totalPages <= 0 || page >= totalPages - 1) break
-  }
-
-  const eventIndex = await getEventIndex()
-
-  const venues = assignUniqueVenueSlugs(
-    [...byId.values()]
-      .map((pin) => {
-        const nextCore = nextEventByVenueId.get(pin.id)
-        const nextEvent = nextCore ? eventIndex.byId.get(nextCore.id) : undefined
-        return {
-          ...pin,
-          ...nextShowFieldsFromEvent(nextEvent),
-        }
-      })
-      .sort((a, b) => a.name.localeCompare(b.name)),
-  )
-  return {venues}
-}
 
 export async function fetchVenuesFromUpcomingMusic(): Promise<VenuesMapResult> {
   const index = await getVenueIndex()
@@ -670,24 +674,15 @@ export async function fetchVenueEventsPage(
   venueId: string,
   page: number,
 ): Promise<VenueEventsResult> {
-  const {events: rawEvents, totalPages, error} = await fetchMusicEventsJson(
-    page,
-    SCHEDULE_PAGE_SIZE,
-    venueId,
-  )
-  if (error) {
-    return {events: [], hasMore: false, error}
+  const index = await getEventIndex()
+  if (index.error) {
+    return {events: [], hasMore: false, error: index.error}
   }
 
-  const events = await enrichEventsWithSlugs(
-    rawEvents
-      .map(normalizeEventCore)
-      .filter((event): event is ScheduleEventCore => event != null),
-  )
-
-  const hasMore = totalPages > 0 ? page < totalPages - 1 : events.length === SCHEDULE_PAGE_SIZE
-
-  return {events, hasMore}
+  const id = venueId.trim()
+  const venueEvents = index.events.filter((event) => event.venueId === id)
+  const result = paginateScheduleEvents(venueEvents, page)
+  return {events: result.events, hasMore: result.hasMore}
 }
 
 export async function fetchEventMatchBySlug(
