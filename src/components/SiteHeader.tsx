@@ -235,9 +235,8 @@ function NavSplitDropdown({
   isCaretActive: (pathname: string) => boolean
 }) {
   const [open, setOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const [menuPosition, setMenuPosition] = useState<{top: number; left: number} | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
+  const sectionLinkRef = useRef<HTMLAnchorElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const closeTimerRef = useRef<number | null>(null)
@@ -251,20 +250,15 @@ function NavSplitDropdown({
     }
   }
 
-  const updateMenuPosition = () => {
-    const root = rootRef.current
-    if (!root) return
-    const rect = root.getBoundingClientRect()
-    setMenuPosition({
-      top: rect.bottom + 8,
-      left: rect.left,
-    })
-  }
-
   const openMenu = () => {
     clearCloseTimer()
-    updateMenuPosition()
     setOpen(true)
+  }
+
+  const closeMenu = (returnFocus = false) => {
+    clearCloseTimer()
+    setOpen(false)
+    if (returnFocus) buttonRef.current?.focus()
   }
 
   const scheduleClose = () => {
@@ -272,9 +266,36 @@ function NavSplitDropdown({
     closeTimerRef.current = window.setTimeout(() => setOpen(false), 120)
   }
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const focusMenuLink = (index: number) => {
+    const links = menuRef.current?.querySelectorAll<HTMLAnchorElement>('a[href]')
+    if (!links?.length) return
+    const target = links[Math.max(0, Math.min(index, links.length - 1))]
+    target.focus()
+  }
+
+  const focusLastMenuLink = () => {
+    focusMenuLink(submenuLinks.length - 1)
+  }
+
+  const shouldKeepSubmenuOpenForFocus = (target: Node | null) => {
+    if (!target) return false
+    if (menuRef.current?.contains(target)) return true
+    if (buttonRef.current === target) return true
+    return false
+  }
+
+  /** Reverse tab from a later nav item (submenu is after the toggle in DOM). */
+  const onToggleFocus = (event: React.FocusEvent<HTMLButtonElement>) => {
+    openMenu()
+    const related = event.relatedTarget as Node | null
+    const root = rootRef.current
+    if (!related || !root) return
+    if (root.contains(related)) return
+    const position = root.compareDocumentPosition(related)
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) {
+      requestAnimationFrame(() => focusLastMenuLink())
+    }
+  }
 
   useEffect(() => {
     setOpen(false)
@@ -282,24 +303,13 @@ function NavSplitDropdown({
 
   useEffect(() => {
     if (!open) return
-    updateMenuPosition()
-    window.addEventListener('scroll', updateMenuPosition, true)
-    window.addEventListener('resize', updateMenuPosition)
-    return () => {
-      window.removeEventListener('scroll', updateMenuPosition, true)
-      window.removeEventListener('resize', updateMenuPosition)
-    }
-  }, [open])
-
-  useEffect(() => {
-    if (!open) return
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node
-      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return
+      if (rootRef.current?.contains(target)) return
       setOpen(false)
     }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Escape') closeMenu(true)
     }
     window.addEventListener('pointerdown', onPointerDown)
     window.addEventListener('keydown', onKeyDown)
@@ -313,82 +323,141 @@ function NavSplitDropdown({
     return () => clearCloseTimer()
   }, [])
 
-  const dropdownMenu =
-    mounted && open && menuPosition
-      ? createPortal(
-          <div
-            ref={menuRef}
-            id={menuId}
-            role="menu"
-            aria-label={menuAriaLabel}
-            style={{top: menuPosition.top, left: menuPosition.left}}
-            className="fixed z-50 min-w-[10rem] transition-[opacity,visibility,transform] duration-200 visible translate-y-0 opacity-100"
-            onMouseEnter={openMenu}
-            onMouseLeave={scheduleClose}
-          >
-            <ul className="overflow-hidden rounded-md border border-zinc-800 bg-zinc-950 py-1 shadow-lg shadow-black/40">
-              {submenuLinks.map((link) => {
-                const active = isNavLinkActive(pathname, link.href)
-                return (
-                  <li key={link.href} role="none">
-                    <Link
-                      href={link.href}
-                      role="menuitem"
-                      aria-current={active ? 'page' : undefined}
-                      className={`block px-4 py-2 text-left text-sm font-medium uppercase tracking-wide text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-amber-200 ${
-                        active ? 'text-amber-200' : ''
-                      }`}
-                      onClick={() => setOpen(false)}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>,
-          document.body,
-        )
-      : null
+  const onToggleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'Escape') {
+      if (open) {
+        event.preventDefault()
+        closeMenu(true)
+      }
+      return
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      if (!open) openMenu()
+      requestAnimationFrame(() => focusMenuLink(0))
+      return
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      if (!open) openMenu()
+      requestAnimationFrame(() => focusMenuLink(submenuLinks.length - 1))
+      return
+    }
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      if (open) {
+        closeMenu(true)
+      } else {
+        openMenu()
+        requestAnimationFrame(() => focusMenuLink(0))
+      }
+    }
+  }
+
+  const onMenuLinkKeyDown = (
+    event: React.KeyboardEvent<HTMLAnchorElement>,
+    linkIndex: number,
+  ) => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      closeMenu(true)
+      return
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      focusMenuLink(linkIndex + 1)
+      return
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      if (linkIndex === 0) {
+        closeMenu(true)
+      } else {
+        focusMenuLink(linkIndex - 1)
+      }
+    }
+  }
 
   return (
-    <>
-      <div ref={rootRef} className="inline-flex items-center gap-0.5">
-        <Link
-          href={href}
-          aria-current={isNavLinkActive(pathname, href) ? 'page' : undefined}
-          className={`${navLinkClass} ${sectionActive ? navLinkActiveClass : ''}`}
+    <div ref={rootRef} className="relative inline-flex items-center gap-0.5">
+      <Link
+        ref={sectionLinkRef}
+        href={href}
+        aria-current={isNavLinkActive(pathname, href) ? 'page' : undefined}
+        className={`${navLinkClass} ${sectionActive ? navLinkActiveClass : ''}`}
+        onFocus={() => {
+          clearCloseTimer()
+          setOpen(false)
+        }}
+      >
+        {label}
+      </Link>
+      <button
+        ref={buttonRef}
+        type="button"
+        className={`inline-flex items-center justify-center rounded-sm p-0.5 ${navLinkClass} ${
+          caretActive ? navLinkActiveClass : ''
+        }`}
+        aria-expanded={open}
+        aria-haspopup="true"
+        aria-controls={menuId}
+        aria-label={`${label} submenu`}
+        onMouseEnter={openMenu}
+        onMouseLeave={scheduleClose}
+        onFocus={onToggleFocus}
+        onBlur={(event) => {
+          const next = event.relatedTarget as Node | null
+          if (shouldKeepSubmenuOpenForFocus(next)) return
+          setOpen(false)
+        }}
+        onClick={() => setOpen((value) => !value)}
+        onKeyDown={onToggleKeyDown}
+      >
+        <IconChevronDown className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <div
+        ref={menuRef}
+        id={menuId}
+        hidden={!open}
+        className="absolute left-0 top-full z-50 mt-2 min-w-[10rem]"
+        onMouseEnter={openMenu}
+        onMouseLeave={scheduleClose}
+      >
+        <ul
+          aria-label={menuAriaLabel}
+          className="overflow-hidden rounded-md border border-zinc-800 bg-zinc-950 py-1 shadow-lg shadow-black/40"
         >
-          {label}
-        </Link>
-        <button
-          ref={buttonRef}
-          type="button"
-          className={`inline-flex items-center justify-center rounded-sm p-0.5 ${navLinkClass} ${
-            caretActive ? navLinkActiveClass : ''
-          }`}
-          aria-expanded={open}
-          aria-haspopup="true"
-          aria-controls={menuId}
-          aria-label={`${label} menu`}
-          onMouseEnter={openMenu}
-          onMouseLeave={scheduleClose}
-          onFocus={openMenu}
-          onBlur={(event) => {
-            const next = event.relatedTarget as Node | null
-            if (menuRef.current?.contains(next) || rootRef.current?.contains(next)) return
-            setOpen(false)
-          }}
-          onClick={() => {
-            updateMenuPosition()
-            setOpen((value) => !value)
-          }}
-        >
-          <IconChevronDown className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-        </button>
+          {submenuLinks.map((link, linkIndex) => {
+            const active = isNavLinkActive(pathname, link.href)
+            return (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`block px-4 py-2 text-left text-sm font-medium uppercase tracking-wide text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-amber-200 focus-visible:bg-zinc-900 focus-visible:text-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-400/50 ${
+                    active ? 'text-amber-200' : ''
+                  }`}
+                  onClick={() => setOpen(false)}
+                  onKeyDown={(event) => onMenuLinkKeyDown(event, linkIndex)}
+                  onBlur={(event) => {
+                    const next = event.relatedTarget as Node | null
+                    if (shouldKeepSubmenuOpenForFocus(next)) return
+                    setOpen(false)
+                  }}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
       </div>
-      {dropdownMenu}
-    </>
+    </div>
   )
 }
 
@@ -597,9 +666,9 @@ export function SiteHeader({
                 </div>
               </div>
             </div>
-            <div className="relative hidden w-full md:block md:py-1">
+            <div className="relative hidden w-full overflow-visible md:block md:py-1">
               <nav
-                className="mx-auto flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-2 px-[6.5rem] py-1 text-sm font-medium uppercase tracking-wide lg:gap-x-5 lg:px-28 [&:has(a:hover)_a]:opacity-35 [&:has(a:hover)_a:hover]:!opacity-100 [&:has(a:hover)_a:hover]:text-amber-200 [&:has(button:hover)_button]:opacity-35 [&:has(button:hover)_button:hover]:!opacity-100 [&:has(button:hover)_button:hover]:text-amber-200"
+                className="mx-auto flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-2 overflow-visible px-[6.5rem] py-1 text-sm font-medium uppercase tracking-wide lg:gap-x-5 lg:px-28 [&:has(a:hover)_a]:opacity-35 [&:has(a:hover)_a:hover]:!opacity-100 [&:has(a:hover)_a:hover]:text-amber-200 [&:has(button:hover)_button]:opacity-35 [&:has(button:hover)_button:hover]:!opacity-100 [&:has(button:hover)_button:hover]:text-amber-200"
                 aria-label="Main"
               >
                 <Link
