@@ -39,6 +39,22 @@ export const resolve: PresentationPluginOptions['resolve'] = {
         ],
       }),
     }),
+    newsletterIssue: defineLocations({
+      select: {
+        title: 'title',
+        slug: 'slug.current',
+      },
+      resolve: (doc) => ({
+        locations: [
+          {
+            title: doc?.title || 'Newsletter',
+            href: `/newsletter/${doc?.slug}`,
+          },
+          {title: 'Newsletter archive', href: '/newsletter'},
+          {title: 'Home', href: '/'},
+        ],
+      }),
+    }),
     tag: defineLocations({
       select: {
         title: 'title',

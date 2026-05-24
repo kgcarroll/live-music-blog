@@ -1,9 +1,12 @@
 import Link from 'next/link'
 
+import {NewsletterSignup} from '@/components/NewsletterSignup'
+
 const footerLinks = [
   {href: '/', label: 'Home'},
   {href: '/about', label: 'About'},
   {href: '/contact', label: 'Contact'},
+  {href: '/newsletter', label: 'Newsletter'},
   {href: '/reviews', label: 'Reviews'},
   {href: '/news', label: 'News'},
   {href: '/interviews', label: 'Interviews'},
@@ -33,6 +36,7 @@ export function SiteFooter() {
             ))}
           </ul>
         </nav>
+        <NewsletterSignup />
         <p className="mt-6 text-center text-xs text-zinc-500">
           Copyright {new Date().getFullYear()}{' '}
           <a

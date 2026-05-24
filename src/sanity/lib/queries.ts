@@ -268,6 +268,63 @@ const settingsImageProjection = `{
   }
 }`
 
+const newsletterBodyProjection = `body[]{
+  ...,
+  _type == "image" => {
+    ...,
+    alt,
+    caption,
+    layout,
+    asset->{
+      _id,
+      url,
+      metadata { dimensions { width, height, aspectRatio } }
+    }
+  }
+}`
+
+const newsletterIssueProjection = `{
+  _id,
+  title,
+  "slug": slug.current,
+  publishedAt,
+  emailSubject,
+  previewText,
+  sentAt,
+  resendBroadcastId,
+  seoTitle,
+  seoDescription,
+  ${sanityImageProjection('coverImage')},
+  ${newsletterBodyProjection}
+}`
+
+export const NEWSLETTER_ISSUE_SLUGS = defineQuery(`
+  *[_type == "newsletterIssue" && defined(slug.current)] | order(publishedAt desc) {
+    "slug": slug.current
+  }
+`)
+
+export const NEWSLETTER_ISSUE_LIST = defineQuery(`
+  *[_type == "newsletterIssue" && defined(slug.current)] | order(publishedAt desc) {
+    _id,
+    title,
+    "slug": slug.current,
+    publishedAt,
+    previewText,
+    excerpt,
+    sentAt,
+    ${sanityImageProjection('coverImage')}
+  }
+`)
+
+export const NEWSLETTER_ISSUE_BY_SLUG = defineQuery(`
+  *[_type == "newsletterIssue" && slug.current == $slug][0] ${newsletterIssueProjection}
+`)
+
+export const NEWSLETTER_ISSUE_BY_ID = defineQuery(`
+  *[_type == "newsletterIssue" && _id == $id][0] ${newsletterIssueProjection}
+`)
+
 /** All public URLs for sitemap.xml (published perspective only). */
 export const SITEMAP_ENTRIES = defineQuery(`{
   "editorial": *[_type in ["interview","news","photoPost","review"] && defined(slug.current)]{
@@ -282,6 +339,10 @@ export const SITEMAP_ENTRIES = defineQuery(`{
   "tags": *[_type == "tag" && defined(slug.current)]{
     "slug": slug.current,
     "lastModified": _updatedAt
+  },
+  "newsletters": *[_type == "newsletterIssue" && defined(slug.current)]{
+    "slug": slug.current,
+    "lastModified": coalesce(sentAt, publishedAt, _updatedAt)
   }
 }`)
 

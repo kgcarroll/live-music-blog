@@ -1,6 +1,6 @@
 import type {MetadataRoute} from 'next'
 
-import {authorHref, editorialHref, tagHref} from '@/lib/paths'
+import {authorHref, editorialHref, newsletterHref, tagHref} from '@/lib/paths'
 import {absoluteSiteUrl} from '@/lib/siteUrl'
 import {sanityFetch} from '@/sanity/lib/live'
 import {SITEMAP_ENTRIES} from '@/sanity/lib/queries'
@@ -17,6 +17,7 @@ const STATIC_PATHS = [
   '/tags',
   '/about',
   '/contact',
+  '/newsletter',
 ] as const
 
 function toLastModified(value: string | null | undefined): Date | undefined {
@@ -76,5 +77,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }),
   )
 
-  return [...staticEntries, ...editorialEntries, ...authorEntries, ...tagEntries]
+  const newsletterEntries = (data?.newsletters ?? []).map(
+    (row: {slug: string; lastModified?: string | null}) =>
+      sitemapEntry(newsletterHref(row.slug), {
+        lastModified: toLastModified(row.lastModified),
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      }),
+  )
+
+  return [...staticEntries, ...editorialEntries, ...authorEntries, ...tagEntries, ...newsletterEntries]
 }

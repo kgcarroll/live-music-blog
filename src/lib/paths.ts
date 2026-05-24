@@ -53,3 +53,11 @@ export function venueHref(venueSlug: string) {
 export function eventHref(eventSlug: string) {
   return `/events/${encodeURIComponent(eventSlug)}`
 }
+
+export function newsletterHref(slug: string) {
+  return `/newsletter/${encodeURIComponent(slug)}`
+}
+
+export function newsletterIndexHref() {
+  return '/newsletter'
+}

@@ -5,6 +5,7 @@ import {visionTool} from '@sanity/vision'
 import {media, mediaAssetSource} from 'sanity-plugin-media'
 import {schemaTypes} from './src/sanity/schemaTypes'
 import {resolve} from './src/sanity/presentation/resolve'
+import {SendNewsletterBroadcastAction, SendNewsletterTestAction} from './src/sanity/actions/newsletterSendActions'
 import {structure} from './src/sanity/structure'
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || 'placeholder'
@@ -54,6 +55,9 @@ export default defineConfig({
     actions: (prev, {schemaType}) => {
       if (schemaType === 'siteSettings') {
         return prev.filter(({action}) => action !== 'delete' && action !== 'duplicate')
+      }
+      if (schemaType === 'newsletterIssue') {
+        return [...prev, SendNewsletterTestAction, SendNewsletterBroadcastAction]
       }
       return prev
     },
