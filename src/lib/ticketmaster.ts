@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto'
 import {unstable_cache} from 'next/cache'
 import {cache} from 'react'
 import {
@@ -167,6 +168,16 @@ function getApiKey(): string | null {
   return key || null
 }
 
+/** Busts the feed cache when TICKETMASTER_API_KEY changes (no secret stored). */
+function getTicketmasterApiKeyFingerprint(): string {
+  const key = getApiKey()
+  if (!key) return 'none'
+  return createHash('sha256').update(key).digest('hex').slice(0, 12)
+}
+
+/** Feed is cached at a higher level; avoid caching 429/error responses per URL. */
+const ticketmasterFetchInit = {cache: 'no-store' as const}
+
 function getDmaId(): string {
   return process.env.TICKETMASTER_DMA_ID?.trim() || SCHEDULE_DMA_ID_DEFAULT
 }
@@ -297,7 +308,7 @@ async function fetchMusicEventsJson(
   try {
     response = await fetch(
       `https://app.ticketmaster.com/discovery/v2/events.json?${params.toString()}`,
-      {next: {revalidate: SCHEDULE_REVALIDATE_SECONDS}},
+      ticketmasterFetchInit,
     )
   } catch {
     return {events: [], totalPages: 0, error: 'api_error'}
@@ -519,14 +530,36 @@ async function loadTicketmasterFeedFromApi(): Promise<TicketmasterFeed> {
   return {events, venues}
 }
 
+class TicketmasterFeedLoadError extends Error {
+  constructor(readonly code: 'not_configured' | 'api_error') {
+    super(code)
+    this.name = 'TicketmasterFeedLoadError'
+  }
+}
+
 const getTicketmasterFeedCached = unstable_cache(
-  loadTicketmasterFeedFromApi,
-  ['ticketmaster-feed', getDmaId()],
+  async (): Promise<TicketmasterFeed> => {
+    const feed = await loadTicketmasterFeedFromApi()
+    if (feed.error) {
+      throw new TicketmasterFeedLoadError(feed.error)
+    }
+    return feed
+  },
+  ['ticketmaster-feed', getDmaId(), getTicketmasterApiKeyFingerprint()],
   {revalidate: SCHEDULE_REVALIDATE_SECONDS, tags: ['ticketmaster-feed']},
 )
 
 /** Cross-request cache (ISR window) + per-request dedupe via React cache below. */
-const getTicketmasterFeed = cache(getTicketmasterFeedCached)
+const getTicketmasterFeed = cache(async (): Promise<TicketmasterFeed> => {
+  try {
+    return await getTicketmasterFeedCached()
+  } catch (error) {
+    if (error instanceof TicketmasterFeedLoadError) {
+      return {events: [], venues: [], error: error.code}
+    }
+    return {events: [], venues: [], error: 'api_error'}
+  }
+})
 
 function paginateScheduleEvents(events: ScheduleEvent[], page: number): ScheduleEventsPageResult {
   const start = Math.max(0, page) * SCHEDULE_PAGE_SIZE
@@ -630,7 +663,7 @@ export async function fetchVenueById(
   try {
     response = await fetch(
       `https://app.ticketmaster.com/discovery/v2/venues/${encodeURIComponent(id)}.json?apikey=${apikey}&locale=en-us`,
-      {next: {revalidate: SCHEDULE_REVALIDATE_SECONDS}},
+      ticketmasterFetchInit,
     )
   } catch {
     return 'api_error'
@@ -721,7 +754,7 @@ export async function fetchEventDetailById(
   try {
     response = await fetch(
       `https://app.ticketmaster.com/discovery/v2/events/${encodeURIComponent(id)}.json?apikey=${apikey}&locale=en-us`,
-      {next: {revalidate: SCHEDULE_REVALIDATE_SECONDS}},
+      ticketmasterFetchInit,
     )
   } catch {
     return 'api_error'
