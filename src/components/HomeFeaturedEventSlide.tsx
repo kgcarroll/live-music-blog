@@ -38,10 +38,7 @@ export function HomeFeaturedEventSlide({
         ) : (
           <div className="absolute inset-0 bg-zinc-800" aria-hidden />
         )}
-        <div
-          className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/75 to-zinc-950/15"
-          aria-hidden
-        />
+        <div className="absolute inset-0 hero-slide-gradient" aria-hidden />
         <div className="relative flex h-full flex-col justify-end p-5 pl-10 pr-10 max-sm:pb-12 sm:p-8 sm:pl-14 sm:pr-14 md:p-10 md:pl-16 md:pr-16">
           <p className="text-xs leading-snug">
             <span className="uppercase tracking-wide text-amber-300">Upcoming Concert</span>

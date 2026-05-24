@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.hero-slide-gradient {
+  background: linear-gradient(to top, rgb(9 9 11) 0%, transparent 75%);
+}
+
 :root {
   color-scheme: dark;
 }
