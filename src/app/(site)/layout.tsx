@@ -33,7 +33,7 @@ export default async function SiteLayout({children}: {children: React.ReactNode}
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:px-6">
         {children}
       </main>
-      <SiteFooter />
+      <SiteFooter logo={logo} siteTitle={siteTitle} social={social} />
     </div>
   )
 }

@@ -5,7 +5,8 @@ import {useState} from 'react'
 const CONSENT =
   'Weekly Philadelphia live-music updates from Philadelphia Music Live. Unsubscribe anytime from any email we send.'
 
-export function NewsletterSignup() {
+export function NewsletterSignup({variant = 'default'}: {variant?: 'default' | 'footer'}) {
+  const isFooter = variant === 'footer'
   const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
   const [message, setMessage] = useState('')
 
@@ -46,14 +47,35 @@ export function NewsletterSignup() {
   }
 
   return (
-    <section id="newsletter" aria-labelledby="newsletter-heading" className="mt-10 border-t border-zinc-800 pt-8">
-      <h2 id="newsletter-heading" className="text-center text-sm font-semibold uppercase tracking-wide text-zinc-200">
+    <section
+      id="newsletter"
+      aria-labelledby="newsletter-heading"
+      className={
+        isFooter
+          ? 'w-full max-w-md md:ml-auto'
+          : 'mt-10 border-t border-zinc-800 pt-8'
+      }
+    >
+      <h2
+        id="newsletter-heading"
+        className={
+          isFooter
+            ? 'text-sm font-semibold uppercase tracking-wide text-zinc-200'
+            : 'text-center text-sm font-semibold uppercase tracking-wide text-zinc-200'
+        }
+      >
         Newsletter
       </h2>
-      <p className="mx-auto mt-2 max-w-md text-center text-sm text-zinc-400">
+      <p
+        className={
+          isFooter
+            ? 'mt-2 text-sm text-zinc-400'
+            : 'mx-auto mt-2 max-w-md text-center text-sm text-zinc-400'
+        }
+      >
         Get weekly updates on shows, reviews, and news around Philadelphia.
       </p>
-      <form onSubmit={onSubmit} className="mx-auto mt-4 max-w-md">
+      <form onSubmit={onSubmit} className={isFooter ? 'mt-4' : 'mx-auto mt-4 max-w-md'}>
         <input
           type="text"
           name="website"
@@ -83,11 +105,11 @@ export function NewsletterSignup() {
             {status === 'loading' ? 'Sending…' : 'Subscribe'}
           </button>
         </div>
-        <p className="mt-2 text-center text-xs text-zinc-500">{CONSENT}</p>
+        <p className={`mt-2 text-xs text-zinc-500 ${isFooter ? '' : 'text-center'}`}>{CONSENT}</p>
         {message ? (
           <p
             role={status === 'error' ? 'alert' : 'status'}
-            className={`mt-3 text-center text-sm ${status === 'error' ? 'text-red-400' : 'text-amber-200'}`}
+            className={`mt-3 text-sm ${isFooter ? '' : 'text-center'} ${status === 'error' ? 'text-red-400' : 'text-amber-200'}`}
           >
             {message}
           </p>

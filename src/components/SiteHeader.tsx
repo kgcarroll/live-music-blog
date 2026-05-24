@@ -6,8 +6,7 @@ import {usePathname} from 'next/navigation'
 import type {HeaderLogo} from '@/lib/resolveHeaderLogo'
 import {ReadProgressBar} from '@/components/ReadProgressBar'
 import {SiteLogoMark} from '@/components/SiteLogoMark'
-import {FacebookIcon} from '@/components/FacebookIcon'
-import {SpotifyIcon} from '@/components/SpotifyIcon'
+import {SocialMediaLinks, socialIconClass, socialIconLinkClass} from '@/components/SocialMediaLinks'
 import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import {createPortal} from 'react-dom'
 
@@ -86,27 +85,6 @@ function getServerMobileNavMqSnapshot() {
   return false
 }
 
-function IconInstagram({className}: {className?: string}) {
-  return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
 function IconSearch({className}: {className?: string}) {
   return (
     <svg
@@ -127,11 +105,6 @@ function IconSearch({className}: {className?: string}) {
   )
 }
 
-const asideIconLinkClass =
-  'group inline-flex h-9 w-9 items-center justify-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50'
-const asideIconClass =
-  'text-zinc-400 transition-colors duration-200 group-hover:text-amber-200 group-focus-visible:text-amber-200'
-
 /** Social links and search icon (search is always shown). */
 function HeaderAsideLinks({
   instagram,
@@ -150,47 +123,15 @@ function HeaderAsideLinks({
 }) {
   return (
     <div className={`flex shrink-0 items-center gap-2 md:gap-1 ${className ?? ''}`}>
-      {instagram ? (
-        <a
-          href={instagram}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={asideIconLinkClass}
-          aria-label="Instagram (opens in a new tab)"
-        >
-          <IconInstagram className={asideIconClass} />
-        </a>
-      ) : null}
-      {facebook ? (
-        <a
-          href={facebook}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={asideIconLinkClass}
-          aria-label="Facebook (opens in a new tab)"
-        >
-          <FacebookIcon className={`${asideIconClass} size-5`} />
-        </a>
-      ) : null}
-      {spotify ? (
-        <a
-          href={spotify}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={asideIconLinkClass}
-          aria-label="Spotify (opens in a new tab)"
-        >
-          <SpotifyIcon className={`${asideIconClass} size-5`} />
-        </a>
-      ) : null}
+      <SocialMediaLinks instagram={instagram} facebook={facebook} spotify={spotify} />
       <Link
         href="/search"
-        className={asideIconLinkClass}
+        className={socialIconLinkClass}
         aria-label="Search"
         aria-current={pathname === '/search' ? 'page' : undefined}
         onClick={onNavigate}
       >
-        <IconSearch className={asideIconClass} />
+        <IconSearch className={socialIconClass} />
       </Link>
     </div>
   )
