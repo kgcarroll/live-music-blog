@@ -273,6 +273,15 @@ export const tagsField = (group = 'content') =>
     of: [defineArrayMember({type: 'reference', to: [{type: 'tag'}]})],
   })
 
+/** Stored by the Facebook Caption document action (hidden in the editor; not a second input). */
+export const facebookCaptionField = () =>
+  defineField({
+    name: 'facebookCaption',
+    title: 'Facebook Caption',
+    type: 'text',
+    hidden: true,
+  })
+
 export const seoFields = () => [
   defineField({
     name: 'seoTitle',

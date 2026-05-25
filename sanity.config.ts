@@ -5,6 +5,7 @@ import {visionTool} from '@sanity/vision'
 import {media, mediaAssetSource} from 'sanity-plugin-media'
 import {schemaTypes} from './src/sanity/schemaTypes'
 import {resolve} from './src/sanity/presentation/resolve'
+import {GenerateFacebookCaptionAction} from './src/sanity/actions/facebookCaptionAction'
 import {SendNewsletterBroadcastAction, SendNewsletterTestAction} from './src/sanity/actions/newsletterSendActions'
 import {structure} from './src/sanity/structure'
 
@@ -58,6 +59,9 @@ export default defineConfig({
       }
       if (schemaType === 'newsletterIssue') {
         return [...prev, SendNewsletterTestAction, SendNewsletterBroadcastAction]
+      }
+      if (schemaType === 'interview' || schemaType === 'news' || schemaType === 'review') {
+        return [...prev, GenerateFacebookCaptionAction]
       }
       return prev
     },

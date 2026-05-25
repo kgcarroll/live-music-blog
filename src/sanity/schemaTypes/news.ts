@@ -4,6 +4,7 @@ import {
   editorialBodyField,
   coverField,
   editorialDocumentGroups,
+  facebookCaptionField,
   featuredField,
   featureImageField,
   seoFields,
@@ -60,6 +61,7 @@ export const news = defineType({
     defineField({name: 'excerpt', type: 'text', title: 'Excerpt', group: 'content', rows: 3}),
     editorialBodyField(),
     tagsField(),
+    facebookCaptionField(),
     ...seoFields(),
   ],
   preview: {
