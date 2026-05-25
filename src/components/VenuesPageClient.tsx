@@ -20,17 +20,6 @@ import {
 } from '@/lib/venueFilters'
 import {isVenueWithinMapRegion} from '@/lib/venues'
 
-const VIEW_STORAGE_KEY = 'venues-view'
-
-function readStoredView(): ScheduleViewMode {
-  try {
-    const stored = localStorage.getItem(VIEW_STORAGE_KEY)
-    return stored === 'list' ? 'list' : 'grid'
-  } catch {
-    return 'grid'
-  }
-}
-
 export function VenuesPageClient({
   children,
   venues,
@@ -55,10 +44,6 @@ export function VenuesPageClient({
   const [filters, setFilters] = useState<VenueFilterState>(initialFiltersRef.current)
 
   useEffect(() => {
-    setView(readStoredView())
-  }, [])
-
-  useEffect(() => {
     setFilters(parseVenueFiltersFromSearchParams(new URLSearchParams(urlKey)))
   }, [urlKey])
 
@@ -72,15 +57,6 @@ export function VenuesPageClient({
     }, 500)
     return () => window.clearTimeout(timer)
   }, [filters, pathname, router])
-
-  const setViewAndStore = useCallback((next: ScheduleViewMode) => {
-    setView(next)
-    try {
-      localStorage.setItem(VIEW_STORAGE_KEY, next)
-    } catch {
-      /* ignore */
-    }
-  }, [])
 
   const regionVenues = useMemo(() => venues.filter(isVenueWithinMapRegion), [venues])
   const cities = useMemo(() => collectVenueCities(regionVenues), [regionVenues])
@@ -144,7 +120,7 @@ export function VenuesPageClient({
       >
         <h1 className="text-3xl font-bold text-zinc-50">Venues</h1>
         {hasRegionVenues ? (
-          <ScheduleViewToggle view={view} onChange={setViewAndStore} ariaLabel="Venues layout" />
+          <ScheduleViewToggle view={view} onChange={setView} ariaLabel="Venues layout" />
         ) : null}
       </div>
       {children}
