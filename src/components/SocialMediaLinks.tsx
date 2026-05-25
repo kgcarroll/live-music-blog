@@ -1,11 +1,33 @@
 import {FacebookIcon} from '@/components/FacebookIcon'
 import {SpotifyIcon} from '@/components/SpotifyIcon'
+import {absoluteSiteUrl} from '@/lib/siteUrl'
 
 export const socialIconLinkClass =
   'group inline-flex h-9 w-9 items-center justify-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50'
 
 export const socialIconClass =
   'text-zinc-400 transition-colors duration-200 group-hover:text-amber-200 group-focus-visible:text-amber-200'
+
+function IconRss({className}: {className?: string}) {
+  return (
+    <svg
+      className={className}
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 11a9 9 0 0 1 9 9" />
+      <path d="M4 4a16 16 0 0 1 16 16" />
+      <circle cx="5" cy="19" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
 
 function IconInstagram({className}: {className?: string}) {
   return (
@@ -40,8 +62,6 @@ export function SocialMediaLinks({
   spotify,
   className,
 }: SocialLinks & {className?: string}) {
-  if (!instagram && !facebook && !spotify) return null
-
   return (
     <div className={`flex shrink-0 items-center gap-2 md:gap-1 ${className ?? ''}`}>
       {instagram ? (
@@ -77,6 +97,9 @@ export function SocialMediaLinks({
           <SpotifyIcon className={`${socialIconClass} size-5`} />
         </a>
       ) : null}
+      <a href={absoluteSiteUrl('/feed.xml')} className={socialIconLinkClass} aria-label="RSS feed">
+        <IconRss className={socialIconClass} />
+      </a>
     </div>
   )
 }

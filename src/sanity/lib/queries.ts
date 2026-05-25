@@ -349,6 +349,21 @@ export const SITEMAP_ENTRIES = defineQuery(`{
   }
 }`)
 
+/** Recent editorial posts for the public RSS feed (newest first). */
+export const RSS_EDITORIAL_FEED = defineQuery(`
+  *[${editorialTypesFilter} && defined(publishedAt)] | order(publishedAt desc)[0...40] {
+    _id,
+    _type,
+    title,
+    "slug": slug.current,
+    publishedAt,
+    excerpt,
+    seoDescription,
+    ${authorEmbed},
+    ${imageProjection}
+  }
+`)
+
 export const SITE_SETTINGS = defineQuery(`
   coalesce(
     *[_type == "siteSettings" && _id == "${SITE_SETTINGS_DOCUMENT_ID}"][0],

@@ -6,6 +6,7 @@ import {VisualEditing} from 'next-sanity/visual-editing'
 import {SanityLive, sanityFetch} from '@/sanity/lib/live'
 import {DisableDraftMode} from '@/components/DisableDraftMode'
 import {VercelAnalytics} from '@/components/VercelAnalytics'
+import {absoluteSiteUrl} from '@/lib/siteUrl'
 import {urlForImage} from '@/sanity/lib/image'
 import {SITE_SETTINGS} from '@/sanity/lib/queries'
 import './globals.css'
@@ -38,6 +39,11 @@ export async function generateMetadata(): Promise<Metadata> {
       template: '%s | Live Music Blog',
     },
     description: 'Live music interviews, news, and reviews.',
+    alternates: {
+      types: {
+        'application/rss+xml': [{url: absoluteSiteUrl('/feed.xml'), title: 'RSS Feed'}],
+      },
+    },
     icons: {
       icon: [
         ...(icon32 ? [{url: icon32, sizes: '32x32', type: 'image/png'}] : []),
