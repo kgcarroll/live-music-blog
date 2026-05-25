@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic'
 
 import type {VenueMapPin} from '@/lib/ticketmaster'
+import type {VenueMapCenter} from '@/lib/venueFilters'
 import {VENUES_MAP_HEIGHT_CLASS} from '@/lib/venues'
 
 const VenuesMap = dynamic(
@@ -19,6 +20,26 @@ const VenuesMap = dynamic(
   },
 )
 
-export function VenuesMapLazy({venues}: {venues: VenueMapPin[]}) {
-  return <VenuesMap venues={venues} />
+export function VenuesMapLazy({
+  venues,
+  initialCenter,
+  syncCenter,
+  radiusMiles,
+  onMapCenterChange,
+}: {
+  venues: VenueMapPin[]
+  initialCenter: VenueMapCenter
+  syncCenter: VenueMapCenter
+  radiusMiles: number | null
+  onMapCenterChange: (center: VenueMapCenter) => void
+}) {
+  return (
+    <VenuesMap
+      venues={venues}
+      initialCenter={initialCenter}
+      syncCenter={syncCenter}
+      radiusMiles={radiusMiles}
+      onMapCenterChange={onMapCenterChange}
+    />
+  )
 }

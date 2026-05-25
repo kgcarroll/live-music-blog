@@ -1,12 +1,9 @@
 'use client'
 
-import {useMemo} from 'react'
-
 import {VenueCard} from '@/components/VenueCard'
 import {VenueListItem} from '@/components/VenueListItem'
 import type {ScheduleViewMode} from '@/components/ScheduleViewToggle'
 import type {VenueMapPin} from '@/lib/ticketmaster'
-import {isVenueWithinMapRegion} from '@/lib/venues'
 
 export function VenuesVenuesFeed({
   view,
@@ -17,16 +14,14 @@ export function VenuesVenuesFeed({
   venues: VenueMapPin[]
   emptyMessage: string
 }) {
-  const displayVenues = useMemo(() => venues.filter(isVenueWithinMapRegion), [venues])
-
-  if (!displayVenues.length) {
+  if (!venues.length) {
     return <p className="mt-8 text-sm text-zinc-500">{emptyMessage}</p>
   }
 
   if (view === 'grid') {
     return (
       <div className="mt-10 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
-        {displayVenues.map((venue) => (
+        {venues.map((venue) => (
           <VenueCard key={venue.id} venue={venue} />
         ))}
       </div>
@@ -45,7 +40,7 @@ export function VenuesVenuesFeed({
         <span className="text-right">View</span>
       </div>
       <ul className="list-none p-0">
-        {displayVenues.map((venue) => (
+        {venues.map((venue) => (
           <VenueListItem key={venue.id} venue={venue} />
         ))}
       </ul>

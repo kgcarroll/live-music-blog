@@ -123,6 +123,8 @@ export type VenueMapPin = {
   nextShowWhen: string | null
   nextShowUrl: string | null
   nextShowSlug: string | null
+  /** ISO timestamp for the earliest upcoming show (for map filters). */
+  nextShowAt: string | null
 }
 
 export type VenuesMapResult = {
@@ -268,6 +270,7 @@ function venueFromEmbedded(raw: TicketmasterVenueEmbedded): VenueMapPin | null {
     nextShowWhen: null,
     nextShowUrl: null,
     nextShowSlug: null,
+    nextShowAt: null,
   }
 
   if (!isVenueWithinMapRegion(pin)) return null
@@ -368,12 +371,32 @@ function considerEarlierNextShow(
   }
 }
 
+function scheduleEventIsoTimestamp(
+  event: Pick<ScheduleEvent, 'startDateTime' | 'localDate' | 'localTime'>,
+): string | null {
+  if (event.startDateTime) {
+    const time = Date.parse(event.startDateTime)
+    if (!Number.isNaN(time)) return new Date(time).toISOString()
+  }
+  if (event.localDate) {
+    const time = Date.parse(`${event.localDate}T${event.localTime ?? '00:00:00'}`)
+    if (!Number.isNaN(time)) return new Date(time).toISOString()
+  }
+  return null
+}
+
 function nextShowFieldsFromEvent(event: ScheduleEvent | undefined): Pick<
   VenueMapPin,
-  'nextShowName' | 'nextShowWhen' | 'nextShowUrl' | 'nextShowSlug'
+  'nextShowName' | 'nextShowWhen' | 'nextShowUrl' | 'nextShowSlug' | 'nextShowAt'
 > {
   if (!event) {
-    return {nextShowName: null, nextShowWhen: null, nextShowUrl: null, nextShowSlug: null}
+    return {
+      nextShowName: null,
+      nextShowWhen: null,
+      nextShowUrl: null,
+      nextShowSlug: null,
+      nextShowAt: null,
+    }
   }
   const when = formatScheduleEventWhen(event)
   return {
@@ -381,6 +404,7 @@ function nextShowFieldsFromEvent(event: ScheduleEvent | undefined): Pick<
     nextShowWhen: when.label,
     nextShowUrl: event.url,
     nextShowSlug: event.slug,
+    nextShowAt: scheduleEventIsoTimestamp(event),
   }
 }
 

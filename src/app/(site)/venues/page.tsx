@@ -1,5 +1,6 @@
 import type {Metadata} from 'next'
 import type {TypedObject} from '@portabletext/types'
+import {Suspense} from 'react'
 import {ArticleBody} from '@/components/ArticleBody'
 import {VenuesPageClient} from '@/components/VenuesPageClient'
 import {buildHubPageMetadata} from '@/lib/hubMetadata'
@@ -40,14 +41,16 @@ export default async function VenuesPage() {
   const mapEnabled = settings?.venuesMapEnabled !== false
 
   return (
-    <VenuesPageClient venues={venues} emptyMessage={emptyMessage} mapEnabled={mapEnabled}>
-      {intro?.length ? (
-        <div className="mt-6 max-w-2xl">
-          <ArticleBody value={intro} />
-        </div>
-      ) : (
-        <p className="mt-3 max-w-2xl text-zinc-400">{fallbackIntro}</p>
-      )}
-    </VenuesPageClient>
+    <Suspense fallback={null}>
+      <VenuesPageClient venues={venues} emptyMessage={emptyMessage} mapEnabled={mapEnabled}>
+        {intro?.length ? (
+          <div className="mt-6 max-w-2xl">
+            <ArticleBody value={intro} />
+          </div>
+        ) : (
+          <p className="mt-3 max-w-2xl text-zinc-400">{fallbackIntro}</p>
+        )}
+      </VenuesPageClient>
+    </Suspense>
   )
 }
