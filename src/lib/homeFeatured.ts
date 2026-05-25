@@ -3,7 +3,7 @@ import type {ScheduleEvent} from '@/lib/ticketmaster'
 import {editorialHref, eventHref} from '@/lib/paths'
 
 /** Editorial types that support homepage featuring. */
-export const EDITORIAL_TYPES = ['interview', 'news', 'photoPost', 'review'] as const
+export const EDITORIAL_TYPES = ['interview', 'news', 'review'] as const
 
 export type HomeFeaturedHero = EditorialCardItem & {
   excerpt?: string | null

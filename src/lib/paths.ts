@@ -1,4 +1,4 @@
-export type EditorialType = 'interview' | 'news' | 'photoPost' | 'review'
+export type EditorialType = 'interview' | 'news' | 'review'
 
 /** Display label for editorial document `_type` (cards, meta lines). Always uppercase. */
 export function editorialTypeLabel(type: string): string {
@@ -7,8 +7,6 @@ export function editorialTypeLabel(type: string): string {
       return 'INTERVIEW'
     case 'news':
       return 'NEWS'
-    case 'photoPost':
-      return 'PHOTOS'
     case 'review':
       return 'REVIEW'
     default:
@@ -22,8 +20,6 @@ export function editorialHref(type: EditorialType | string, slug: string) {
       return `/interviews/${slug}`
     case 'news':
       return `/news/${slug}`
-    case 'photoPost':
-      return `/photos/${slug}`
     case 'review':
       return `/reviews/${slug}`
     default:
@@ -39,7 +35,7 @@ export function tagHref(slug: string) {
   return `/tags/${slug}`
 }
 
-const ARTICLE_PATH = /^\/(interviews|news|photos|reviews)\/[^/]+$/
+const ARTICLE_PATH = /^\/(interviews|news|reviews)\/[^/]+$/
 
 /** True for individual editorial article URLs (not section hubs). */
 export function isArticlePath(pathname: string) {

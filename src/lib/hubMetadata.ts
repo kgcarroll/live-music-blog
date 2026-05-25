@@ -8,7 +8,6 @@ import {SITE_SETTINGS} from '@/sanity/lib/queries'
 type HubIntroKey =
   | 'interviewsHubPortable'
   | 'newsHubPortable'
-  | 'photosHubPortable'
   | 'reviewsHubPortable'
   | 'authorsHubPortable'
   | 'tagsHubPortable'

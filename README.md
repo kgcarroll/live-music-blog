@@ -1,6 +1,6 @@
 # Live Music Blog (Sanity + Next.js)
 
-Editorial site with **Visual Editing**: interviews, photos, and reviews at `/interviews/[slug]`, `/photos/[slug]`, `/reviews/[slug]`. Embedded Studio at **`/studio`**.
+Editorial site with **Visual Editing**: interviews, news, and reviews at `/interviews/[slug]`, `/news/[slug]`, `/reviews/[slug]`. Embedded Studio at **`/studio`**.
 
 ## Setup
 
@@ -21,8 +21,8 @@ Open [http://localhost:3000](http://localhost:3000) for the site and [http://loc
 |----------|---------|
 | `NEXT_PUBLIC_SANITY_PROJECT_ID` | Sanity project id |
 | `NEXT_PUBLIC_SANITY_DATASET` | Usually `production` |
-| `SANITY_API_READ_TOKEN` | Viewer token — drafts + `SanityLive` / Presentation |
-| `NEXT_PUBLIC_SITE_URL` | e.g. `http://localhost:3000` — used for Presentation + stega |
+| `SANITY_API_READ_TOKEN` | Viewer token ï¿½ drafts + `SanityLive` / Presentation |
+| `NEXT_PUBLIC_SITE_URL` | e.g. `http://localhost:3000` ï¿½ used for Presentation + stega |
 | `RESEND_API_KEY`, `CONTACT_TO_EMAIL` | Contact form at `/contact` via [Resend](https://resend.com) |
 | `RESEND_FROM` | Verified sender after domain setup (e.g. `Live Music Blog <hello@yourdomain.com>`); omit for Resend test mode |
 
@@ -46,6 +46,6 @@ CLI (optional): `npx sanity cors add http://localhost:3000 --credentials`
 
 ## Scripts
 
-- `npm run dev` — Next dev server (Turbopack)
-- `npm run build` — Production build
-- `npm run lint` — ESLint
+- `npm run dev` ï¿½ Next dev server (Turbopack)
+- `npm run build` ï¿½ Production build
+- `npm run lint` ï¿½ ESLint

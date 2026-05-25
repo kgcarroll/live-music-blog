@@ -2,7 +2,6 @@ import {author} from './author'
 import {instagramEmbed} from './instagramEmbed'
 import {interview} from './interview'
 import {news} from './news'
-import {photoPost} from './photoPost'
 import {newsletterIssue} from './newsletterIssue'
 import {review} from './review'
 import {siteSettings} from './siteSettings'
@@ -16,6 +15,5 @@ export const schemaTypes = [
   interview,
   news,
   newsletterIssue,
-  photoPost,
   review,
 ]

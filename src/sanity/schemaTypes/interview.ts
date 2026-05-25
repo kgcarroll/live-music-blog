@@ -1,7 +1,7 @@
 import {MicrophoneIcon} from '@sanity/icons'
 import {defineField, defineType} from 'sanity'
 import {
-  bodyField,
+  editorialBodyField,
   coverField,
   editorialDocumentGroups,
   featuredField,
@@ -58,7 +58,7 @@ export const interview = defineType({
     featureImageField(),
     coverField(),
     defineField({name: 'excerpt', type: 'text', title: 'Excerpt', group: 'content', rows: 3}),
-    bodyField(),
+    editorialBodyField(),
     tagsField(),
     ...seoFields(),
   ],

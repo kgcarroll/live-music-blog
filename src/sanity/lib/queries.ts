@@ -17,19 +17,6 @@ const sanityImageProjection = (field: string) => `${field}{
 const imageProjection = sanityImageProjection('coverImage')
 const featureImageProjection = sanityImageProjection('featureImage')
 
-const galleryImagesProjection = `gallery[]{
-  _key,
-  ...,
-  asset->{
-    _id,
-    url,
-    metadata {
-      lqip,
-      dimensions { width, height, aspectRatio }
-    }
-  }
-}`
-
 const authorEmbed = `author->{
   name,
   bio,
@@ -62,11 +49,9 @@ const editorialProjection = `{
   ${authorEmbed},
   ${tagsProjection},
   featured,
-  galleryNote,
   verdict,
   showDate,
   venueName,
-  ${galleryImagesProjection},
   ${imageProjection},
   seoTitle,
   seoDescription,
@@ -100,10 +85,28 @@ const editorialProjection = `{
         }
       },
       text[]{ ... }
+    },
+    _type == "photoGallery" => {
+      layout,
+      images[]{
+        _key,
+        alt,
+        caption,
+        hotspot,
+        crop,
+        asset->{
+          _id,
+          url,
+          metadata {
+            lqip,
+            dimensions { width, height, aspectRatio }
+          }
+        }
+      }
     }
   },
   "relatedArticles": *[
-    _type in ["interview","news","photoPost","review"] &&
+    _type in ["interview","news","review"] &&
     _id != ^._id &&
     defined(slug.current) &&
     count(^.tags[]._ref) > 0 &&
@@ -113,7 +116,7 @@ const editorialProjection = `{
   }
 }`
 
-const editorialTypesFilter = `_type in ["interview","news","photoPost","review"] && defined(slug.current)`
+const editorialTypesFilter = `_type in ["interview","news","review"] && defined(slug.current)`
 
 const homeHeroFields = `
   ${editorialCardListFields},
@@ -192,7 +195,7 @@ export const ALL_AUTHORS = defineQuery(`
     name,
     "slug": slug.current,
     "count": count(*[
-      _type in ["interview","news","photoPost","review"] &&
+      _type in ["interview","news","review"] &&
       defined(slug.current) &&
       author._ref == ^._id
     ])
@@ -200,7 +203,7 @@ export const ALL_AUTHORS = defineQuery(`
 `)
 
 export const POSTS_BY_AUTHOR_SLUG = defineQuery(`
-  *[_type in ["interview","news","photoPost","review"] && author->slug.current == $slug && defined(slug.current)]
+  *[_type in ["interview","news","review"] && author->slug.current == $slug && defined(slug.current)]
   | order(publishedAt desc) [$start...$end] {
     ${editorialCardListFields}
   }
@@ -212,7 +215,7 @@ export const ALL_TAGS = defineQuery(`
     title,
     "slug": slug.current,
     "count": count(*[
-      _type in ["interview","news","photoPost","review"] &&
+      _type in ["interview","news","review"] &&
       defined(slug.current) &&
       ^._id in tags[]._ref
     ])
@@ -236,7 +239,7 @@ export const TAG_SLUGS = defineQuery(`
 
 export const POSTS_BY_TAG_ID = defineQuery(`
   *[
-    _type in ["interview","news","photoPost","review"] &&
+    _type in ["interview","news","review"] &&
     defined(slug.current) &&
     $tagId in tags[]._ref
   ] | order(publishedAt desc) {
@@ -246,7 +249,7 @@ export const POSTS_BY_TAG_ID = defineQuery(`
 
 export const POSTS_BY_TAG_ID_PAGE = defineQuery(`
   *[
-    _type in ["interview","news","photoPost","review"] &&
+    _type in ["interview","news","review"] &&
     defined(slug.current) &&
     $tagId in tags[]._ref
   ] | order(publishedAt desc) [$start...$end] {
@@ -327,7 +330,7 @@ export const NEWSLETTER_ISSUE_BY_ID = defineQuery(`
 
 /** All public URLs for sitemap.xml (published perspective only). */
 export const SITEMAP_ENTRIES = defineQuery(`{
-  "editorial": *[_type in ["interview","news","photoPost","review"] && defined(slug.current)]{
+  "editorial": *[_type in ["interview","news","review"] && defined(slug.current)]{
     _type,
     "slug": slug.current,
     "lastModified": coalesce(_updatedAt, publishedAt)
@@ -365,7 +368,6 @@ export const SITE_SETTINGS = defineQuery(`
     contactPortable,
     interviewsHubPortable,
     newsHubPortable,
-    photosHubPortable,
     reviewsHubPortable,
     authorsHubPortable,
     tagsHubPortable,

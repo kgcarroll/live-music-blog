@@ -48,7 +48,7 @@ export default async function AuthorsPage() {
         </div>
       ) : (
         <p className="mt-3 max-w-2xl text-zinc-400">
-          Writers and contributors across interviews, news, photos, and reviews.
+          Writers and contributors across interviews, news, and reviews.
         </p>
       )}
 

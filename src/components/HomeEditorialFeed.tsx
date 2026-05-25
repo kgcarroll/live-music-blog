@@ -57,7 +57,7 @@ export function HomeEditorialFeed({
           <Link href="/studio" className="text-amber-300 underline">
             Sanity Studio
           </Link>{' '}
-          to add interviews, news, photos, or reviews.
+          to add interviews, news, or reviews.
         </p>
       ) : null}
       {hasMore ? (

@@ -30,7 +30,6 @@ const trailingNavLinks = [
 const reviewsSubmenuLinks = [
   {href: '/news', label: 'News'},
   {href: '/interviews', label: 'Interviews'},
-  {href: '/photos', label: 'Photos'},
 ] as const
 
 function isReviewsSectionActive(pathname: string) {

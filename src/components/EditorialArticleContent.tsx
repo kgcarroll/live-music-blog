@@ -5,7 +5,6 @@ import {ArticleBody} from '@/components/ArticleBody'
 import {EditorialCard, type EditorialAuthor, type EditorialCardItem} from '@/components/EditorialCard'
 import {JsonLd} from '@/components/JsonLd'
 import {buildEditorialJsonLd} from '@/lib/editorialJsonLd'
-import {PhotoGalleryMosaic, type PhotoGalleryImage} from '@/components/PhotoGalleryMosaic'
 import {authorHref, editorialHref, editorialTypeLabel, tagHref} from '@/lib/paths'
 import {formatReadingTime, plainTextFromPortableText, readingTimeMinutes} from '@/lib/readingTime'
 import {absoluteSiteUrl} from '@/lib/siteUrl'
@@ -20,8 +19,6 @@ export type EditorialDoc = {
   excerpt?: string | null
   author?: EditorialAuthor | null
   tags?: EditorialTag[] | null
-  galleryNote?: string | null
-  gallery?: PhotoGalleryImage[] | null
   verdict?: string | null
   coverImage?: {
     alt?: string
@@ -119,12 +116,7 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
         })
       : null
   const typeLabel = editorialTypeLabel(doc._type)
-  const readMinutes = readingTimeMinutes(
-    doc.body,
-    doc.excerpt,
-    doc.galleryNote,
-    doc.verdict,
-  )
+  const readMinutes = readingTimeMinutes(doc.body, doc.excerpt, doc.verdict)
   const readTimeLabel = readMinutes != null ? formatReadingTime(readMinutes) : null
 
   const dims = doc.coverImage?.asset?.metadata?.dimensions
@@ -190,7 +182,6 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
               )}
             </p>
             {articleShareUrl ? <ArticleShareLinks title={doc.title} url={articleShareUrl} /> : null}
-            {doc.galleryNote ? <p className="text-lg text-zinc-400">{doc.galleryNote}</p> : null}
             {doc.verdict ? (
               <p className="text-lg font-medium text-amber-200/90">{doc.verdict}</p>
             ) : null}
@@ -214,10 +205,6 @@ export function EditorialArticleContent({doc}: {doc: EditorialDoc}) {
             />
           </div>
         </div>
-      ) : null}
-
-      {doc._type === 'photoPost' && doc.gallery?.length ? (
-        <PhotoGalleryMosaic images={doc.gallery} />
       ) : null}
 
       {doc.excerpt ? (

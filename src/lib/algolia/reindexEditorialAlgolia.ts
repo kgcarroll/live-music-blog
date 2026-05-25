@@ -22,7 +22,7 @@ export type EditorialAlgoliaRecord = {
 
 const MAX_BODY_CHARS = 12000
 
-export const EDITORIAL_ALGOLIA_GROQ = `*[_type in ["interview","news","photoPost","review"] && defined(slug.current)]{
+export const EDITORIAL_ALGOLIA_GROQ = `*[_type in ["interview","news","review"] && defined(slug.current)]{
   "objectID": _id,
   "editorialType": _type,
   title,

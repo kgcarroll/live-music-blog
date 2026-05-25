@@ -46,7 +46,7 @@ export default async function TagsPage() {
         </div>
       ) : (
         <p className="mt-3 max-w-2xl text-zinc-400">
-          Browse interviews, news, photos, and reviews by topic.
+          Browse interviews, news, and reviews by topic.
         </p>
       )}
 

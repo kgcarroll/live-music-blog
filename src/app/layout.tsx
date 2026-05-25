@@ -37,7 +37,7 @@ export async function generateMetadata(): Promise<Metadata> {
       default: 'Live Music Blog',
       template: '%s | Live Music Blog',
     },
-    description: 'Live music interviews, photos, and reviews.',
+    description: 'Live music interviews, news, and reviews.',
     icons: {
       icon: [
         ...(icon32 ? [{url: icon32, sizes: '32x32', type: 'image/png'}] : []),

@@ -1,6 +1,7 @@
 import {PortableText, type PortableTextComponents} from '@portabletext/react'
 import type {TypedObject} from '@portabletext/types'
 import {Suspense} from 'react'
+import {PhotoGalleryInline} from '@/components/PhotoGalleryInline'
 import {SanityImage} from '@/components/SanityImage'
 import {InstagramEmbed} from '@/components/InstagramEmbed'
 import {SpotifyEmbedFromUrl} from '@/components/SpotifyEmbedFromUrl'
@@ -88,6 +89,15 @@ const articlePortableTextComponents: PortableTextComponents = {
         <div className="my-8">
           <InstagramEmbed embed={info} title={typeof embed.title === 'string' ? embed.title : null} />
         </div>
+      )
+    },
+    photoGallery: ({value: galleryValue}) => {
+      const gallery = galleryValue as {layout?: string; images?: unknown}
+      return (
+        <PhotoGalleryInline
+          layout={typeof gallery.layout === 'string' ? gallery.layout : 'mosaic'}
+          images={Array.isArray(gallery.images) ? gallery.images : []}
+        />
       )
     },
     imageTextRow: ({value: rowValue}) => {

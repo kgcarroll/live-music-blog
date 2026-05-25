@@ -214,12 +214,6 @@ export const siteSettings = defineType({
       {group: 'hubs'},
     ),
     pageIntroField(
-      'photosHubPortable',
-      'Photos Page Intro',
-      'Intro above the grid on /photos. Also used for SEO description when set.',
-      {group: 'hubs'},
-    ),
-    pageIntroField(
       'reviewsHubPortable',
       'Reviews Page Intro',
       'Intro above the grid on /reviews. Also used for SEO description when set.',

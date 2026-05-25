@@ -302,7 +302,7 @@ function DebouncedSearchBox() {
 
   return (
     <SearchBox
-      placeholder="Search interviews, news, photos, reviews…"
+      placeholder="Search interviews, news, reviews…"
       searchAsYouType
       queryHook={queryHook}
       submitIconComponent={SearchSubmitButtonContent}

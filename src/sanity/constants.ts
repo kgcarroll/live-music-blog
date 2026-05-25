@@ -1,7 +1,7 @@
 /** Fixed Sanity document id for the Site Settings singleton. */
 export const SITE_SETTINGS_DOCUMENT_ID = 'siteSettings'
 
-export const EDITORIAL_DOCUMENT_TYPES = ['interview', 'news', 'photoPost', 'review'] as const
+export const EDITORIAL_DOCUMENT_TYPES = ['interview', 'news', 'review'] as const
 
 /** Registered by sanity-plugin-media; managed inside the Media tool, not the desk. */
 export const MEDIA_TAG_DOCUMENT_TYPE = 'media.tag'

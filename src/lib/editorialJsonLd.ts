@@ -1,3 +1,4 @@
+import {galleryImagesFromPortableBody} from '@/lib/portableTextGallery'
 import {authorHref, editorialHref} from '@/lib/paths'
 import {normalizeDescription, plainTextFromPortableText} from '@/lib/portableTextPlain'
 import {absoluteSiteUrl, siteOrigin} from '@/lib/siteUrl'
@@ -130,14 +131,36 @@ export function buildEditorialJsonLd(doc: EditorialJsonLdDoc): Record<string, un
     }
   }
 
+  const galleryImages = galleryImagesFromPortableBody(doc.body)
+  const imageObjects: Record<string, unknown>[] = []
+
   if (imageUrl) {
-    payload.image = {
+    imageObjects.push({
       '@type': 'ImageObject',
       url: imageUrl,
       ...(dims?.width ? {width: dims.width} : {}),
       ...(dims?.height ? {height: dims.height} : {}),
       ...(cover?.alt ? {caption: cover.alt} : {}),
-    }
+    })
+  }
+
+  for (const img of galleryImages) {
+    if (!img.asset?._id) continue
+    const imgDims = img.asset.metadata?.dimensions
+    const galleryUrl = urlForImage(img as never).width(OG_IMAGE_WIDTH).fit('max').url()
+    imageObjects.push({
+      '@type': 'ImageObject',
+      url: galleryUrl,
+      ...(imgDims?.width ? {width: imgDims.width} : {}),
+      ...(imgDims?.height ? {height: imgDims.height} : {}),
+      ...(img.alt?.trim() ? {caption: img.alt.trim()} : {}),
+    })
+  }
+
+  if (imageObjects.length === 1) {
+    payload.image = imageObjects[0]
+  } else if (imageObjects.length > 1) {
+    payload.image = imageObjects
   }
 
   if (schemaType === 'Review') {
@@ -147,9 +170,15 @@ export function buildEditorialJsonLd(doc: EditorialJsonLdDoc): Record<string, un
       normalizeDescription(plainTextFromPortableText(doc.body))
     if (reviewBody) payload.reviewBody = reviewBody
 
+    const reviewImageUrl =
+      imageUrl ||
+      (galleryImages[0]?.asset?._id
+        ? urlForImage(galleryImages[0] as never).width(OG_IMAGE_WIDTH).fit('max').url()
+        : undefined)
+
     payload.itemReviewed = buildReviewItemReviewed(
       headline.trim(),
-      imageUrl,
+      reviewImageUrl,
       doc.showDate,
       doc.venueName,
       doc.publishedAt,

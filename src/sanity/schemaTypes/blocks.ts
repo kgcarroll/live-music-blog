@@ -2,7 +2,7 @@ import {defineArrayMember, defineField} from 'sanity'
 
 import {getSpotifyEmbed, spotifyEmbedTypeLabel} from '@/lib/spotify'
 
-/** Content + SEO tabs for interview, news, photoPost, and review documents. */
+/** Content + SEO tabs for interview, news, and review documents. */
 export const editorialDocumentGroups = [
   {name: 'content', title: 'Content', default: true},
   {name: 'seo', title: 'SEO'},
@@ -10,22 +10,56 @@ export const editorialDocumentGroups = [
 
 const bodyEmbedTypeNames = ['youtubeEmbed', 'spotifyEmbed', 'instagramEmbed'] as const
 
-export const bodyField = (group = 'content') =>
-  defineField({
-    name: 'body',
-    title: 'Body',
-    type: 'array',
-    group,
-    options: {
-      insertMenu: {
-        groups: [
-          {name: 'text', title: 'Text', of: ['block']},
-          {name: 'media', title: 'Media', of: ['image']},
-          {name: 'embeds', title: 'Embeds', of: [...bodyEmbedTypeNames]},
+const galleryImageMember = {
+  type: 'image',
+  options: {hotspot: true},
+  fields: [
+    defineField({name: 'alt', type: 'string', title: 'Alt Text', validation: (Rule) => Rule.required()}),
+    defineField({name: 'caption', type: 'string', title: 'Caption'}),
+  ],
+}
+
+const photoGalleryBlock = defineArrayMember({
+  name: 'photoGallery',
+  title: 'Photo Gallery',
+  type: 'object',
+  fields: [
+    defineField({
+      name: 'layout',
+      type: 'string',
+      title: 'Layout',
+      initialValue: 'mosaic',
+      options: {
+        layout: 'radio',
+        list: [
+          {title: 'Mosaic grid', value: 'mosaic'},
+          {title: 'Carousel', value: 'carousel'},
         ],
       },
+    }),
+    defineField({
+      name: 'images',
+      title: 'Images',
+      type: 'array',
+      options: {layout: 'grid'},
+      of: [galleryImageMember],
+    }),
+  ],
+  preview: {
+    select: {layout: 'layout', images: 'images'},
+    prepare({layout, images}: {layout?: string; images?: unknown}) {
+      const count = Array.isArray(images) ? images.length : 0
+      const layoutLabel = layout === 'carousel' ? 'carousel' : 'mosaic'
+      return {
+        title: 'Photo gallery',
+        subtitle: count ? `${count} image${count === 1 ? '' : 's'} · ${layoutLabel}` : 'Add images',
+      }
     },
-    of: [
+  },
+})
+
+const bodyPortableTextOf = (includePhotoGallery: boolean) =>
+  [
       {
         type: 'block',
         styles: [
@@ -91,7 +125,7 @@ export const bodyField = (group = 'content') =>
             title: 'title',
             subtitle: 'url',
           },
-          prepare({title, subtitle}) {
+          prepare({title, subtitle}: {title?: string; subtitle?: string}) {
             return {
               title: title || 'YouTube Video',
               subtitle,
@@ -124,7 +158,7 @@ export const bodyField = (group = 'content') =>
         ],
         preview: {
           select: {title: 'title', url: 'url'},
-          prepare({title, url}) {
+          prepare({title, url}: {title?: string; url?: string}) {
             const embed = getSpotifyEmbed(typeof url === 'string' ? url : undefined)
             return {
               title: title || 'Spotify',
@@ -138,7 +172,45 @@ export const bodyField = (group = 'content') =>
         },
       },
       defineArrayMember({type: 'instagramEmbed'}),
-    ],
+    ...(includePhotoGallery ? [photoGalleryBlock] : []),
+  ] as const
+
+/** Newsletter and other non-editorial portable text (no inline galleries). */
+export const bodyField = (group = 'content') =>
+  defineField({
+    name: 'body',
+    title: 'Body',
+    type: 'array',
+    group,
+    options: {
+      insertMenu: {
+        groups: [
+          {name: 'text', title: 'Text', of: ['block']},
+          {name: 'media', title: 'Media', of: ['image']},
+          {name: 'embeds', title: 'Embeds', of: [...bodyEmbedTypeNames]},
+        ],
+      },
+    },
+    of: [...bodyPortableTextOf(false)],
+  })
+
+/** Editorial article body with inline photo galleries (reviews, news, interviews). */
+export const editorialBodyField = (group = 'content') =>
+  defineField({
+    name: 'body',
+    title: 'Body',
+    type: 'array',
+    group,
+    options: {
+      insertMenu: {
+        groups: [
+          {name: 'text', title: 'Text', of: ['block']},
+          {name: 'media', title: 'Media', of: ['image', 'photoGallery']},
+          {name: 'embeds', title: 'Embeds', of: [...bodyEmbedTypeNames]},
+        ],
+      },
+    },
+    of: [...bodyPortableTextOf(true)],
   })
 
 export const coverField = (group = 'content') =>
