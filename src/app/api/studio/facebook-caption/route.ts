@@ -19,6 +19,7 @@ type Body = {
   documentId?: string
   regenerate?: boolean
   previousCaption?: string
+  additionalPrompt?: string
   /** Save edited caption text without calling OpenAI. */
   save?: boolean
   caption?: string
@@ -108,9 +109,8 @@ export async function POST(request: Request) {
     const {caption, model} = await generateFacebookCaptionWithOpenAI(article, {
       regenerate,
       previousCaption: body.previousCaption,
+      additionalPrompt: body.additionalPrompt,
     })
-
-    await saveStoredFacebookCaption(documentId, caption)
 
     return NextResponse.json({
       ok: true,

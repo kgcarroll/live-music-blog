@@ -31,7 +31,7 @@ async function persistCaption(documentId: string, caption: string): Promise<void
 
 async function fetchCaption(
   documentId: string,
-  options?: {regenerate?: boolean; previousCaption?: string},
+  options?: {regenerate?: boolean; previousCaption?: string; additionalPrompt?: string},
 ): Promise<CaptionResponse> {
   const response = await fetch(`${studioApiOrigin()}/api/studio/facebook-caption`, {
     method: 'POST',
@@ -42,6 +42,7 @@ async function fetchCaption(
       documentId,
       regenerate: options?.regenerate === true,
       previousCaption: options?.previousCaption?.trim() || undefined,
+      additionalPrompt: options?.additionalPrompt?.trim() || undefined,
     }),
   })
   const data = (await response.json().catch(() => ({}))) as CaptionResponse
@@ -71,8 +72,11 @@ export function FacebookCaptionDialog({
   const [error, setError] = useState<string | null>(null)
   const [copyStatus, setCopyStatus] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [additionalPrompt, setAdditionalPrompt] = useState('')
+  const additionalPromptRef = useRef(additionalPrompt)
   const captionRef = useRef(caption)
   captionRef.current = caption
+  additionalPromptRef.current = additionalPrompt
 
   const persistCurrentCaption = useCallback(async () => {
     const text = captionRef.current.trim()
@@ -99,14 +103,18 @@ export function FacebookCaptionDialog({
     }
   }, [onClose, persistCurrentCaption])
 
-  const loadCaption = useCallback(async (regenerate = false) => {
+  const loadCaption = useCallback(async (regenerate = false, extraPrompt?: string) => {
     setLoading(true)
     setIsRegenerating(regenerate)
     setError(null)
     setCopyStatus(null)
     const previousCaption = regenerate ? captionRef.current : undefined
     try {
-      const data = await fetchCaption(documentId, {regenerate, previousCaption})
+      const data = await fetchCaption(documentId, {
+        regenerate,
+        previousCaption,
+        additionalPrompt: regenerate ? extraPrompt : undefined,
+      })
       setCaption(data.caption ?? '')
       setArticleUrl(data.articleUrl ?? '')
       setTitle(data.title ?? '')
@@ -206,6 +214,18 @@ export function FacebookCaptionDialog({
               />
             </Stack>
 
+            <Stack space={2}>
+              <Text size={1} muted>
+                Additional prompt (used on Regenerate only)
+              </Text>
+              <TextArea
+                value={additionalPrompt}
+                onChange={(event) => setAdditionalPrompt(event.currentTarget.value)}
+                rows={2}
+                placeholder="Optional: e.g. emphasize the venue, remove adjectives, mention it’s a benefit show…"
+              />
+            </Stack>
+
             <Flex gap={2} wrap="wrap">
               <Button
                 icon={CopyIcon}
@@ -232,7 +252,7 @@ export function FacebookCaptionDialog({
                 icon={ResetIcon}
                 mode="ghost"
                 text="Regenerate"
-                onClick={() => void loadCaption(true)}
+                onClick={() => void loadCaption(true, additionalPromptRef.current)}
                 disabled={loading}
               />
             </Flex>

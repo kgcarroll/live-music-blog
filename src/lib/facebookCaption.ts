@@ -88,6 +88,8 @@ export type GenerateFacebookCaptionOptions = {
   /** When true, ask for a fresh variant and avoid repeating previousCaption. */
   regenerate?: boolean
   previousCaption?: string | null
+  /** Extra editor-provided instructions for regenerate. */
+  additionalPrompt?: string | null
 }
 
 export async function generateFacebookCaptionWithOpenAI(
@@ -103,6 +105,7 @@ export async function generateFacebookCaptionWithOpenAI(
   const context = buildFacebookCaptionContext(article)
   const regenerate = options.regenerate === true
   const previous = options.previousCaption?.trim()
+  const additionalPrompt = options.additionalPrompt?.trim()
 
   const userPrompt = regenerate
     ? [
@@ -113,6 +116,7 @@ export async function generateFacebookCaptionWithOpenAI(
             previous +
             '\n---'
           : '',
+        additionalPrompt ? `Additional instructions:\n---\n${additionalPrompt}\n---` : '',
         context,
       ]
         .filter(Boolean)

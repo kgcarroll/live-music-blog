@@ -19,14 +19,25 @@ export function publishedDocumentId(documentId: string): string {
   return documentId.replace(/^drafts\./, '')
 }
 
-export async function fetchStoredFacebookCaption(documentId: string): Promise<string | null> {
+async function fetchCaptionOnDocument(id: string): Promise<string | null> {
   const stored = await client.fetch<string | null>(
     `*[_id == $id][0].facebookCaption`,
-    {id: documentId},
+    {id},
     {useCdn: false},
   )
   const text = stored?.trim()
   return text || null
+}
+
+/** Prefer draft caption (Studio edits) over published. */
+export async function fetchStoredFacebookCaption(documentId: string): Promise<string | null> {
+  const publishedId = publishedDocumentId(documentId)
+  const draftId = documentId.startsWith('drafts.') ? documentId : `drafts.${publishedId}`
+
+  const fromDraft = await fetchCaptionOnDocument(draftId)
+  if (fromDraft) return fromDraft
+
+  return fetchCaptionOnDocument(publishedId)
 }
 
 export async function saveStoredFacebookCaption(documentId: string, caption: string): Promise<void> {
