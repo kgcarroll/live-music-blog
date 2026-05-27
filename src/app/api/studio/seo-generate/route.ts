@@ -10,6 +10,16 @@ import {siteOrigin} from '@/lib/siteUrl'
 
 type Body = {
   documentId?: string
+  draft?: {
+    _type?: string
+    title?: string
+    slug?: unknown
+    excerpt?: string
+    verdict?: unknown
+    showDate?: unknown
+    venueName?: unknown
+    body?: unknown
+  }
   regenerate?: boolean
   previousSeoTitle?: string
   previousSeoDescription?: string
@@ -42,23 +52,37 @@ export async function POST(request: Request) {
   }
 
   const documentId = String(body.documentId || '').trim()
-  if (!documentId) {
-    return NextResponse.json({error: 'documentId is required'}, {status: 400})
-  }
-
   const regenerate = body.regenerate === true
   const additionalPrompt = String(body.additionalPrompt ?? '').trim()
 
   try {
-    const raw = await fetchSeoGenerationArticle(documentId)
-    const validated = validateSeoGenerationArticle(raw)
+    const raw = documentId ? await fetchSeoGenerationArticle(documentId) : null
+
+    const draftArticle =
+      body.draft && typeof body.draft === 'object'
+        ? ({
+            _type: body.draft._type,
+            title: body.draft.title,
+            slug: (body.draft as any).slug,
+            excerpt: body.draft.excerpt,
+            seoTitle: undefined,
+            seoDescription: undefined,
+            verdict: (body.draft as any).verdict,
+            showDate: (body.draft as any).showDate,
+            venueName: (body.draft as any).venueName,
+            body: body.draft.body,
+          } as any)
+        : null
+
+    const validated = validateSeoGenerationArticle(draftArticle ?? raw)
     if (!validated.ok) {
       return NextResponse.json({error: validated.error}, {status: 400})
     }
 
     const {article} = validated
 
-    if (!regenerate && !additionalPrompt && hasStoredSeoMetadata(article)) {
+    // Only offer cached values if we're reading from the stored document.
+    if (!draftArticle && !regenerate && !additionalPrompt && hasStoredSeoMetadata(article)) {
       return NextResponse.json({
         ok: true,
         seoTitle: article.seoTitle!.trim(),

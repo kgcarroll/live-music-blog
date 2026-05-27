@@ -12,6 +12,13 @@ import {siteOrigin} from '@/lib/siteUrl'
 type Body = {
   documentId?: string
   additionalPrompt?: string
+  draft?: {
+    _type?: string
+    title?: string
+    excerpt?: string
+    body?: unknown
+    tags?: unknown
+  }
 }
 
 function isSameOriginRequest(request: Request): boolean {
@@ -40,16 +47,22 @@ export async function POST(request: Request) {
   }
 
   const documentId = String(body.documentId ?? '').trim()
-  if (!documentId) {
-    return NextResponse.json({error: 'documentId is required'}, {status: 400})
-  }
 
   try {
-    const [rawArticle, tags] = await Promise.all([
-      fetchTagSuggestionArticle(documentId),
-      fetchAllTags(),
-    ])
-    const validated = validateTagSuggestionArticle(rawArticle)
+    const [rawArticle, tags] = await Promise.all([documentId ? fetchTagSuggestionArticle(documentId) : null, fetchAllTags()])
+
+    const draftArticle =
+      body.draft && typeof body.draft === 'object'
+        ? ({
+            _type: body.draft._type,
+            title: body.draft.title,
+            excerpt: body.draft.excerpt,
+            body: body.draft.body,
+            tags: body.draft.tags,
+          } as any)
+        : null
+
+    const validated = validateTagSuggestionArticle(draftArticle ?? rawArticle)
     if (!validated.ok) {
       return NextResponse.json({error: validated.error}, {status: 400})
     }
@@ -73,11 +86,19 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .map((t) => ({_id: t!._id, title: t!.title, slug: t!.slug ?? null}))
 
-    await saveStoredTagSuggestions(documentId, {
-      tags: suggestedTags,
-      newTags,
-      model,
-    })
+    // Persist suggestions on the document when possible. For brand-new docs, Studio may
+    // not have created a readable draft yet, so persist is best-effort.
+    if (documentId) {
+      try {
+        await saveStoredTagSuggestions(documentId, {
+          tags: suggestedTags,
+          newTags,
+          model,
+        })
+      } catch {
+        // Ignore persistence failure; returning suggestions is still useful.
+      }
+    }
 
     return NextResponse.json({
       ok: true,

@@ -26,6 +26,16 @@ async function fetchSeoMetadata(
     previousSeoTitle?: string
     previousSeoDescription?: string
     additionalPrompt?: string
+    draft?: {
+      _type?: string
+      title?: string
+      slug?: unknown
+      excerpt?: string
+      verdict?: unknown
+      showDate?: unknown
+      venueName?: unknown
+      body?: unknown
+    }
   },
 ): Promise<SeoResponse> {
   const response = await fetch(`${studioApiOrigin()}/api/studio/seo-generate`, {
@@ -35,6 +45,7 @@ async function fetchSeoMetadata(
     cache: 'no-store',
     body: JSON.stringify({
       documentId,
+      draft: options?.draft,
       regenerate: options?.regenerate === true,
       previousSeoTitle: options?.previousSeoTitle?.trim() || undefined,
       previousSeoDescription: options?.previousSeoDescription?.trim() || undefined,
@@ -54,7 +65,8 @@ function charCount(text: string | undefined): number {
 
 export function SeoGeneratorPanel() {
   const getFormValue = useGetFormValue()
-  const documentId = getFormValue(['_id']) as string | undefined
+  // `useFormValue` updates as the form initializes/auto-saves drafts.
+  const documentId = useFormValue(['_id']) as string | undefined
   const documentType = getFormValue(['_type']) as string | undefined
   const currentSeoTitle = useFormValue(['seoTitle']) as string | undefined
   const currentSeoDescription = useFormValue(['seoDescription']) as string | undefined
@@ -83,11 +95,6 @@ export function SeoGeneratorPanel() {
 
   const runGenerate = useCallback(
     async (regenerate: boolean) => {
-      if (!documentId) {
-        setError('Document id is missing.')
-        return
-      }
-
       const hasExisting = Boolean(currentSeoTitle?.trim() || currentSeoDescription?.trim())
       if (!regenerate && hasExisting) {
         const ok = window.confirm(
@@ -102,11 +109,23 @@ export function SeoGeneratorPanel() {
       setStatus(null)
 
       try {
-        const data = await fetchSeoMetadata(documentId, {
+        const draft = {
+          _type: getFormValue(['_type']) as string | undefined,
+          title: getFormValue(['title']) as string | undefined,
+          slug: getFormValue(['slug']),
+          excerpt: getFormValue(['excerpt']) as string | undefined,
+          verdict: getFormValue(['verdict']),
+          showDate: getFormValue(['showDate']),
+          venueName: getFormValue(['venueName']),
+          body: getFormValue(['body']),
+        }
+
+        const data = await fetchSeoMetadata(documentId ?? '', {
           regenerate,
           previousSeoTitle: regenerate ? currentSeoTitle : undefined,
           previousSeoDescription: regenerate ? currentSeoDescription : undefined,
           additionalPrompt: additionalPromptRef.current,
+          draft,
         })
 
         const seoTitle = data.seoTitle?.trim() ?? ''
@@ -130,10 +149,10 @@ export function SeoGeneratorPanel() {
         setIsRegenerating(false)
       }
     },
-    [applySeo, currentSeoDescription, currentSeoTitle, documentId],
+    [applySeo, currentSeoDescription, currentSeoTitle, getFormValue],
   )
 
-  const disabled = loading || !documentId || !documentType
+  const disabled = loading || !documentType
 
   return (
     <Box paddingBottom={4}>

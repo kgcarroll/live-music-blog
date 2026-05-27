@@ -55,6 +55,27 @@ async function fetchSuggestions(documentId: string, additionalPrompt?: string): 
   if (!response.ok) throw new Error(data.error || `Tag suggestion failed (${response.status})`)
   return data
 }
+async function fetchSuggestionsFromDraft(
+  draft: {_type?: string; title?: string; excerpt?: string; body?: unknown; tags?: unknown},
+  additionalPrompt?: string,
+  documentId?: string,
+): Promise<TagSuggestResponse> {
+  const response = await fetch(`${studioApiOrigin()}/api/studio/tag-suggest`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    credentials: 'same-origin',
+    cache: 'no-store',
+    body: JSON.stringify({
+      // Always include the on-screen draft so this works even before the doc is readable by id.
+      draft,
+      documentId: documentId?.trim() || undefined,
+      additionalPrompt: additionalPrompt?.trim() || undefined,
+    }),
+  })
+  const data = (await response.json().catch(() => ({}))) as TagSuggestResponse
+  if (!response.ok) throw new Error(data.error || `Tag suggestion failed (${response.status})`)
+  return data
+}
 
 function tagTitleKey(title: string): string {
   return title.trim().toLowerCase()
@@ -170,7 +191,8 @@ export function TagsWithSuggestionsInput(props: ArrayOfObjectsInputProps) {
   const getFormValue = useGetFormValue()
   const client = useClient({apiVersion})
   const documentType = getFormValue(['_type']) as string | undefined
-  const documentId = getFormValue(['_id']) as string | undefined
+  // `useFormValue` updates as the form initializes/auto-saves drafts.
+  const documentId = useFormValue(['_id']) as string | undefined
   const storedRaw = useFormValue(['tagSuggestions'])
 
   const tagsValue = useFormValue(props.path) as Reference[] | undefined
@@ -267,14 +289,20 @@ export function TagsWithSuggestionsInput(props: ArrayOfObjectsInputProps) {
   }, [applyStored, client, currentIds, show, storedRaw])
 
   const run = useCallback(async () => {
-    if (!documentId) {
-      setError('Document id is missing.')
-      return
-    }
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchSuggestions(documentId, additionalPromptRef.current)
+      const draft = {
+        _type: getFormValue(['_type']) as string | undefined,
+        title: getFormValue(['title']) as string | undefined,
+        excerpt: getFormValue(['excerpt']) as string | undefined,
+        body: getFormValue(['body']),
+        tags: getFormValue(['tags']),
+      }
+
+      // Always prefer the live draft values so users don't need a manual save.
+      // If the document is already readable by id, the API can still persist suggestions.
+      const data = await fetchSuggestionsFromDraft(draft, additionalPromptRef.current, documentId)
       const stored = {
         tags: (data.tags ?? []).filter((t) => t._id && t.title),
         newTags: uniqStrings((data.newTags ?? []).filter(Boolean)),
@@ -286,7 +314,7 @@ export function TagsWithSuggestionsInput(props: ArrayOfObjectsInputProps) {
     } finally {
       setLoading(false)
     }
-  }, [applyStored, documentId])
+  }, [applyStored, documentId, getFormValue])
 
   const applyTag = useCallback(
     (tagId: string) => {
@@ -338,7 +366,7 @@ export function TagsWithSuggestionsInput(props: ArrayOfObjectsInputProps) {
                 text={loading ? 'Suggesting…' : 'Suggest tags'}
                 tone="primary"
                 mode="ghost"
-                disabled={loading || !documentId}
+                disabled={loading}
                 onClick={() => void run()}
               />
               {loading ? (
