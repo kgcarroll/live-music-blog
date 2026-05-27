@@ -1,5 +1,6 @@
 import {defineArrayMember, defineField} from 'sanity'
 
+import {EditorialSeoTitleField} from '@/sanity/components/EditorialSeoTitleField'
 import {getSpotifyEmbed, spotifyEmbedTypeLabel} from '@/lib/spotify'
 
 /** Content + SEO tabs for interview, news, and review documents. */
@@ -289,6 +290,9 @@ export const seoFields = () => [
     title: 'SEO Title',
     group: 'seo',
     description: 'Optional. Overrides the page title in search results and social previews.',
+    components: {
+      field: EditorialSeoTitleField,
+    },
   }),
   defineField({
     name: 'seoDescription',

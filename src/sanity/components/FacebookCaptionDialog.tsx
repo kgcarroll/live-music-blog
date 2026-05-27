@@ -1,6 +1,6 @@
 'use client'
 
-import {CopyIcon, ResetIcon} from '@sanity/icons'
+import {CopyIcon, LaunchIcon, ResetIcon} from '@sanity/icons'
 import {Box, Button, Card, Flex, Spinner, Stack, Text, TextArea} from '@sanity/ui'
 import {useCallback, useEffect, useRef, useState} from 'react'
 
@@ -157,15 +157,14 @@ export function FacebookCaptionDialog({
           <Text size={1} muted>
             Generate a short post, edit if needed, then copy and paste onto your Facebook Page. Add
             the cover image manually in Facebook. Edits are saved when you close. Generate and
-            Regenerate use OpenAI credits.
-          </Text>
-          <Text size={1}>
+            Regenerate use OpenAI credits.{' '}
             <a
               href="https://platform.openai.com/settings/organization/usage"
               target="_blank"
               rel="noopener noreferrer"
+              style={{display: 'inline-flex', alignItems: 'center', gap: 4}}
             >
-              OpenAI usage
+              OpenAI Usage <LaunchIcon />
             </a>
           </Text>
         </Stack>
