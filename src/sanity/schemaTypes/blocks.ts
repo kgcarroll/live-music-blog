@@ -1,6 +1,7 @@
 import {defineArrayMember, defineField} from 'sanity'
 
 import {EditorialSeoTitleField} from '@/sanity/components/EditorialSeoTitleField'
+import {AiAltTextInput} from '@/sanity/components/AiAltTextInput'
 import {getSpotifyEmbed, spotifyEmbedTypeLabel} from '@/lib/spotify'
 
 /** Content + SEO tabs for interview, news, and review documents. */
@@ -15,7 +16,13 @@ const galleryImageMember = {
   type: 'image',
   options: {hotspot: true},
   fields: [
-    defineField({name: 'alt', type: 'string', title: 'Alt Text', validation: (Rule) => Rule.required()}),
+    defineField({
+      name: 'alt',
+      type: 'string',
+      title: 'Alt Text',
+      validation: (Rule) => Rule.required(),
+      components: {input: AiAltTextInput},
+    }),
     defineField({name: 'caption', type: 'string', title: 'Caption'}),
   ],
 }
@@ -85,7 +92,13 @@ const bodyPortableTextOf = (includePhotoGallery: boolean) =>
         type: 'image',
         options: {hotspot: true},
         fields: [
-          defineField({name: 'alt', type: 'string', title: 'Alt Text', validation: (Rule) => Rule.required()}),
+          defineField({
+            name: 'alt',
+            type: 'string',
+            title: 'Alt Text',
+            validation: (Rule) => Rule.required(),
+            components: {input: AiAltTextInput},
+          }),
           defineField({name: 'caption', type: 'string', title: 'Caption'}),
           defineField({
             name: 'layout',
@@ -221,7 +234,7 @@ export const coverField = (group = 'content') =>
     type: 'image',
     group,
     options: {hotspot: true},
-    fields: [defineField({name: 'alt', type: 'string', title: 'Alt Text'})],
+    fields: [defineField({name: 'alt', type: 'string', title: 'Alt Text', components: {input: AiAltTextInput}})],
   })
 
 /** Wide hero image for the homepage carousel; falls back to cover image when empty. */
@@ -245,7 +258,7 @@ export const featureImageField = (group = 'content') =>
       'Homepage Carousel only. Use a 16:9 image and set the hotspot in Studio to frame the subject. Leave empty to use the Cover Image.',
     type: 'image',
     options: {hotspot: true},
-    fields: [defineField({name: 'alt', type: 'string', title: 'Alt Text'})],
+    fields: [defineField({name: 'alt', type: 'string', title: 'Alt Text', components: {input: AiAltTextInput}})],
   })
 
 /** Simple rich text for static pages and section hub intros (Site Settings). */
