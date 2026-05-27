@@ -8,6 +8,15 @@
 
 :root {
   color-scheme: dark;
+  --site-header-height: 5.75rem;
+  --site-sticky-top: calc(5.75rem + 0.75rem);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --site-header-height: 8.5rem;
+    --site-sticky-top: calc(8.5rem + 0.75rem);
+  }
 }
 
 body {

@@ -7,7 +7,7 @@ import type {HeaderLogo} from '@/lib/resolveHeaderLogo'
 import {ReadProgressBar} from '@/components/ReadProgressBar'
 import {SiteLogoMark} from '@/components/SiteLogoMark'
 import {SocialMediaLinks, socialIconClass, socialIconLinkClass} from '@/components/SocialMediaLinks'
-import {useEffect, useRef, useState, useSyncExternalStore} from 'react'
+import {useCallback, useEffect, useRef, useState, useSyncExternalStore} from 'react'
 import {createPortal} from 'react-dom'
 
 const aboutLinks = [
@@ -68,6 +68,8 @@ const navLinkActiveClass = '!opacity-100 text-amber-200'
 const MOBILE_NAV_MQ = '(max-width: 767px)'
 const LOGO_HIDE_SCROLL_Y = 140
 const LOGO_SHOW_SCROLL_Y = 48
+/** Extra space below measured header height for sticky panels (e.g. venue map). */
+const STICKY_TOP_BUFFER_PX = 12
 
 function subscribeMobileNavMq(onChange: () => void) {
   if (typeof window === 'undefined') return () => {}
@@ -414,8 +416,20 @@ export function SiteHeader({
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [showLogo, setShowLogo] = useState(true)
+  const headerRef = useRef<HTMLElement>(null)
   const lastScrollY = useRef(0)
   const showLogoRef = useRef(true)
+
+  const syncSiteHeaderMetrics = useCallback(() => {
+    const el = headerRef.current
+    if (!el) return
+    const height = el.getBoundingClientRect().height
+    document.documentElement.style.setProperty('--site-header-height', `${height}px`)
+    document.documentElement.style.setProperty(
+      '--site-sticky-top',
+      `${height + STICKY_TOP_BUFFER_PX}px`,
+    )
+  }, [])
   const pathname = usePathname()
   const isMobileLayout = useSyncExternalStore(
     subscribeMobileNavMq,
@@ -426,6 +440,20 @@ export function SiteHeader({
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    syncSiteHeaderMetrics()
+    const el = headerRef.current
+    if (!el) return
+
+    const ro = new ResizeObserver(syncSiteHeaderMetrics)
+    ro.observe(el)
+    window.addEventListener('resize', syncSiteHeaderMetrics)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', syncSiteHeaderMetrics)
+    }
+  }, [syncSiteHeaderMetrics, showLogo, open, isMobileLayout])
 
   useEffect(() => {
     lastScrollY.current = window.scrollY
@@ -449,11 +477,12 @@ export function SiteHeader({
       }
 
       lastScrollY.current = y
+      syncSiteHeaderMetrics()
     }
 
     window.addEventListener('scroll', onScroll, {passive: true})
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  }, [syncSiteHeaderMetrics])
 
   useEffect(() => {
     setOpen(false)
@@ -554,7 +583,10 @@ export function SiteHeader({
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur">
+      <header
+        ref={headerRef}
+        className="fixed inset-x-0 top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur"
+      >
         <div className="mx-auto max-w-6xl px-4">
           <div
             className={`flex flex-col overflow-hidden transition-[max-height,padding] duration-300 ease-out md:overflow-visible md:items-center md:gap-2 ${

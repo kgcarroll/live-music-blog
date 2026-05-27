@@ -7,6 +7,12 @@ export const VENUES_MAP_ZOOM = 11
 /** Map panel height on /venues (shorter on mobile so the page scrolls past it easily). */
 export const VENUES_MAP_HEIGHT_CLASS = 'h-[min(36vh,260px)] sm:h-[min(52vh,400px)]'
 
+/** Zoom for a single venue on /venues/[slug]. */
+export const VENUE_DETAIL_MAP_ZOOM = 14
+
+/** Map on venue detail (right of copy on large screens; above the events grid). */
+export const VENUE_DETAIL_MAP_HEIGHT_CLASS = 'h-[min(36vh,280px)] lg:h-[min(48vh,420px)]'
+
 /**
  * Rough tri-state box around Philly. Drops bad Ticketmaster coordinates (e.g. Europe)
  * that still appear on DMA-tagged events.

@@ -50,7 +50,7 @@ export function VenueUpcomingEvents({
 
   return (
     <>
-      <div className="mt-6 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+      <div className="mt-6 grid w-full grid-cols-1 items-stretch gap-3 sm:grid-cols-2 sm:gap-4 md:gap-6 lg:grid-cols-3">
         {events.map((event) => (
           <ScheduleEventCard key={event.id} event={event} />
         ))}
