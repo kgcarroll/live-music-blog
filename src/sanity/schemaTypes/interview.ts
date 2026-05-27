@@ -5,6 +5,7 @@ import {
   coverField,
   editorialDocumentGroups,
   facebookCaptionField,
+  tagSuggestionsField,
   featuredField,
   featureImageField,
   seoFields,
@@ -62,6 +63,7 @@ export const interview = defineType({
     editorialBodyField(),
     tagsField(),
     facebookCaptionField(),
+    tagSuggestionsField(),
     ...seoFields(),
   ],
   preview: {

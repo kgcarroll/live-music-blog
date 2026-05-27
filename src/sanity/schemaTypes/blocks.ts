@@ -2,6 +2,7 @@ import {defineArrayMember, defineField} from 'sanity'
 
 import {EditorialSeoTitleField} from '@/sanity/components/EditorialSeoTitleField'
 import {AiAltTextInput} from '@/sanity/components/AiAltTextInput'
+import {TagsWithSuggestionsInput} from '@/sanity/components/TagsWithSuggestionsInput'
 import {getSpotifyEmbed, spotifyEmbedTypeLabel} from '@/lib/spotify'
 
 /** Content + SEO tabs for interview, news, and review documents. */
@@ -285,6 +286,9 @@ export const tagsField = (group = 'content') =>
     type: 'array',
     group,
     of: [defineArrayMember({type: 'reference', to: [{type: 'tag'}]})],
+    components: {
+      input: TagsWithSuggestionsInput,
+    },
   })
 
 /** Stored by the Facebook Caption document action (hidden in the editor; not a second input). */
@@ -294,6 +298,37 @@ export const facebookCaptionField = () =>
     title: 'Facebook Caption',
     type: 'text',
     hidden: true,
+  })
+
+/** Stored by the tag suggestion panel (hidden; powers persisted suggestions on reopen). */
+export const tagSuggestionsField = () =>
+  defineField({
+    name: 'tagSuggestions',
+    title: 'Tag suggestions',
+    type: 'object',
+    hidden: true,
+    fields: [
+      defineField({
+        name: 'tags',
+        type: 'array',
+        of: [
+          defineArrayMember({
+            type: 'object',
+            fields: [
+              defineField({name: 'tagId', type: 'string'}),
+              defineField({name: 'title', type: 'string'}),
+              defineField({name: 'slug', type: 'string'}),
+            ],
+          }),
+        ],
+      }),
+      defineField({
+        name: 'newTags',
+        type: 'array',
+        of: [defineArrayMember({type: 'string'})],
+      }),
+      defineField({name: 'model', type: 'string'}),
+    ],
   })
 
 export const seoFields = () => [

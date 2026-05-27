@@ -27,6 +27,20 @@ export const tag = defineType({
       type: 'array',
       of: [defineArrayMember({type: 'block'})],
     }),
+    defineField({
+      name: 'linkToArticleId',
+      title: 'Link to article (id)',
+      type: 'string',
+      hidden: true,
+      readOnly: true,
+    }),
+    defineField({
+      name: 'linkToArticleType',
+      title: 'Link to article (type)',
+      type: 'string',
+      hidden: true,
+      readOnly: true,
+    }),
   ],
   preview: {
     select: {title: 'title', subtitle: 'slug.current'},
