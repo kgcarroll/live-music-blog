@@ -351,7 +351,7 @@ export const SITEMAP_ENTRIES = defineQuery(`{
 
 /** Recent editorial posts for the public RSS feed (newest first). */
 export const RSS_EDITORIAL_FEED = defineQuery(`
-  *[${editorialTypesFilter} && defined(publishedAt)] | order(publishedAt desc)[0...40] {
+  *[${editorialTypesFilter} && defined(publishedAt)] | order(publishedAt desc)[0...200] {
     _id,
     _type,
     title,

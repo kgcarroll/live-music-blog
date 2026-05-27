@@ -1,7 +1,8 @@
 import {EnvelopeIcon} from '@sanity/icons'
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
-import {bodyField, coverField, seoFields} from './blocks'
+import {NewsletterIssueBodyInput} from '@/sanity/components/NewsletterIssueBodyInput'
+import {coverField, seoFields} from './blocks'
 
 export const newsletterIssue = defineType({
   name: 'newsletterIssue',
@@ -52,7 +53,73 @@ export const newsletterIssue = defineType({
       description: 'Inbox preview snippet (preheader).',
     }),
     coverField('content'),
-    bodyField('content'),
+    defineField({
+      name: 'body',
+      title: 'Body',
+      type: 'array',
+      group: 'content',
+      components: {input: NewsletterIssueBodyInput},
+      options: {
+        insertMenu: {
+          groups: [
+            {name: 'text', title: 'Text', of: ['block']},
+            {name: 'media', title: 'Media', of: ['image']},
+            {name: 'embeds', title: 'Embeds', of: ['youtubeEmbed', 'spotifyEmbed', 'instagramEmbed']},
+          ],
+        },
+      },
+      of: [
+        defineArrayMember({
+          type: 'block',
+          styles: [
+            {title: 'Normal', value: 'normal'},
+            {title: 'H2', value: 'h2'},
+            {title: 'H3', value: 'h3'},
+            {title: 'Quote', value: 'blockquote'},
+          ],
+          lists: [
+            {title: 'Bullet', value: 'bullet'},
+            {title: 'Number', value: 'number'},
+          ],
+          marks: {
+            decorators: [
+              {title: 'Strong', value: 'strong'},
+              {title: 'Emphasis', value: 'em'},
+            ],
+            annotations: [
+              {name: 'link', type: 'object', title: 'Link', fields: [{name: 'href', type: 'url', title: 'URL'}]},
+            ],
+          },
+        }),
+        defineArrayMember({
+          type: 'image',
+          options: {hotspot: true},
+          fields: [
+            defineField({name: 'alt', type: 'string', title: 'Alt Text'}),
+            defineField({name: 'caption', type: 'string', title: 'Caption'}),
+          ],
+        }),
+        defineArrayMember({
+          name: 'youtubeEmbed',
+          title: 'YouTube Video',
+          type: 'object',
+          fields: [
+            defineField({name: 'url', title: 'YouTube URL', type: 'url', validation: (Rule) => Rule.required()}),
+            defineField({name: 'title', title: 'Accessible Title', type: 'string', initialValue: 'YouTube Video'}),
+          ],
+        }),
+        defineArrayMember({
+          name: 'spotifyEmbed',
+          title: 'Spotify',
+          type: 'object',
+          fields: [
+            defineField({name: 'url', title: 'Spotify URL', type: 'url', validation: (Rule) => Rule.required()}),
+            defineField({name: 'title', title: 'Accessible Title', type: 'string', initialValue: 'Spotify player'}),
+          ],
+        }),
+        defineArrayMember({type: 'instagramEmbed'}),
+      ],
+    }),
     defineField({
       name: 'sentAt',
       type: 'datetime',
