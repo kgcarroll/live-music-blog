@@ -111,7 +111,10 @@ export default async function VenueDetailPage({params}: Props) {
   const latitude = venue.latitude ?? pin.latitude
   const longitude = venue.longitude ?? pin.longitude
   const showMap = mapEnabled && latitude != null && longitude != null
-  const mapsQuery = `${latitude},${longitude}`
+  const mapsQuery =
+    [venue.name, address].filter(Boolean).join(' ') ||
+    [venue.name, pin.city, pin.state].filter(Boolean).join(' ') ||
+    `${latitude},${longitude}`
 
   const mapPanelProps =
     latitude != null && longitude != null
