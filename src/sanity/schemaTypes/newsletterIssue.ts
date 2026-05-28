@@ -38,20 +38,6 @@ export const newsletterIssue = defineType({
       description: 'Used for the web archive and ordering. Publish the document before sending.',
       validation: (Rule) => Rule.required(),
     }),
-    defineField({
-      name: 'emailSubject',
-      type: 'string',
-      title: 'Email Subject',
-      group: 'content',
-      description: 'Subject line for the broadcast. Falls back to title when empty.',
-    }),
-    defineField({
-      name: 'previewText',
-      type: 'string',
-      title: 'Preview Text',
-      group: 'content',
-      description: 'Inbox preview snippet (preheader).',
-    }),
     coverField('content'),
     defineField({
       name: 'body',
@@ -119,6 +105,20 @@ export const newsletterIssue = defineType({
         }),
         defineArrayMember({type: 'instagramEmbed'}),
       ],
+    }),
+    defineField({
+      name: 'emailSubject',
+      type: 'string',
+      title: 'Email Subject',
+      group: 'content',
+      description: 'Subject line for the broadcast. Falls back to title when empty.',
+    }),
+    defineField({
+      name: 'previewText',
+      type: 'string',
+      title: 'Preview Text',
+      group: 'content',
+      description: 'Inbox preview snippet (preheader).',
     }),
     defineField({
       name: 'sentAt',

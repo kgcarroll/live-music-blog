@@ -3,7 +3,7 @@
 import {SparklesIcon} from '@sanity/icons'
 import {Box, Button, Card, Checkbox, Flex, Spinner, Stack, Text} from '@sanity/ui'
 import {useCallback, useMemo, useState} from 'react'
-import {set, type ArrayOfObjectsInputProps} from 'sanity'
+import {set, useDocumentOperation, useFormValue, useGetFormValue, type ArrayOfObjectsInputProps} from 'sanity'
 
 import {
   NEWSLETTER_DIGEST_DAYS,
@@ -18,6 +18,8 @@ type SectionCount = {inIssue: number; inWindow: number}
 type GenerateResponse = {
   blocks?: unknown[]
   model?: string
+  emailSubject?: string
+  previewText?: string
   windowPostCount?: number
   selectedPostCount?: number
   generatedItemCount?: number
@@ -66,6 +68,13 @@ function formatSectionCounts(counts: GenerateResponse['sectionCounts']): string 
 
 export function NewsletterIssueBodyInput(props: ArrayOfObjectsInputProps) {
   const {readOnly, onChange} = props
+  const getFormValue = useGetFormValue()
+  const documentId = useFormValue(['_id']) as string | undefined
+  const documentType = getFormValue(['_type']) as string | undefined
+
+  // Document operations expect the published id (no `drafts.` prefix).
+  const operationId = (documentId ?? '').replace(/^drafts\./, '')
+  const {patch} = useDocumentOperation(operationId, documentType ?? '')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -98,6 +107,12 @@ export function NewsletterIssueBodyInput(props: ArrayOfObjectsInputProps) {
         eventsLimit: NEWSLETTER_EVENTS_LIMIT,
       })
       onChange(set(result.blocks as any))
+      if (patch && (result.emailSubject?.trim() || result.previewText?.trim())) {
+        patch.execute([
+          ...(result.emailSubject?.trim() ? [{set: {emailSubject: result.emailSubject.trim()}}] : []),
+          ...(result.previewText?.trim() ? [{set: {previewText: result.previewText.trim()}}] : []),
+        ])
+      }
       setModel(result.model ?? null)
 
       const sectionLine = formatSectionCounts(result.sectionCounts)
@@ -127,7 +142,7 @@ export function NewsletterIssueBodyInput(props: ArrayOfObjectsInputProps) {
     } finally {
       setLoading(false)
     }
-  }, [canGenerate, hasBody, includeUpcomingShows, onChange])
+  }, [canGenerate, hasBody, includeUpcomingShows, onChange, patch])
 
   return (
     <Stack space={3}>

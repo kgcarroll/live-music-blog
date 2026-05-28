@@ -35,9 +35,9 @@ const SECTION_HUB_PATH: Record<EditorialType, string> = {
 }
 
 const SECTION_HUB_LINK_TEXT: Record<EditorialType, string> = {
-  news: 'See all news',
-  review: 'See all reviews',
-  interview: 'See all interviews',
+  news: 'See all News',
+  review: 'See all Reviews',
+  interview: 'See all Interviews',
 }
 
 type OpenAIChatResponse = {
@@ -84,6 +84,11 @@ export type NewsletterDigestIntro = {
   paragraphs: string[]
 }
 
+export type NewsletterEmailMeta = {
+  emailSubject: string
+  previewText: string
+}
+
 export type NewsletterUpcomingEvent = {
   name: string
   when: string
@@ -110,6 +115,18 @@ function clampText(s: string, max = 280) {
   const t = s.trim()
   if (t.length <= max) return t
   return `${t.slice(0, max - 1).trimEnd()}…`
+}
+
+function normalizeEmailSubject(value: unknown, fallback: string): string {
+  const raw = typeof value === 'string' ? value.trim() : ''
+  const out = raw || fallback
+  return clampText(out, 78)
+}
+
+function normalizePreviewText(value: unknown, fallback: string): string {
+  const raw = typeof value === 'string' ? value.trim() : ''
+  const out = raw || fallback
+  return clampText(out, 120)
 }
 
 function isEditorialType(type: string): type is EditorialType {
@@ -313,6 +330,7 @@ export async function generateNewsletterDigestWithOpenAI(options: {
   eventsDays: number
   eventsLimit: number
 }): Promise<{
+  email: NewsletterEmailMeta
   intro: NewsletterDigestIntro
   sections: NewsletterDigestSection[]
   upcomingEvents: NewsletterUpcomingEvent[]
@@ -358,12 +376,15 @@ export async function generateNewsletterDigestWithOpenAI(options: {
 
   const system =
     'You write biweekly newsletter blurbs from a list of recent articles grouped by section (news, reviews, interviews). ' +
-    'Return ONLY valid JSON: {"intro":{"paragraphs":[string]},"items":[{headline, excerpt, url}]}. ' +
-    'intro.paragraphs must be 1-2 paragraphs, plain text, friendly, and summarize this two-week digest.' +
-    'intro.paragraphs should not use AI-sounding words or filler text. ' +
+    'Return ONLY valid JSON: {"emailSubject": string, "previewText": string, "intro":{"paragraphs":[string]},"items":[{headline, excerpt, url}]}. ' +
+    'emailSubject must be specific to the actual articles in this digest. Mention 1-3 major artists, bands, tours, albums, or news events featured in the articles. Never use generic subjects like "Latest Music News", "Music Updates", "New Reviews", or "Weekly Digest". The subject should read like a real music publication email and clearly reflect the biggest stories in the input content. Keep it under 80 characters. ' +
+    'previewText must also reference specific content from the digest. Mention notable artists, tours, albums, anniversaries, awards, or headlines covered in the articles. Never write vague summaries like "Catch up on the latest music news." Keep it conversational and under 120 characters. ' +
+    'intro.paragraphs must be 1-2 short paragraphs, plain text, friendly, and summarize the biggest themes and stories from this two-week digest. Reference actual artists, tours, releases, or events from the provided articles when relevant. Avoid generic wording. ' +
+    'intro.paragraphs should not use AI-sounding phrases, filler text, corporate language, or exaggerated hype. Avoid phrases like "dive into", "packed with", "exciting roundup", "must-read", "latest happenings", or "ever-evolving music scene". ' +
     'Rules: headline should be the original title or a light edit (no clickbait). ' +
-    'excerpt must be 2-3 sentences, plain text, conversational, and avoid flowery AI-sounding words. ' +
-    'url must match an input url exactly. Do not invent content. Include every input article exactly once.'
+    'excerpt must be 2-3 sentences, plain text, conversational, and grounded in the article content. Summarize the actual story instead of speaking broadly about music culture. Avoid flowery or AI-sounding wording. ' +
+    'url must match an input url exactly. Do not invent content. Include every input article exactly once. ' +
+    'Prioritize specificity over generality in every field. If the digest includes recognizable artists, venues, tours, albums, anniversaries, awards, or regional music stories, reference them directly.'
 
   const user = JSON.stringify({
     digestDays: options.days,
@@ -400,7 +421,12 @@ export async function generateNewsletterDigestWithOpenAI(options: {
   const raw = data.choices?.[0]?.message?.content
   if (!raw) throw new Error('OpenAI returned empty newsletter JSON.')
 
-  const parsed = parseJsonObject(raw) as {intro?: unknown; items?: unknown} | null
+  const parsed = parseJsonObject(raw) as {
+    emailSubject?: unknown
+    previewText?: unknown
+    intro?: unknown
+    items?: unknown
+  } | null
   const introParagraphs = Array.isArray((parsed as {intro?: {paragraphs?: unknown}})?.intro?.paragraphs)
     ? ((parsed as {intro: {paragraphs: unknown[]}}).intro.paragraphs as unknown[])
         .map((p: unknown) => String(p ?? '').trim())
@@ -443,7 +469,14 @@ export async function generateNewsletterDigestWithOpenAI(options: {
   const generatedCount = sections.reduce((n, s) => n + s.items.length, 0)
   if (!generatedCount) throw new Error('OpenAI returned no usable newsletter items.')
 
+  const fallbackSubject = `Philadelphia Music Live — last ${options.days} days`
+  const fallbackPreview = introParagraphs[0]?.trim() || `The latest from Philadelphia Music Live (last ${options.days} days).`
+
   return {
+    email: {
+      emailSubject: normalizeEmailSubject(parsed?.emailSubject, fallbackSubject),
+      previewText: normalizePreviewText(parsed?.previewText, fallbackPreview),
+    },
     intro: {
       paragraphs: introParagraphs.length
         ? introParagraphs

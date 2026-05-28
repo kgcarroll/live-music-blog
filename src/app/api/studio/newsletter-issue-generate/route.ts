@@ -54,6 +54,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       blocks,
       model: result.model,
+      emailSubject: result.email.emailSubject,
+      previewText: result.email.previewText,
       windowPostCount: result.windowPostCount,
       selectedPostCount: result.selectedPostCount,
       generatedItemCount: result.selectedPostCount,
