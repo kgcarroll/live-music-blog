@@ -3,7 +3,7 @@ import {urlForImage} from '@/sanity/lib/image'
 
 export type BodyImageLayout = 'full' | 'floatLeft' | 'floatRight'
 
-type BodyImageValue = {
+export type BodyImageValue = {
   _type?: string
   alt?: string
   caption?: string

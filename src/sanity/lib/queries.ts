@@ -400,6 +400,10 @@ export const SITE_SETTINGS = defineQuery(`
     authorsHubPortable,
     tagsHubPortable,
     scheduleHubPortable,
-    venuesHubPortable
+    venuesHubPortable,
+    newsletterPopupEnabled,
+    newsletterPopupHeadline,
+    newsletterPopupCta,
+    newsletterPopupImage ${settingsImageProjection}
   }
 `)

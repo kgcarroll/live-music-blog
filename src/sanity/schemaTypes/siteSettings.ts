@@ -74,6 +74,7 @@ export const siteSettings = defineType({
   icon: CogIcon,
   groups: [
     {name: 'site', title: 'Site', default: true},
+    {name: 'newsletter', title: 'Newsletter'},
     {name: 'social', title: 'Social'},
     {name: 'pages', title: 'About & Contact'},
     {name: 'hubs', title: 'Section Hubs'},
@@ -164,6 +165,43 @@ export const siteSettings = defineType({
       title: 'Ticketmaster feed status',
       hidden: true,
       fields: ticketmasterFeedStatusFields,
+    }),
+    defineField({
+      name: 'newsletterPopupEnabled',
+      type: 'boolean',
+      title: 'Newsletter signup popup',
+      group: 'newsletter',
+      description:
+        'Shows a subscribe modal on public pages after 5 seconds (scroll or exit intent on desktop). Once per session.',
+      initialValue: false,
+    }),
+    defineField({
+      name: 'newsletterPopupHeadline',
+      type: 'string',
+      title: 'Popup headline',
+      group: 'newsletter',
+      description: 'Shown in the modal. Defaults to a generic line if empty.',
+    }),
+    defineField({
+      name: 'newsletterPopupImage',
+      type: 'image',
+      title: 'Popup image',
+      group: 'newsletter',
+      options: {hotspot: true},
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alt Text',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'newsletterPopupCta',
+      type: 'string',
+      title: 'Subscribe button label',
+      group: 'newsletter',
+      description: 'Defaults to “Subscribe” when empty.',
     }),
     defineField({
       name: 'instagramUrl',

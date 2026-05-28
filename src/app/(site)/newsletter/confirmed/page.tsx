@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import type {Metadata} from 'next'
+import {Suspense} from 'react'
 
+import {NewsletterConfirmHide} from '@/components/NewsletterConfirmHide'
 import {newsletterIndexHref} from '@/lib/paths'
 
 export const metadata: Metadata = {
@@ -31,6 +33,9 @@ export default async function NewsletterConfirmedPage({searchParams}: Props) {
 
   return (
     <div className="mx-auto max-w-lg px-4 py-16 text-center md:px-6">
+      <Suspense fallback={null}>
+        <NewsletterConfirmHide />
+      </Suspense>
       <h1 className="text-2xl font-semibold text-zinc-50">{copy.title}</h1>
       <p className="mt-4 text-zinc-400">{copy.body}</p>
       <p className="mt-8">
