@@ -349,6 +349,19 @@ export const SITEMAP_ENTRIES = defineQuery(`{
   }
 }`)
 
+/** Editorial posts in a date window for newsletter generation (newest first). */
+export const NEWSLETTER_EDITORIAL_FEED = defineQuery(`
+  *[${editorialTypesFilter} && defined(publishedAt) && publishedAt >= $since] | order(publishedAt desc) {
+    _type,
+    title,
+    "slug": slug.current,
+    publishedAt,
+    excerpt,
+    seoDescription,
+    body
+  }
+`)
+
 /** Recent editorial posts for the public RSS feed (newest first). */
 export const RSS_EDITORIAL_FEED = defineQuery(`
   *[${editorialTypesFilter} && defined(publishedAt)] | order(publishedAt desc)[0...200] {
