@@ -10,7 +10,6 @@ import {
   fetchEventDetailById,
   fetchEventMatchBySlug,
   fetchRelatedEvents,
-  fetchScheduleEventsPage,
   fetchVenueEventsPage,
   formatScheduleEventWhen,
   formatScheduleVenue,
@@ -27,11 +26,10 @@ async function loadPastEventView(slug: string) {
   const archive = await fetchEventArchiveBySlug(slug)
   if (!archive) return null
 
-  const [venueEventsResult, areaPage, venueIndex] = await Promise.all([
+  const [venueEventsResult, venueIndex] = await Promise.all([
     archive.venueId
       ? fetchVenueEventsPage(archive.venueId, 0)
       : Promise.resolve({events: [], hasMore: false}),
-    fetchScheduleEventsPage(0),
     archive.venueId && !archive.venueSlug
       ? getVenueIndex()
       : Promise.resolve(null),
@@ -47,7 +45,6 @@ async function loadPastEventView(slug: string) {
     archive,
     venueSlug,
     venueEvents: venueEventsResult.events.slice(0, PAST_EVENT_RELATED_LIMIT),
-    areaEvents: areaPage.events.slice(0, PAST_EVENT_RELATED_LIMIT),
   }
 }
 
@@ -99,7 +96,6 @@ export default async function EventDetailPage({params}: Props) {
           archive={past.archive}
           venueSlug={past.venueSlug}
           venueEvents={past.venueEvents}
-          areaEvents={past.areaEvents}
         />
       )
     }
@@ -120,7 +116,6 @@ export default async function EventDetailPage({params}: Props) {
         archive={past.archive}
         venueSlug={past.venueSlug}
         venueEvents={past.venueEvents}
-        areaEvents={past.areaEvents}
       />
     )
   }
@@ -144,7 +139,6 @@ export default async function EventDetailPage({params}: Props) {
           archive={past.archive}
           venueSlug={past.venueSlug}
           venueEvents={past.venueEvents}
-          areaEvents={past.areaEvents}
         />
       )
     }

@@ -16,21 +16,15 @@ export function PastEventContent({
   archive,
   venueSlug,
   venueEvents,
-  areaEvents,
 }: {
   archive: EventArchiveRecord
   venueSlug: string | null
   venueEvents: ScheduleEvent[]
-  areaEvents: ScheduleEvent[]
 }) {
   const event = scheduleEventFromArchive(archive)
   const when = formatScheduleEventWhen(event)
   const venueLabel = formatScheduleVenue(event)
   const venueEventsDeduped = venueEvents.filter((item) => item.id !== archive.eventId)
-  const venueIds = new Set(venueEventsDeduped.map((item) => item.id))
-  const areaEventsDeduped = areaEvents.filter(
-    (item) => item.id !== archive.eventId && !venueIds.has(item.id),
-  )
 
   return (
     <article className="pb-16">
@@ -110,19 +104,6 @@ export function PastEventContent({
           </h2>
           <div className="mt-6 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-3 md:gap-6">
             {venueEventsDeduped.map((item) => (
-              <ScheduleEventCard key={item.id} event={item} />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {areaEventsDeduped.length ? (
-        <section className="mx-auto mt-14 max-w-5xl px-4" aria-labelledby="area-events-heading">
-          <h2 id="area-events-heading" className="text-2xl font-semibold tracking-tight text-zinc-50">
-            {venueEventsDeduped.length ? 'More upcoming shows in the area' : 'Upcoming shows in the area'}
-          </h2>
-          <div className="mt-6 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-3 md:gap-6">
-            {areaEventsDeduped.map((item) => (
               <ScheduleEventCard key={item.id} event={item} />
             ))}
           </div>
