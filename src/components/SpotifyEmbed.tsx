@@ -5,15 +5,21 @@ import {SPOTIFY_EMBED_MAX_WIDTH, type SpotifyEmbedInfo} from '@/lib/spotify'
 export function SpotifyEmbed({
   embed,
   title,
+  fillWidth = false,
 }: {
   embed: SpotifyEmbedInfo
   title?: string | null
+  /** Fill grid column width (no centered max-width cap). */
+  fillWidth?: boolean
 }) {
   const iframeTitle = title?.trim() || `Spotify ${embed.type} player`
   const maxWidth = Math.min(embed.width, SPOTIFY_EMBED_MAX_WIDTH)
 
   return (
-    <figure className="not-prose mx-auto w-full" style={{maxWidth}}>
+    <figure
+      className={fillWidth ? 'not-prose w-full' : 'not-prose mx-auto w-full'}
+      style={fillWidth ? undefined : {maxWidth}}
+    >
       <iframe
         src={embed.embedSrc}
         title={iframeTitle}

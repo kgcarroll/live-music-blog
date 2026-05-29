@@ -65,6 +65,7 @@ function scheduleEventFromSnapshot(entry: TicketmasterFeedSnapshotEntry): Schedu
     venueName: entry.venueName,
     venueCity: entry.venueCity,
     venueState: entry.venueState,
+    attractions: [],
   }
 }
 

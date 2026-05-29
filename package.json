@@ -10,7 +10,9 @@
     "algolia:index": "node --env-file=.env.local --import tsx scripts/algolia-index.ts",
     "event-archive:backfill": "node --env-file=.env.local --import tsx scripts/backfill-event-archives.ts",
     "event-archive:prune-live": "node --env-file=.env.local --import tsx scripts/prune-live-event-archives.ts",
-    "event-archive:migrate-ids": "node --env-file=.env.local --import tsx scripts/migrate-event-archive-ids.ts"
+    "event-archive:migrate-ids": "node --env-file=.env.local --import tsx scripts/migrate-event-archive-ids.ts",
+    "spotify-artist:sync": "node --env-file=.env.local --import tsx scripts/sync-spotify-artists.ts",
+    "spotify-artist:recurate": "node --env-file=.env.local --import tsx scripts/recurate-spotify-artists.ts"
   },
   "dependencies": {
     "@portabletext/react": "^4.0.3",

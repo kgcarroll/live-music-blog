@@ -156,7 +156,17 @@ export default async function EventDetailPage({params}: Props) {
       ? (venueIndex.byId.get(detail.venueId)?.slug ?? null)
       : null
 
+  const attractions =
+    detail.attractions.length > 0
+      ? detail.attractions
+      : (match.event.attractions ?? [])
+
   return (
-    <EventArticleContent detail={detail} venueSlug={venueSlug} relatedEvents={relatedEvents} />
+    <EventArticleContent
+      detail={detail}
+      venueSlug={venueSlug}
+      relatedEvents={relatedEvents}
+      attractions={attractions}
+    />
   )
 }

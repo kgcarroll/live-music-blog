@@ -30,4 +30,6 @@ export const STRUCTURE_HIDDEN_DOCUMENT_TYPES = [
   SITE_SETTINGS_DOCUMENT_ID,
   MEDIA_TAG_DOCUMENT_TYPE,
   'eventArchive',
+  'spotifyArtistMatch',
+  'eventSpotifyCuration',
 ] as const

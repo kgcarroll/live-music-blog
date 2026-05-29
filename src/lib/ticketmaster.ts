@@ -7,7 +7,11 @@ import {
   SCHEDULE_REVALIDATE_SECONDS,
 } from '@/lib/schedule'
 import {assignUniqueEventSlugs, eventSlugFromEvent} from '@/lib/eventSlug'
+import type {EventSpotifyCurationInput} from '@/lib/spotifyArtistCuration'
 import {syncEventArchivesOnFeedUpdate} from '@/lib/eventArchiveSync'
+import type {TicketmasterAttractionRef} from '@/lib/spotifyArtistMatch'
+import {formatSpotifyRateLimitMessage} from '@/lib/spotifyApi'
+import {syncSpotifyArtistMatchesOnFeed} from '@/lib/spotifyAttractionSync'
 import {persistTicketmasterFeedStatus} from '@/lib/ticketmasterFeedStatus'
 import {assignUniqueVenueSlugs} from '@/lib/venueSlug'
 import {
@@ -32,12 +36,32 @@ export type ScheduleEvent = {
   venueName: string | null
   venueCity: string | null
   venueState: string | null
+  attractions: TicketmasterAttractionRef[]
+}
+
+export type EventPresale = {
+  name: string
+  startDateTime: string | null
+  endDateTime: string | null
 }
 
 export type EventDetail = ScheduleEvent & {
   pleaseNote: string | null
   info: string | null
   priceSummary: string | null
+  description: string | null
+  statusLabel: string | null
+  genreLabels: string[]
+  eventTypeLabel: string | null
+  promoterNames: string[]
+  accessibilityInfo: string | null
+  ticketLimitInfo: string | null
+  seatmapUrl: string | null
+  venueAddress: string | null
+  venueUrl: string | null
+  salesPublicStart: string | null
+  salesPublicEnd: string | null
+  presales: EventPresale[]
 }
 
 export type ScheduleEventsPageResult = {
@@ -62,6 +86,7 @@ type TicketmasterEvent = {
   name?: string
   url?: string
   info?: string
+  description?: string
   pleaseNote?: string
   priceRanges?: {type?: string; currency?: string; min?: number; max?: number}[]
   images?: TicketmasterImage[]
@@ -76,9 +101,41 @@ type TicketmasterEvent = {
     timezone?: string
     status?: {code?: string}
   }
+  sales?: {
+    public?: {
+      startDateTime?: string
+      endDateTime?: string
+      startTBD?: boolean
+      startTBA?: boolean
+    }
+    presales?: {
+      name?: string
+      startDateTime?: string
+      endDateTime?: string
+    }[]
+  }
+  classifications?: {
+    primary?: boolean
+    segment?: {name?: string}
+    genre?: {name?: string}
+    subGenre?: {name?: string}
+    subType?: {name?: string}
+  }[]
+  promoter?: {name?: string}
+  promoters?: {name?: string}[]
+  accessibility?: {info?: string; ticketLimit?: number}
+  ticketLimit?: {info?: string}
+  seatmap?: {staticUrl?: string}
   _embedded?: {
     venues?: TicketmasterVenueEmbedded[]
+    attractions?: TicketmasterAttractionEmbedded[]
   }
+}
+
+type TicketmasterAttractionEmbedded = {
+  id?: string
+  name?: string
+  url?: string
 }
 
 type TicketmasterVenueEmbedded = {
@@ -88,6 +145,7 @@ type TicketmasterVenueEmbedded = {
   city?: {name?: string}
   state?: {stateCode?: string}
   postalCode?: string
+  address?: {line1?: string; line2?: string}
   location?: {longitude?: string; latitude?: string}
 }
 
@@ -409,6 +467,66 @@ function nextShowFieldsFromEvent(event: ScheduleEvent | undefined): Pick<
   }
 }
 
+function parseAttractionsFromRaw(raw: TicketmasterEvent): TicketmasterAttractionRef[] {
+  const items = raw._embedded?.attractions ?? []
+  const out: TicketmasterAttractionRef[] = []
+  const seen = new Set<string>()
+
+  for (const item of items) {
+    const id = item.id?.trim()
+    const name = item.name?.trim()
+    if (!id || !name || seen.has(id)) continue
+    seen.add(id)
+    out.push({id, name, url: item.url?.trim() || null})
+  }
+
+  return out
+}
+
+function collectAttractionsFromRawEvents(rawEvents: TicketmasterEvent[]): TicketmasterAttractionRef[] {
+  const byId = new Map<string, TicketmasterAttractionRef>()
+  for (const raw of rawEvents) {
+    for (const attraction of parseAttractionsFromRaw(raw)) {
+      if (!byId.has(attraction.id)) {
+        byId.set(attraction.id, attraction)
+      }
+    }
+  }
+  return [...byId.values()]
+}
+
+/** Events with lineup context for OpenAI Spotify curation. */
+export function buildEventSpotifyCurationInputs(
+  rawEvents: TicketmasterEvent[],
+): EventSpotifyCurationInput[] {
+  const results: EventSpotifyCurationInput[] = []
+  const seen = new Set<string>()
+
+  for (const raw of rawEvents) {
+    const eventId = raw.id?.trim()
+    if (!eventId || seen.has(eventId)) continue
+    seen.add(eventId)
+
+    const attractions = parseAttractionsFromRaw(raw)
+    if (!attractions.length) continue
+
+    const detail = eventDetailFromRaw(raw)
+    if (!detail) continue
+
+    results.push({
+      eventId,
+      eventName: detail.name,
+      venueName: detail.venueName,
+      genreLabels: detail.genreLabels,
+      eventTypeLabel: detail.eventTypeLabel,
+      info: detail.info,
+      attractions,
+    })
+  }
+
+  return results
+}
+
 function normalizeEventCore(raw: TicketmasterEvent): ScheduleEventCore | null {
   const id = raw.id?.trim()
   const name = raw.name?.trim()
@@ -435,6 +553,7 @@ function normalizeEventCore(raw: TicketmasterEvent): ScheduleEventCore | null {
     venueName: venue?.name?.trim() || null,
     venueCity: venue?.city?.name?.trim() || null,
     venueState: venue?.state?.stateCode?.trim() || null,
+    attractions: parseAttractionsFromRaw(raw),
   }
 }
 
@@ -455,21 +574,127 @@ function formatPriceSummary(
   return value != null ? `${symbol}${value}` : null
 }
 
+const EVENT_STATUS_LABELS: Record<string, string> = {
+  onsale: 'On sale',
+  offsale: 'Off sale',
+  canceled: 'Canceled',
+  cancelled: 'Canceled',
+  postponed: 'Postponed',
+  rescheduled: 'Rescheduled',
+}
+
+function formatEventStatusLabel(code: string | undefined): string | null {
+  const key = code?.trim().toLowerCase()
+  if (!key) return null
+  return EVENT_STATUS_LABELS[key] ?? code!.trim()
+}
+
+function isMeaningfulClassificationLabel(value: string | undefined): value is string {
+  const label = value?.trim()
+  return Boolean(label && label.toLowerCase() !== 'undefined')
+}
+
+function parseEventClassifications(raw: TicketmasterEvent): {
+  genreLabels: string[]
+  eventTypeLabel: string | null
+} {
+  const primary = raw.classifications?.find((row) => row.primary) ?? raw.classifications?.[0]
+  if (!primary) return {genreLabels: [], eventTypeLabel: null}
+
+  const genreLabels = [
+    primary.genre?.name,
+    primary.subGenre?.name,
+    primary.segment?.name,
+  ].filter(isMeaningfulClassificationLabel)
+
+  const eventTypeLabel = isMeaningfulClassificationLabel(primary.subType?.name)
+    ? primary.subType!.name!.trim()
+    : null
+
+  return {genreLabels: [...new Set(genreLabels)], eventTypeLabel}
+}
+
+function parsePromoterNames(raw: TicketmasterEvent): string[] {
+  const names = [
+    ...(raw.promoters?.map((row) => row.name?.trim()).filter(Boolean) ?? []),
+    raw.promoter?.name?.trim(),
+  ].filter(Boolean) as string[]
+  return [...new Set(names)]
+}
+
+function parseEventPresales(raw: TicketmasterEvent): EventPresale[] {
+  return (raw.sales?.presales ?? [])
+    .map((row) => ({
+      name: row.name?.trim() || 'Presale',
+      startDateTime: row.startDateTime?.trim() || null,
+      endDateTime: row.endDateTime?.trim() || null,
+    }))
+    .filter((row) => row.name)
+}
+
+function venueAddressFromEmbedded(venue: TicketmasterVenueEmbedded | undefined): string | null {
+  if (!venue) return null
+  const parts = [
+    venue.address?.line1?.trim(),
+    venue.address?.line2?.trim(),
+    [venue.city?.name?.trim(), venue.state?.stateCode?.trim()].filter(Boolean).join(', '),
+    venue.postalCode?.trim(),
+  ].filter(Boolean)
+  return parts.length ? parts.join(' · ') : null
+}
+
+export function formatTicketmasterDateTime(
+  iso: string | null | undefined,
+  timezone?: string | null,
+): string | null {
+  if (!iso?.trim()) return null
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toLocaleString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: timezone?.trim() || undefined,
+  })
+}
+
 function eventDetailFromRaw(raw: TicketmasterEvent): EventDetail | null {
   const core = normalizeEventCore(raw)
   if (!core) return null
+
+  const venue = raw._embedded?.venues?.[0]
+  const {genreLabels, eventTypeLabel} = parseEventClassifications(raw)
+  const info = raw.info?.trim() || null
+  const description = raw.description?.trim() || null
+
   return {
     ...core,
     slug: eventSlugFromEvent(core),
     pleaseNote: raw.pleaseNote?.trim() || null,
-    info: raw.info?.trim() || null,
+    info,
+    description: description && description !== info ? description : null,
     priceSummary: formatPriceSummary(raw.priceRanges),
+    statusLabel: formatEventStatusLabel(raw.dates?.status?.code),
+    genreLabels,
+    eventTypeLabel,
+    promoterNames: parsePromoterNames(raw),
+    accessibilityInfo: raw.accessibility?.info?.trim() || null,
+    ticketLimitInfo: raw.ticketLimit?.info?.trim() || null,
+    seatmapUrl: raw.seatmap?.staticUrl?.trim() || null,
+    venueAddress: venueAddressFromEmbedded(venue),
+    venueUrl: venue?.url?.trim() || null,
+    salesPublicStart: raw.sales?.public?.startDateTime?.trim() || null,
+    salesPublicEnd: raw.sales?.public?.endDateTime?.trim() || null,
+    presales: parseEventPresales(raw),
   }
 }
 
 type TicketmasterFeed = {
   events: ScheduleEvent[]
   venues: VenueMapPin[]
+  curationInputs: EventSpotifyCurationInput[]
   error?: 'not_configured' | 'api_error'
 }
 
@@ -542,7 +767,9 @@ function buildVenuesFromRawEvents(
 }
 
 /** One paginated Discovery scan; builds both event and venue indexes. */
-async function loadTicketmasterFeedFromApi(): Promise<TicketmasterFeed> {
+async function loadTicketmasterFeedFromApi(options?: {
+  skipSpotifySync?: boolean
+}): Promise<TicketmasterFeed> {
   const attemptAt = new Date().toISOString()
   const fingerprint = getTicketmasterApiKeyFingerprint()
   const dmaId = getDmaId()
@@ -554,7 +781,7 @@ async function loadTicketmasterFeedFromApi(): Promise<TicketmasterFeed> {
       apiKeyFingerprint: fingerprint,
       dmaId,
     })
-    return {events: [], venues: [], error: 'not_configured'}
+    return {events: [], venues: [], curationInputs: [], error: 'not_configured'}
   }
 
   const rawEvents: TicketmasterEvent[] = []
@@ -575,7 +802,7 @@ async function loadTicketmasterFeedFromApi(): Promise<TicketmasterFeed> {
         apiKeyFingerprint: fingerprint,
         dmaId,
       })
-      return {events: [], venues: [], error: error === 'rate_limit' ? 'api_error' : error}
+      return {events: [], venues: [], curationInputs: [], error: error === 'rate_limit' ? 'api_error' : error}
     }
 
     rawEvents.push(...events)
@@ -603,12 +830,27 @@ async function loadTicketmasterFeedFromApi(): Promise<TicketmasterFeed> {
     console.warn('[eventArchive] Failed to sync event archives:', error)
   })
 
-  return {events, venues}
+  const curationInputs = buildEventSpotifyCurationInputs(rawEvents)
+  if (!options?.skipSpotifySync) {
+    void syncSpotifyArtistMatchesOnFeed(curationInputs)
+      .then((result) => {
+        if (result.rateLimited) {
+          console.warn(formatSpotifyRateLimitMessage(result.retryAfterMs ?? 60_000))
+        }
+      })
+      .catch((error) => {
+        console.warn('[spotify] Failed to sync artist matches:', error)
+      })
+  }
+
+  return {events, venues, curationInputs}
 }
 
 /** Bypass Next.js `unstable_cache` / React `cache` — use in CLI scripts only. */
-export async function loadTicketmasterFeedDirect(): Promise<TicketmasterFeed> {
-  return loadTicketmasterFeedFromApi()
+export async function loadTicketmasterFeedDirect(options?: {
+  skipSpotifySync?: boolean
+}): Promise<TicketmasterFeed> {
+  return loadTicketmasterFeedFromApi(options)
 }
 
 class TicketmasterFeedLoadError extends Error {
@@ -636,9 +878,9 @@ const getTicketmasterFeed = cache(async (): Promise<TicketmasterFeed> => {
     return await getTicketmasterFeedCached()
   } catch (error) {
     if (error instanceof TicketmasterFeedLoadError) {
-      return {events: [], venues: [], error: error.code}
+      return {events: [], venues: [], curationInputs: [], error: error.code}
     }
-    return {events: [], venues: [], error: 'api_error'}
+    return {events: [], venues: [], curationInputs: [], error: 'api_error'}
   }
 })
 

@@ -62,6 +62,7 @@ function normalizeRaw(raw: RawEvent): Omit<ScheduleEvent, 'slug'> | null {
     venueName: venue?.name?.trim() || null,
     venueCity: venue?.city?.name?.trim() || null,
     venueState: venue?.state?.stateCode?.trim() || null,
+    attractions: [],
   }
 }
 

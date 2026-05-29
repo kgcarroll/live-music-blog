@@ -53,6 +53,7 @@ export function scheduleEventFromArchive(archive: EventArchiveRecord): ScheduleE
     venueName: archive.venueName,
     venueCity: archive.venueCity,
     venueState: archive.venueState,
+    attractions: [],
   }
 }
 
