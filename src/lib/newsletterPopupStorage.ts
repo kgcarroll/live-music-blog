@@ -70,6 +70,7 @@ function writeLocalExpiry(key: string, days: number) {
 
 export function isNewsletterPopupPathExcluded(pathname: string): boolean {
   if (!pathname) return true
+  if (pathname === '/') return true
   if (pathname === '/studio' || pathname.startsWith('/studio/')) return true
   if (pathname === '/newsletter/confirmed' || pathname.startsWith('/newsletter/confirmed')) {
     return true
