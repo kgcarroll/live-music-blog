@@ -167,6 +167,33 @@ export const siteSettings = defineType({
       fields: ticketmasterFeedStatusFields,
     }),
     defineField({
+      name: 'ticketmasterFeedSnapshot',
+      type: 'array',
+      title: 'Ticketmaster feed snapshot',
+      hidden: true,
+      description: 'Last successful feed scan; used to detect concerts that left the schedule.',
+      of: [
+        {
+          type: 'object',
+          fields: [
+            {name: 'slug', type: 'string'},
+            {name: 'eventId', type: 'string'},
+            {name: 'name', type: 'string'},
+            {name: 'url', type: 'string'},
+            {name: 'imageUrl', type: 'url'},
+            {name: 'startDateTime', type: 'datetime'},
+            {name: 'localDate', type: 'string'},
+            {name: 'localTime', type: 'string'},
+            {name: 'venueId', type: 'string'},
+            {name: 'venueName', type: 'string'},
+            {name: 'venueSlug', type: 'string'},
+            {name: 'venueCity', type: 'string'},
+            {name: 'venueState', type: 'string'},
+          ],
+        },
+      ],
+    }),
+    defineField({
       name: 'newsletterPopupEnabled',
       type: 'boolean',
       title: 'Newsletter signup popup',

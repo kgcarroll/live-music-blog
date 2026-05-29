@@ -29,4 +29,5 @@ export const MEDIA_TAG_DOCUMENT_TYPE = 'media.tag'
 export const STRUCTURE_HIDDEN_DOCUMENT_TYPES = [
   SITE_SETTINGS_DOCUMENT_ID,
   MEDIA_TAG_DOCUMENT_TYPE,
+  'eventArchive',
 ] as const

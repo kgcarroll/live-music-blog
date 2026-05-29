@@ -377,6 +377,44 @@ export const RSS_EDITORIAL_FEED = defineQuery(`
   }
 `)
 
+export const EVENT_ARCHIVE_BY_DOC_ID = defineQuery(`
+  *[_type == "eventArchive" && _id == $docId][0] {
+    slug,
+    eventId,
+    name,
+    venueId,
+    venueName,
+    venueSlug,
+    venueCity,
+    venueState,
+    startDateTime,
+    localDate,
+    localTime,
+    "ticketmasterUrl": ticketmasterUrl,
+    imageUrl,
+    lastSeenAt
+  }
+`)
+
+export const EVENT_ARCHIVE_BY_SLUG = defineQuery(`
+  *[_type == "eventArchive" && slug == $slug][0] {
+    slug,
+    eventId,
+    name,
+    venueId,
+    venueName,
+    venueSlug,
+    venueCity,
+    venueState,
+    startDateTime,
+    localDate,
+    localTime,
+    "ticketmasterUrl": ticketmasterUrl,
+    imageUrl,
+    lastSeenAt
+  }
+`)
+
 export const SITE_SETTINGS = defineQuery(`
   coalesce(
     *[_type == "siteSettings" && _id == "${SITE_SETTINGS_DOCUMENT_ID}"][0],

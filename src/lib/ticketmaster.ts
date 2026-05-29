@@ -7,6 +7,7 @@ import {
   SCHEDULE_REVALIDATE_SECONDS,
 } from '@/lib/schedule'
 import {assignUniqueEventSlugs, eventSlugFromEvent} from '@/lib/eventSlug'
+import {syncEventArchivesOnFeedUpdate} from '@/lib/eventArchiveSync'
 import {persistTicketmasterFeedStatus} from '@/lib/ticketmasterFeedStatus'
 import {assignUniqueVenueSlugs} from '@/lib/venueSlug'
 import {
@@ -598,7 +599,16 @@ async function loadTicketmasterFeedFromApi(): Promise<TicketmasterFeed> {
     dmaId,
   })
 
+  void syncEventArchivesOnFeedUpdate(events, venues).catch((error) => {
+    console.warn('[eventArchive] Failed to sync event archives:', error)
+  })
+
   return {events, venues}
+}
+
+/** Bypass Next.js `unstable_cache` / React `cache` — use in CLI scripts only. */
+export async function loadTicketmasterFeedDirect(): Promise<TicketmasterFeed> {
+  return loadTicketmasterFeedFromApi()
 }
 
 class TicketmasterFeedLoadError extends Error {

@@ -1,4 +1,5 @@
 import {author} from './author'
+import {eventArchive} from './eventArchive'
 import {instagramEmbed} from './instagramEmbed'
 import {interview} from './interview'
 import {news} from './news'
@@ -8,6 +9,7 @@ import {siteSettings} from './siteSettings'
 import {tag} from './tag'
 
 export const schemaTypes = [
+  eventArchive,
   siteSettings,
   tag,
   author,
