@@ -1,5 +1,6 @@
 import {editorialHref, type EditorialType} from '@/lib/paths'
 import {plainTextFromPortableText} from '@/lib/portableTextPlain'
+import {trimSeoDescription, trimSeoTitle} from '@/lib/seoGeneration'
 import {absoluteSiteUrl} from '@/lib/siteUrl'
 import {
   formatScheduleEventWhen,
@@ -87,6 +88,11 @@ export type NewsletterDigestIntro = {
 export type NewsletterEmailMeta = {
   emailSubject: string
   previewText: string
+}
+
+export type NewsletterSeoMeta = {
+  seoTitle: string
+  seoDescription: string
 }
 
 export type NewsletterUpcomingEvent = {
@@ -331,6 +337,7 @@ export async function generateNewsletterDigestWithOpenAI(options: {
   eventsLimit: number
 }): Promise<{
   email: NewsletterEmailMeta
+  seo: NewsletterSeoMeta
   intro: NewsletterDigestIntro
   sections: NewsletterDigestSection[]
   upcomingEvents: NewsletterUpcomingEvent[]
@@ -376,7 +383,9 @@ export async function generateNewsletterDigestWithOpenAI(options: {
 
   const system =
     'You write biweekly newsletter blurbs from a list of recent articles grouped by section (news, reviews, interviews). ' +
-    'Return ONLY valid JSON: {"emailSubject": string, "previewText": string, "intro":{"paragraphs":[string]},"items":[{headline, excerpt, url}]}. ' +
+    'Return ONLY valid JSON: {"emailSubject": string, "previewText": string, "seoTitle": string, "seoDescription": string, "intro":{"paragraphs":[string]},"items":[{headline, excerpt, url}]}. ' +
+    'seoTitle is for the public web archive page (about 80 characters): specific to this digest, search-friendly, not the same wording as emailSubject. ' +
+    'seoDescription is meta description for the archive page (about 220 characters): summarize what is in this issue; may differ from previewText. ' +
     'emailSubject must be specific to the actual articles in this digest. Mention 1-3 major artists, bands, tours, albums, or news events featured in the articles. Never use generic subjects like "Latest Music News", "Music Updates", "New Reviews", or "Weekly Digest". The subject should read like a real music publication email and clearly reflect the biggest stories in the input content. Keep it under 80 characters. ' +
     'previewText must also reference specific content from the digest. Mention notable artists, tours, albums, anniversaries, awards, or headlines covered in the articles. Never write vague summaries like "Catch up on the latest music news." Keep it conversational and under 120 characters. ' +
     'intro.paragraphs must be 1-2 short paragraphs, plain text, friendly, and summarize the biggest themes and stories from this two-week digest. Reference actual artists, tours, releases, or events from the provided articles when relevant. Avoid generic wording. ' +
@@ -424,6 +433,8 @@ export async function generateNewsletterDigestWithOpenAI(options: {
   const parsed = parseJsonObject(raw) as {
     emailSubject?: unknown
     previewText?: unknown
+    seoTitle?: unknown
+    seoDescription?: unknown
     intro?: unknown
     items?: unknown
   } | null
@@ -471,12 +482,24 @@ export async function generateNewsletterDigestWithOpenAI(options: {
 
   const fallbackSubject = `Philadelphia Music Live — last ${options.days} days`
   const fallbackPreview = introParagraphs[0]?.trim() || `The latest from Philadelphia Music Live (last ${options.days} days).`
+  const email = {
+    emailSubject: normalizeEmailSubject(parsed?.emailSubject, fallbackSubject),
+    previewText: normalizePreviewText(parsed?.previewText, fallbackPreview),
+  }
+  const seoTitle =
+    trimSeoTitle(String(parsed?.seoTitle ?? '')) || trimSeoTitle(email.emailSubject)
+  const seoDescription =
+    trimSeoDescription(String(parsed?.seoDescription ?? '')) ||
+    trimSeoDescription(email.previewText) ||
+    trimSeoDescription(introParagraphs.join(' '))
+
+  if (!seoTitle || !seoDescription) {
+    throw new Error('OpenAI returned incomplete newsletter SEO metadata.')
+  }
 
   return {
-    email: {
-      emailSubject: normalizeEmailSubject(parsed?.emailSubject, fallbackSubject),
-      previewText: normalizePreviewText(parsed?.previewText, fallbackPreview),
-    },
+    email,
+    seo: {seoTitle, seoDescription},
     intro: {
       paragraphs: introParagraphs.length
         ? introParagraphs

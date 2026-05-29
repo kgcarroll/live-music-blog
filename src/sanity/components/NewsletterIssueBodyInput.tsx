@@ -20,6 +20,8 @@ type GenerateResponse = {
   model?: string
   emailSubject?: string
   previewText?: string
+  seoTitle?: string
+  seoDescription?: string
   windowPostCount?: number
   selectedPostCount?: number
   generatedItemCount?: number
@@ -107,10 +109,20 @@ export function NewsletterIssueBodyInput(props: ArrayOfObjectsInputProps) {
         eventsLimit: NEWSLETTER_EVENTS_LIMIT,
       })
       onChange(set(result.blocks as any))
-      if (patch && (result.emailSubject?.trim() || result.previewText?.trim())) {
+      if (
+        patch &&
+        (result.emailSubject?.trim() ||
+          result.previewText?.trim() ||
+          result.seoTitle?.trim() ||
+          result.seoDescription?.trim())
+      ) {
         patch.execute([
           ...(result.emailSubject?.trim() ? [{set: {emailSubject: result.emailSubject.trim()}}] : []),
           ...(result.previewText?.trim() ? [{set: {previewText: result.previewText.trim()}}] : []),
+          ...(result.seoTitle?.trim() ? [{set: {seoTitle: result.seoTitle.trim()}}] : []),
+          ...(result.seoDescription?.trim()
+            ? [{set: {seoDescription: result.seoDescription.trim()}}]
+            : []),
         ])
       }
       setModel(result.model ?? null)
@@ -150,7 +162,8 @@ export function NewsletterIssueBodyInput(props: ArrayOfObjectsInputProps) {
         <Stack space={3}>
           <Text size={1} muted>
             Builds a biweekly digest from published Sanity articles (up to {NEWSLETTER_MAX_PER_SECTION} per
-            section: news, reviews, interviews). Draft only.
+            section: news, reviews, interviews). Also fills email subject, preview text, and SEO fields.
+            Draft only.
           </Text>
 
           <Flex align="center">

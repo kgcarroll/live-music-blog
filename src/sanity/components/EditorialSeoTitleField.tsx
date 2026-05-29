@@ -6,12 +6,12 @@ import {useGetFormValue} from 'sanity'
 
 import {SeoGeneratorPanel} from '@/sanity/components/SeoGeneratorInput'
 
-const EDITORIAL_SEO_TYPES = new Set(['interview', 'news', 'review'])
+const SEO_GENERATOR_TYPES = new Set(['interview', 'news', 'review', 'newsletterIssue'])
 
 export function EditorialSeoTitleField(props: FieldProps) {
   const getFormValue = useGetFormValue()
   const documentType = getFormValue(['_type']) as string | undefined
-  const showGenerator = EDITORIAL_SEO_TYPES.has(documentType ?? '')
+  const showGenerator = SEO_GENERATOR_TYPES.has(documentType ?? '')
 
   return (
     <Stack space={5}>

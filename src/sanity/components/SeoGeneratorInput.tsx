@@ -31,6 +31,7 @@ async function fetchSeoMetadata(
       title?: string
       slug?: unknown
       excerpt?: string
+      previewText?: string
       verdict?: unknown
       showDate?: unknown
       venueName?: unknown
@@ -114,6 +115,7 @@ export function SeoGeneratorPanel() {
           title: getFormValue(['title']) as string | undefined,
           slug: getFormValue(['slug']),
           excerpt: getFormValue(['excerpt']) as string | undefined,
+          previewText: getFormValue(['previewText']) as string | undefined,
           verdict: getFormValue(['verdict']),
           showDate: getFormValue(['showDate']),
           venueName: getFormValue(['venueName']),
@@ -162,7 +164,7 @@ export function SeoGeneratorPanel() {
             Generate from body
           </Text>
           <Text size={1} muted>
-            Creates SEO title and description from the article body using OpenAI. Values fill the
+            Creates SEO title and description from the issue or article body using OpenAI. Values fill the
             fields below—edit them before publishing. Leave the prompt field empty to use the
             default rules, or add optional instructions for either button.
             {' '}

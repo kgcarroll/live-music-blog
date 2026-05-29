@@ -1,8 +1,8 @@
 import {editorialTypeLabel} from '@/lib/paths'
 import {plainTextFromPortableText} from '@/lib/portableTextPlain'
 
-export const SEO_TITLE_MAX_CHARS = 60
-export const SEO_DESCRIPTION_MAX_CHARS = 160
+export const SEO_TITLE_MAX_CHARS = 80
+export const SEO_DESCRIPTION_MAX_CHARS = 220
 
 export const SEO_GENERATION_INSTRUCTIONS = `You write SEO metadata for a local live-music publication in Philadelphia.
 Use the article body as the primary source. The headline is context only—SEO title may differ from it.
@@ -19,11 +19,31 @@ Rules for seoDescription:
 
 Return only valid JSON with keys "seoTitle" and "seoDescription".`
 
+export const NEWSLETTER_ISSUE_SEO_INSTRUCTIONS = `You write SEO metadata for a biweekly Philadelphia live-music newsletter issue published as a web archive page.
+Use the newsletter body as the primary source. The issue title and email preview text are context only—the SEO title may differ from both.
+
+Rules for seoTitle:
+- About ${SEO_TITLE_MAX_CHARS} characters or fewer. Never truncate mid-word in your output.
+- Specific to this digest: artists, venues, tours, or themes covered in the issue.
+- Plain language. No clickbait, no ALL CAPS, no emojis, no trailing site name.
+- Avoid generic phrases like "latest music news", "music updates", "new reviews", "weekly digest", etc.
+- Sound like a human editor wrote it: direct, specific, plain language—not marketing copy or AI filler.
+
+Rules for seoDescription:
+- About ${SEO_DESCRIPTION_MAX_CHARS} characters or fewer. One or two complete sentences. Never truncate mid-word in your output.
+- Summarize what readers will find in this issue (news, reviews, interviews). Mention Philadelphia only when natural.
+- Factual tone. No "click here", no hashtag stuffing, no AI filler phrases.
+- Avoid generic phrases like "latest music news", "music updates", "new reviews", "weekly digest", etc.
+- Sound like a human editor wrote it: direct, specific, plain language—not marketing copy or AI filler.
+
+Return only valid JSON with keys "seoTitle" and "seoDescription".`
+
 export type SeoGenerationArticle = {
   _type: string
   title?: string | null
   slug?: string | null
   excerpt?: string | null
+  previewText?: string | null
   seoTitle?: string | null
   seoDescription?: string | null
   verdict?: string | null
@@ -36,8 +56,27 @@ export function isSeoEditorialType(type: string): boolean {
   return type === 'interview' || type === 'news' || type === 'review'
 }
 
+export function isSeoGeneratableType(type: string): boolean {
+  return isSeoEditorialType(type) || type === 'newsletterIssue'
+}
+
+function seoInstructionsForType(type: string): string {
+  return type === 'newsletterIssue' ? NEWSLETTER_ISSUE_SEO_INSTRUCTIONS : SEO_GENERATION_INSTRUCTIONS
+}
+
 export function buildSeoGenerationContext(article: SeoGenerationArticle): string {
   const bodyPreview = plainTextFromPortableText(article.body as never).slice(0, 2500)
+
+  if (article._type === 'newsletterIssue') {
+    const lines = [
+      'Content type: Newsletter issue (web archive)',
+      `Issue title: ${article.title?.trim() || 'Untitled'}`,
+      article.previewText?.trim() ? `Email preview text: ${article.previewText.trim()}` : '',
+      bodyPreview ? `Newsletter body:\n${bodyPreview}` : '',
+    ]
+    return lines.filter(Boolean).join('\n\n')
+  }
+
   const lines = [
     `Article type: ${editorialTypeLabel(article._type)}`,
     `Headline: ${article.title?.trim() || 'Untitled'}`,
@@ -153,7 +192,7 @@ export async function generateSeoWithOpenAI(
       max_tokens: 300,
       response_format: {type: 'json_object'},
       messages: [
-        {role: 'system', content: SEO_GENERATION_INSTRUCTIONS},
+        {role: 'system', content: seoInstructionsForType(article._type)},
         {role: 'user', content: userPrompt},
       ],
     }),

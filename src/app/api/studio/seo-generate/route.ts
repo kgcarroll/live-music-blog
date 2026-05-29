@@ -15,6 +15,7 @@ type Body = {
     title?: string
     slug?: unknown
     excerpt?: string
+    previewText?: string
     verdict?: unknown
     showDate?: unknown
     venueName?: unknown
@@ -65,6 +66,7 @@ export async function POST(request: Request) {
             title: body.draft.title,
             slug: (body.draft as any).slug,
             excerpt: body.draft.excerpt,
+            previewText: body.draft.previewText,
             seoTitle: undefined,
             seoDescription: undefined,
             verdict: (body.draft as any).verdict,

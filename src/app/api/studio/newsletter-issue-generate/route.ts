@@ -56,6 +56,8 @@ export async function POST(request: Request) {
       model: result.model,
       emailSubject: result.email.emailSubject,
       previewText: result.email.previewText,
+      seoTitle: result.seo.seoTitle,
+      seoDescription: result.seo.seoDescription,
       windowPostCount: result.windowPostCount,
       selectedPostCount: result.selectedPostCount,
       generatedItemCount: result.selectedPostCount,

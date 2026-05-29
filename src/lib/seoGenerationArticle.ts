@@ -1,6 +1,6 @@
 import {
   buildSeoGenerationContext,
-  isSeoEditorialType,
+  isSeoGeneratableType,
   type SeoGenerationArticle,
 } from '@/lib/seoGeneration'
 import {plainTextFromPortableText} from '@/lib/portableTextPlain'
@@ -12,6 +12,7 @@ const SEO_ARTICLE_QUERY = `*[_id == $id][0]{
   title,
   "slug": slug.current,
   excerpt,
+  previewText,
   seoTitle,
   seoDescription,
   verdict,
@@ -43,7 +44,7 @@ export function validateSeoGenerationArticle(
   if (!article) {
     return {ok: false, error: 'Document not found.'}
   }
-  if (!isSeoEditorialType(article._type)) {
+  if (!isSeoGeneratableType(article._type)) {
     return {ok: false, error: 'This document type does not support SEO generation.'}
   }
   if (!article.title?.trim()) {
@@ -52,10 +53,14 @@ export function validateSeoGenerationArticle(
 
   const bodyText = plainTextFromPortableText(article.body as never)
   const excerpt = article.excerpt?.trim() ?? ''
-  if (!bodyText && !excerpt) {
+  const previewText = article.previewText?.trim() ?? ''
+  if (!bodyText && !excerpt && !previewText) {
     return {
       ok: false,
-      error: 'Add article body or excerpt content before generating SEO metadata.',
+      error:
+        article._type === 'newsletterIssue'
+          ? 'Add newsletter body or preview text before generating SEO metadata.'
+          : 'Add article body or excerpt content before generating SEO metadata.',
     }
   }
 
