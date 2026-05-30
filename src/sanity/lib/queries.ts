@@ -53,6 +53,7 @@ const editorialProjection = `{
   reviewSubject,
   showDate,
   venueName,
+  videoUploadDate,
   ${imageProjection},
   seoTitle,
   seoDescription,

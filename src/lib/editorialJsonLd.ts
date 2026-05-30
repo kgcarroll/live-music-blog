@@ -21,6 +21,7 @@ export type EditorialJsonLdDoc = {
   reviewSubject?: string | null
   showDate?: string | null
   venueName?: string | null
+  videoUploadDate?: string | null
   body?: unknown
   author?: {
     name?: string | null
@@ -52,14 +53,27 @@ function jsonLdArticleType(editorialType: string): string {
  * itemReviewed shape depends on what the review covers (concert vs album vs video).
  * Live concerts use Event with optional date/venue; other subjects use simpler types.
  */
-function buildReviewItemReviewed(
-  headline: string,
-  imageUrl: string | undefined,
-  subject: ReviewSubject,
-  showDate?: string | null,
-  venueName?: string | null,
-  publishedAt?: string | null,
-): Record<string, unknown> {
+function buildReviewItemReviewed(input: {
+  headline: string
+  imageUrl: string | undefined
+  subject: ReviewSubject
+  description?: string
+  showDate?: string | null
+  venueName?: string | null
+  videoUploadDate?: string | null
+  publishedAt?: string | null
+}): Record<string, unknown> {
+  const {
+    headline,
+    imageUrl,
+    subject,
+    description,
+    showDate,
+    venueName,
+    videoUploadDate,
+    publishedAt,
+  } = input
+
   if (subject === 'album') {
     return {
       '@type': 'MusicAlbum',
@@ -69,10 +83,13 @@ function buildReviewItemReviewed(
   }
 
   if (subject === 'video') {
+    const uploadDate = videoUploadDate?.trim() || publishedAt?.trim()
     return {
       '@type': 'VideoObject',
       name: headline,
+      ...(description ? {description} : {}),
       ...(imageUrl ? {thumbnailUrl: imageUrl} : {}),
+      ...(uploadDate ? {uploadDate} : {}),
     }
   }
 
@@ -203,14 +220,21 @@ export function buildEditorialJsonLd(doc: EditorialJsonLdDoc): Record<string, un
         ? urlForImage(galleryImages[0] as never).width(OG_IMAGE_WIDTH).fit('max').url()
         : undefined)
 
-    payload.itemReviewed = buildReviewItemReviewed(
-      headline.trim(),
-      reviewImageUrl,
-      resolveReviewSubject(doc.reviewSubject, doc.showDate, doc.venueName),
-      doc.showDate,
-      doc.venueName,
-      doc.publishedAt,
-    )
+    const itemDescription =
+      normalizeDescription(doc.seoDescription) ||
+      normalizeDescription(doc.excerpt) ||
+      normalizeDescription(doc.verdict)
+
+    payload.itemReviewed = buildReviewItemReviewed({
+      headline: headline.trim(),
+      imageUrl: reviewImageUrl,
+      subject: resolveReviewSubject(doc.reviewSubject, doc.showDate, doc.venueName),
+      description: itemDescription,
+      showDate: doc.showDate,
+      venueName: doc.venueName,
+      videoUploadDate: doc.videoUploadDate,
+      publishedAt: doc.publishedAt,
+    })
   }
 
   return payload

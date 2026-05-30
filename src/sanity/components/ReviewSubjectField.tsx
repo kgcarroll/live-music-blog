@@ -14,6 +14,7 @@ export function ReviewSubjectField(props: FieldProps) {
   const venueName = getFormValue(['venueName']) as string | undefined
   const subject = resolveReviewSubject(reviewSubject, showDate, venueName)
   const isLiveConcert = isLiveConcertReviewSubject(subject)
+  const isVideo = subject === 'video'
 
   return (
     <Stack space={5}>
@@ -26,16 +27,18 @@ export function ReviewSubjectField(props: FieldProps) {
               Live concert (structured data)
             </Text>
             <Text size={1} muted>
-              For Google review markup: when and where the performance happened. Not used for album
-              or video reviews.
+              For Google review markup: when and where the performance happened.
             </Text>
           </Stack>
           <LiveConcertJsonLdSuggestPanel />
         </Stack>
+      ) : isVideo ? (
+        <Text size={1} muted>
+          Set the video upload date below for Google VideoObject markup.
+        </Text>
       ) : (
         <Text size={1} muted>
-          Concert date and venue fields are hidden for this review type. Search title and
-          description above still apply.
+          Subject-specific fields are hidden for this review type.
         </Text>
       )}
     </Stack>

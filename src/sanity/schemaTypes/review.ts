@@ -19,6 +19,11 @@ function isLiveConcertDocument(document: unknown): boolean {
   return subject === 'liveConcert'
 }
 
+function isVideoDocument(document: unknown): boolean {
+  const subject = (document as {reviewSubject?: string} | undefined)?.reviewSubject
+  return subject === 'video'
+}
+
 export const review = defineType({
   name: 'review',
   title: 'Review',
@@ -95,7 +100,7 @@ export const review = defineType({
       title: 'Concert date',
       group: 'seo',
       description:
-        'When the live performance happened. Used in JSON-LD for concert reviews. If empty, Published At is used as a fallback.',
+        'When the live performance happened. Used in JSON-LD for concert reviews. Use “Suggest from body” above, or Published At as a fallback.',
       hidden: ({document}) => !isLiveConcertDocument(document),
     }),
     defineField({
@@ -106,6 +111,15 @@ export const review = defineType({
       description:
         'Where the concert took place, e.g. "Union Transfer". If empty, the review title is used in structured data.',
       hidden: ({document}) => !isLiveConcertDocument(document),
+    }),
+    defineField({
+      name: 'videoUploadDate',
+      type: 'datetime',
+      title: 'Video upload / release date',
+      group: 'seo',
+      description:
+        'When the video or film was published or released. Used as uploadDate in JSON-LD. If empty, Published At is used as a fallback.',
+      hidden: ({document}) => !isVideoDocument(document),
     }),
   ],
   preview: {
