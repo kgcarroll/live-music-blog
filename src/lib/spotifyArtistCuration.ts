@@ -31,6 +31,8 @@ Rules:
 - Use the event title for billing ("X Presents: Y" → X is usually headliner; Y may be a comedian or co-headliner)
 - Skip comedians, podcast hosts, generic hosts, and "experience/tribute" acts unless they are primarily known as recording musicians
 - Short ambiguous names need event context (e.g. "Delirious" at a comedy show is not the band "Delirious?")
+- Bingo Loco is not GO LOCO.
+- Do not double up on artists. If one artist is listed multiple times, only include one of them.
 - Prefer separate listed performers over festival or series names when both appear
 - Every input attraction must appear exactly once in the output
 
