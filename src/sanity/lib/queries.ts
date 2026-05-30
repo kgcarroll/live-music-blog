@@ -50,6 +50,7 @@ const editorialProjection = `{
   ${tagsProjection},
   featured,
   verdict,
+  reviewSubject,
   showDate,
   venueName,
   ${imageProjection},

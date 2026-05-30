@@ -11,6 +11,13 @@ import {
   seoFields,
   tagsField,
 } from './blocks'
+import {ReviewSubjectField} from '@/sanity/components/ReviewSubjectField'
+import {REVIEW_SUBJECT_OPTIONS} from '@/lib/reviewSubject'
+
+function isLiveConcertDocument(document: unknown): boolean {
+  const subject = (document as {reviewSubject?: string} | undefined)?.reviewSubject
+  return subject === 'liveConcert'
+}
 
 export const review = defineType({
   name: 'review',
@@ -66,12 +73,30 @@ export const review = defineType({
     tagSuggestionsField(),
     ...seoFields(),
     defineField({
-      name: 'showDate',
-      type: 'datetime',
-      title: 'Show Date',
+      name: 'reviewSubject',
+      type: 'string',
+      title: 'What is this review about?',
       group: 'seo',
       description:
-        'Optional. Concert date for review JSON-LD. If empty, Published At is used as startDate.',
+        'Controls optional concert fields and how Google structured data describes the thing being reviewed.',
+      options: {
+        list: [...REVIEW_SUBJECT_OPTIONS],
+        layout: 'radio',
+      },
+      initialValue: 'other',
+      validation: (Rule) => Rule.required(),
+      components: {
+        field: ReviewSubjectField,
+      },
+    }),
+    defineField({
+      name: 'showDate',
+      type: 'datetime',
+      title: 'Concert date',
+      group: 'seo',
+      description:
+        'When the live performance happened. Used in JSON-LD for concert reviews. If empty, Published At is used as a fallback.',
+      hidden: ({document}) => !isLiveConcertDocument(document),
     }),
     defineField({
       name: 'venueName',
@@ -79,17 +104,26 @@ export const review = defineType({
       title: 'Venue',
       group: 'seo',
       description:
-        'Optional. Venue or city for JSON-LD, e.g. "Capital One Arena". If empty, the review title is used as the place name.',
+        'Where the concert took place, e.g. "Union Transfer". If empty, the review title is used in structured data.',
+      hidden: ({document}) => !isLiveConcertDocument(document),
     }),
   ],
   preview: {
-    select: {title: 'title', media: 'coverImage', subtitle: 'publishedAt', featured: 'featured'},
-    prepare({title, media, subtitle, featured}) {
+    select: {
+      title: 'title',
+      media: 'coverImage',
+      subtitle: 'publishedAt',
+      featured: 'featured',
+      reviewSubject: 'reviewSubject',
+    },
+    prepare({title, media, subtitle, featured, reviewSubject}) {
       const date = subtitle ? new Date(subtitle).toLocaleDateString() : ''
+      const subjectLabel =
+        REVIEW_SUBJECT_OPTIONS.find((option) => option.value === reviewSubject)?.title ?? null
       return {
         title,
         media,
-        subtitle: [featured ? 'Featured' : null, date].filter(Boolean).join(' · '),
+        subtitle: [featured ? 'Featured' : null, subjectLabel, date].filter(Boolean).join(' · '),
       }
     },
   },

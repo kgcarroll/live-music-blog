@@ -1,6 +1,7 @@
 import {galleryImagesFromPortableBody} from '@/lib/portableTextGallery'
 import {authorHref, editorialHref} from '@/lib/paths'
 import {normalizeDescription, plainTextFromPortableText} from '@/lib/portableTextPlain'
+import {resolveReviewSubject, type ReviewSubject} from '@/lib/reviewSubject'
 import {absoluteSiteUrl, siteOrigin} from '@/lib/siteUrl'
 import {urlForImage} from '@/sanity/lib/image'
 
@@ -17,6 +18,7 @@ export type EditorialJsonLdDoc = {
   seoDescription?: string | null
   publishedAt?: string | null
   verdict?: string | null
+  reviewSubject?: string | null
   showDate?: string | null
   venueName?: string | null
   body?: unknown
@@ -47,22 +49,47 @@ function jsonLdArticleType(editorialType: string): string {
 }
 
 /**
- * Google Review markup accepts Event (not generic Thing) for itemReviewed.
- * Falls back when SEO show fields are empty: startDate → publishedAt, location name → title.
+ * itemReviewed shape depends on what the review covers (concert vs album vs video).
+ * Live concerts use Event with optional date/venue; other subjects use simpler types.
  */
 function buildReviewItemReviewed(
-  name: string,
+  headline: string,
   imageUrl: string | undefined,
+  subject: ReviewSubject,
   showDate?: string | null,
   venueName?: string | null,
   publishedAt?: string | null,
 ): Record<string, unknown> {
+  if (subject === 'album') {
+    return {
+      '@type': 'MusicAlbum',
+      name: headline,
+      ...(imageUrl ? {image: imageUrl} : {}),
+    }
+  }
+
+  if (subject === 'video') {
+    return {
+      '@type': 'VideoObject',
+      name: headline,
+      ...(imageUrl ? {thumbnailUrl: imageUrl} : {}),
+    }
+  }
+
+  if (subject !== 'liveConcert') {
+    return {
+      '@type': 'Thing',
+      name: headline,
+      ...(imageUrl ? {image: imageUrl} : {}),
+    }
+  }
+
   const startDate = showDate?.trim() || publishedAt?.trim()
-  const locationName = venueName?.trim() || name
+  const locationName = venueName?.trim() || headline
 
   const item: Record<string, unknown> = {
     '@type': 'Event',
-    name,
+    name: headline,
     location: {
       '@type': 'Place',
       name: locationName,
@@ -179,6 +206,7 @@ export function buildEditorialJsonLd(doc: EditorialJsonLdDoc): Record<string, un
     payload.itemReviewed = buildReviewItemReviewed(
       headline.trim(),
       reviewImageUrl,
+      resolveReviewSubject(doc.reviewSubject, doc.showDate, doc.venueName),
       doc.showDate,
       doc.venueName,
       doc.publishedAt,

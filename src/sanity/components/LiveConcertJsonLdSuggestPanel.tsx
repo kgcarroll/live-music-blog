@@ -3,43 +3,39 @@
 import {LaunchIcon, ResetIcon, SparklesIcon} from '@sanity/icons'
 import {Box, Button, Card, Flex, Spinner, Stack, Text, TextArea} from '@sanity/ui'
 import {useCallback, useRef, useState} from 'react'
-import {useDocumentOperation, useFormValue, useGetFormValue} from 'sanity'
+import {useDocumentOperation, useGetFormValue} from 'sanity'
 
-import {
-  SEO_DESCRIPTION_MAX_CHARS,
-  SEO_TITLE_MAX_CHARS,
-} from '@/lib/seoGeneration'
 import {studioApiOrigin} from '@/lib/studioHomeCarousel'
 
-type SeoResponse = {
-  seoTitle?: string
-  seoDescription?: string
+type ShowMetadataResponse = {
+  showDate?: string | null
+  venueName?: string | null
+  confidence?: 'high' | 'medium' | 'low'
+  note?: string | null
   error?: string
   model?: string
-  cached?: boolean
 }
 
-async function fetchSeoMetadata(
+async function fetchLiveConcertMetadata(
   documentId: string,
   options?: {
     regenerate?: boolean
-    previousSeoTitle?: string
-    previousSeoDescription?: string
+    previousShowDate?: string
+    previousVenueName?: string
     additionalPrompt?: string
     draft?: {
       _type?: string
       title?: string
-      slug?: unknown
       excerpt?: string
-      previewText?: string
       verdict?: unknown
+      reviewSubject?: unknown
       showDate?: unknown
       venueName?: unknown
       body?: unknown
     }
   },
-): Promise<SeoResponse> {
-  const response = await fetch(`${studioApiOrigin()}/api/studio/seo-generate`, {
+): Promise<ShowMetadataResponse> {
+  const response = await fetch(`${studioApiOrigin()}/api/studio/show-metadata-generate`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     credentials: 'same-origin',
@@ -48,31 +44,51 @@ async function fetchSeoMetadata(
       documentId,
       draft: options?.draft,
       regenerate: options?.regenerate === true,
-      previousSeoTitle: options?.previousSeoTitle?.trim() || undefined,
-      previousSeoDescription: options?.previousSeoDescription?.trim() || undefined,
+      previousShowDate: options?.previousShowDate?.trim() || undefined,
+      previousVenueName: options?.previousVenueName?.trim() || undefined,
       additionalPrompt: options?.additionalPrompt?.trim() || undefined,
     }),
   })
-  const data = (await response.json().catch(() => ({}))) as SeoResponse
+  const data = (await response.json().catch(() => ({}))) as ShowMetadataResponse
   if (!response.ok) {
-    throw new Error(data.error || `SEO generation failed (${response.status})`)
+    throw new Error(data.error || `Concert metadata suggestion failed (${response.status})`)
   }
   return data
 }
 
-function charCount(text: string | undefined): number {
-  return text?.trim().length ?? 0
+function formatShowDatePreview(value: string | null | undefined): string {
+  if (!value?.trim()) return 'Not set'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'America/New_York',
+  })
 }
 
-export function SeoGeneratorPanel() {
-  const getFormValue = useGetFormValue()
-  // `useFormValue` updates as the form initializes/auto-saves drafts.
-  const documentId = useFormValue(['_id']) as string | undefined
-  const documentType = getFormValue(['_type']) as string | undefined
-  const currentSeoTitle = useFormValue(['seoTitle']) as string | undefined
-  const currentSeoDescription = useFormValue(['seoDescription']) as string | undefined
+function confidenceLabel(confidence: ShowMetadataResponse['confidence']): string {
+  switch (confidence) {
+    case 'high':
+      return 'High confidence'
+    case 'medium':
+      return 'Medium confidence'
+    default:
+      return 'Low confidence'
+  }
+}
 
-  // Sanity document operations expect the published id (no `drafts.` prefix).
+export function LiveConcertJsonLdSuggestPanel() {
+  const getFormValue = useGetFormValue()
+  const documentId = getFormValue(['_id']) as string | undefined
+  const documentType = getFormValue(['_type']) as string | undefined
+  const currentShowDate = getFormValue(['showDate']) as string | undefined
+  const currentVenueName = getFormValue(['venueName']) as string | undefined
+
   const operationId = (documentId ?? '').replace(/^drafts\./, '')
   const {patch} = useDocumentOperation(operationId, documentType ?? '')
 
@@ -84,22 +100,28 @@ export function SeoGeneratorPanel() {
   const additionalPromptRef = useRef(additionalPrompt)
   additionalPromptRef.current = additionalPrompt
 
-  const applySeo = useCallback(
-    (seoTitle: string, seoDescription: string) => {
-      patch.execute([
-        {set: {seoTitle: seoTitle.trim()}},
-        {set: {seoDescription: seoDescription.trim()}},
-      ])
+  const applyConcertFields = useCallback(
+    (showDate: string | null | undefined, venueName: string | null | undefined) => {
+      const ops: Array<{set: Record<string, string>}> = []
+      if (showDate?.trim()) {
+        ops.push({set: {showDate: showDate.trim()}})
+      }
+      if (venueName?.trim()) {
+        ops.push({set: {venueName: venueName.trim()}})
+      }
+      if (ops.length) {
+        patch.execute(ops)
+      }
     },
     [patch],
   )
 
   const runGenerate = useCallback(
     async (regenerate: boolean) => {
-      const hasExisting = Boolean(currentSeoTitle?.trim() || currentSeoDescription?.trim())
+      const hasExisting = Boolean(currentShowDate?.trim() || currentVenueName?.trim())
       if (!regenerate && hasExisting) {
         const ok = window.confirm(
-          'Replace the current SEO title and description with newly generated values?',
+          'Replace the current concert date and/or venue with newly suggested values?',
         )
         if (!ok) return
       }
@@ -113,37 +135,34 @@ export function SeoGeneratorPanel() {
         const draft = {
           _type: getFormValue(['_type']) as string | undefined,
           title: getFormValue(['title']) as string | undefined,
-          slug: getFormValue(['slug']),
           excerpt: getFormValue(['excerpt']) as string | undefined,
-          previewText: getFormValue(['previewText']) as string | undefined,
           verdict: getFormValue(['verdict']),
+          reviewSubject: getFormValue(['reviewSubject']),
           showDate: getFormValue(['showDate']),
           venueName: getFormValue(['venueName']),
           body: getFormValue(['body']),
         }
 
-        const data = await fetchSeoMetadata(documentId ?? '', {
+        const data = await fetchLiveConcertMetadata(documentId ?? '', {
           regenerate,
-          previousSeoTitle: regenerate ? currentSeoTitle : undefined,
-          previousSeoDescription: regenerate ? currentSeoDescription : undefined,
+          previousShowDate: regenerate ? currentShowDate : undefined,
+          previousVenueName: regenerate ? currentVenueName : undefined,
           additionalPrompt: additionalPromptRef.current,
           draft,
         })
 
-        const seoTitle = data.seoTitle?.trim() ?? ''
-        const seoDescription = data.seoDescription?.trim() ?? ''
-        if (!seoTitle || !seoDescription) {
-          throw new Error('SEO generation returned empty fields.')
-        }
+        applyConcertFields(data.showDate, data.venueName)
 
-        applySeo(seoTitle, seoDescription)
-        setStatus(
-          data.cached
-            ? 'Loaded saved SEO metadata into the fields below.'
-            : data.model
-              ? `Generated with ${data.model}. Review the fields below, then publish when ready.`
-              : 'Generated SEO metadata. Review the fields below, then publish when ready.',
-        )
+        const parts = [
+          data.model ? `Suggested with ${data.model}.` : 'Suggestion ready.',
+          confidenceLabel(data.confidence),
+          data.note,
+          data.showDate ? `Concert date → ${formatShowDatePreview(data.showDate)}` : null,
+          data.venueName ? `Venue → ${data.venueName}` : null,
+          'Review the fields below, then publish when ready.',
+        ].filter(Boolean)
+
+        setStatus(parts.join(' '))
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
@@ -151,22 +170,21 @@ export function SeoGeneratorPanel() {
         setIsRegenerating(false)
       }
     },
-    [applySeo, currentSeoDescription, currentSeoTitle, getFormValue],
+    [applyConcertFields, currentShowDate, currentVenueName, documentId, getFormValue],
   )
 
-  const disabled = loading || !documentType
+  const disabled = loading || documentType !== 'review'
 
   return (
-    <Box paddingBottom={4}>
+    <Box paddingTop={2} paddingBottom={2}>
       <Stack space={4}>
         <Stack space={2}>
           <Text size={2} weight="semibold">
-            Generate search title &amp; description
+            Suggest concert date &amp; venue
           </Text>
           <Text size={1} muted>
-            Creates SEO title and description from the issue or article body using OpenAI. Values fill the
-            fields below—edit them before publishing. Leave the prompt field empty to use the
-            default rules, or add optional instructions for either button.
+            Optional. Fills the concert fields below for Google structured data. Uses the review
+            text plus your Ticketmaster schedule and archives as reference.
             {' '}
             <a
               href="https://platform.openai.com/settings/organization/usage"
@@ -180,23 +198,21 @@ export function SeoGeneratorPanel() {
         </Stack>
 
         <Card padding={3} radius={2} tone="transparent" border>
-          <Stack space={2}>
-            <Text size={1} muted>
-              Current: title {charCount(currentSeoTitle)} / {SEO_TITLE_MAX_CHARS} chars ·
-              description {charCount(currentSeoDescription)} / {SEO_DESCRIPTION_MAX_CHARS} chars
-            </Text>
-          </Stack>
+          <Text size={1} muted>
+            Current: {formatShowDatePreview(currentShowDate)} ·{' '}
+            {currentVenueName?.trim() || 'Venue not set'}
+          </Text>
         </Card>
 
         <Stack space={2}>
           <Text size={1} muted>
-            Alter the default SEO prompt.
+            Optional instructions for the suggestion.
           </Text>
           <TextArea
             value={additionalPrompt}
             onChange={(event) => setAdditionalPrompt(event.currentTarget.value)}
             rows={2}
-            placeholder="Optional: e.g. mention the venue, keep title under 55 characters…"
+            placeholder="Optional: e.g. matinee, festival main stage, May 28 at Union Transfer…"
           />
         </Stack>
 
@@ -204,7 +220,7 @@ export function SeoGeneratorPanel() {
           <Flex align="center" gap={3}>
             <Spinner />
             <Text size={1} muted>
-              {isRegenerating ? 'Regenerating SEO metadata…' : 'Generating SEO metadata…'}
+              {isRegenerating ? 'Regenerating…' : 'Suggesting concert date and venue…'}
             </Text>
           </Flex>
         ) : null}
@@ -224,7 +240,7 @@ export function SeoGeneratorPanel() {
         <Flex gap={2} wrap="wrap">
           <Button
             icon={SparklesIcon}
-            text="Generate search metadata"
+            text="Suggest from body"
             tone="primary"
             disabled={disabled}
             onClick={() => void runGenerate(false)}
