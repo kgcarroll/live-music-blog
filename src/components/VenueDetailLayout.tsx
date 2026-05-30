@@ -10,17 +10,20 @@ export function VenueDetailLayout({
   mapAside,
   mapMobile,
   below,
+  asideColumn = false,
 }: {
   details: ReactNode
   mapAside?: ReactNode
   mapMobile?: ReactNode
   below: ReactNode
+  /** lg+: keep the sidebar column even when mapAside is empty. */
+  asideColumn?: boolean
 }) {
-  const hasMapAside = mapAside != null
+  const useAsideLayout = asideColumn || mapAside != null
 
   return (
     <article className="pb-16">
-      {hasMapAside ? (
+      {useAsideLayout ? (
         <>
           <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-stretch lg:gap-x-10">
             <div className="min-w-0">{details}</div>

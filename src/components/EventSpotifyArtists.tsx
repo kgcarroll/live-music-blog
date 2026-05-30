@@ -1,15 +1,7 @@
 import {SpotifyEmbed} from '@/components/SpotifyEmbed'
-import {VenueMapStickyAside} from '@/components/VenueDetailLayout'
-import {fetchEventSpotifyArtistEmbeds, type TicketmasterAttractionRef} from '@/lib/spotifyArtistMatch'
+import type {EventSpotifyArtistEmbed} from '@/lib/spotifyArtistMatch'
 
-async function EventSpotifyPanel({
-  eventId,
-  attractions,
-}: {
-  eventId: string
-  attractions: TicketmasterAttractionRef[]
-}) {
-  const embeds = await fetchEventSpotifyArtistEmbeds(eventId, attractions)
+export function EventSpotifyPanelContent({embeds}: {embeds: EventSpotifyArtistEmbed[]}) {
   if (!embeds.length) return null
 
   return (
@@ -24,29 +16,4 @@ async function EventSpotifyPanel({
       </div>
     </>
   )
-}
-
-/** Sticky sidebar Spotify panel (desktop). Returns null when no matched artists. */
-export async function EventSpotifyStickyAside({
-  eventId,
-  attractions,
-}: {
-  eventId: string
-  attractions: TicketmasterAttractionRef[]
-}) {
-  const panel = await EventSpotifyPanel({eventId, attractions})
-  if (!panel) return null
-
-  return <VenueMapStickyAside>{panel}</VenueMapStickyAside>
-}
-
-/** Inline Spotify panel for mobile (non-sticky). Returns null when no matched artists. */
-export async function EventSpotifyMobilePanel({
-  eventId,
-  attractions,
-}: {
-  eventId: string
-  attractions: TicketmasterAttractionRef[]
-}) {
-  return EventSpotifyPanel({eventId, attractions})
 }

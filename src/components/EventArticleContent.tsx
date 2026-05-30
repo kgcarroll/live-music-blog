@@ -1,10 +1,10 @@
 import Link from 'next/link'
 
 import {EventDetailExtra} from '@/components/EventDetailExtra'
-import {EventSpotifyMobilePanel, EventSpotifyStickyAside} from '@/components/EventSpotifyArtists'
+import {EventSpotifyPanelContent} from '@/components/EventSpotifyArtists'
 import {ScheduleEventCard} from '@/components/ScheduleEventCard'
-import {VenueDetailLayout} from '@/components/VenueDetailLayout'
-import type {TicketmasterAttractionRef} from '@/lib/spotifyArtistMatch'
+import {VenueDetailLayout, VenueMapStickyAside} from '@/components/VenueDetailLayout'
+import {fetchEventSpotifyArtistEmbeds, type TicketmasterAttractionRef} from '@/lib/spotifyArtistMatch'
 import {
   formatScheduleEventWhen,
   formatScheduleVenue,
@@ -13,7 +13,7 @@ import {
 } from '@/lib/ticketmaster'
 import {venueHref} from '@/lib/paths'
 
-export function EventArticleContent({
+export async function EventArticleContent({
   detail,
   venueSlug,
   relatedEvents,
@@ -128,13 +128,12 @@ export function EventArticleContent({
     </>
   )
 
-  const spotifyAside = attractions.length ? (
-    <EventSpotifyStickyAside eventId={detail.id} attractions={attractions} />
-  ) : null
-
-  const spotifyMobile = attractions.length ? (
-    <EventSpotifyMobilePanel eventId={detail.id} attractions={attractions} />
-  ) : null
+  const embeds = attractions.length
+    ? await fetchEventSpotifyArtistEmbeds(detail.id, attractions)
+    : []
+  const spotifyPanel = embeds.length ? <EventSpotifyPanelContent embeds={embeds} /> : null
+  const spotifyAside = spotifyPanel ? <VenueMapStickyAside>{spotifyPanel}</VenueMapStickyAside> : undefined
+  const spotifyMobile = spotifyPanel ?? undefined
 
   const relatedSection = relatedEvents.length ? (
     <section className="w-full" aria-labelledby="related-events-heading">
@@ -152,8 +151,9 @@ export function EventArticleContent({
   return (
     <VenueDetailLayout
       details={eventDetails}
-      mapAside={spotifyAside ?? undefined}
-      mapMobile={spotifyMobile ?? undefined}
+      asideColumn
+      mapAside={spotifyAside}
+      mapMobile={spotifyMobile}
       below={relatedSection}
     />
   )
