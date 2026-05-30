@@ -24,7 +24,7 @@ export function ReviewSubjectField(props: FieldProps) {
         <Stack space={4}>
           <Stack space={2}>
             <Text size={1} weight="semibold">
-              Live concert (structured data)
+              Live Concert (structured data)
             </Text>
             <Text size={1} muted>
               For Google review markup: when and where the performance happened.

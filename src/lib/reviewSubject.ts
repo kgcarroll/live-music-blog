@@ -1,7 +1,7 @@
 export const REVIEW_SUBJECT_OPTIONS = [
-  {title: 'Live concert', value: 'liveConcert'},
+  {title: 'Live Concert', value: 'liveConcert'},
   {title: 'Album / EP', value: 'album'},
-  {title: 'Video / film', value: 'video'},
+  {title: 'Video/Film', value: 'video'},
   {title: 'Other', value: 'other'},
 ] as const
 

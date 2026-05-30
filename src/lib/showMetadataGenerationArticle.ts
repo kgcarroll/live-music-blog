@@ -53,7 +53,7 @@ export function validateShowMetadataGenerationArticle(
     return {
       ok: false,
       error:
-        'Set “What is this review about?” to Live concert before suggesting concert date and venue.',
+        'Set “What is this review about?” to Live Concert before suggesting concert date and venue.',
     }
   }
   if (!article.title?.trim()) {
