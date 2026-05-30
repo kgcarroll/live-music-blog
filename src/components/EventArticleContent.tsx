@@ -18,11 +18,15 @@ export function EventArticleContent({
   venueSlug,
   relatedEvents,
   attractions,
+  isPast = false,
+  relatedSectionTitle,
 }: {
   detail: EventDetail
   venueSlug: string | null
   relatedEvents: ScheduleEvent[]
   attractions: TicketmasterAttractionRef[]
+  isPast?: boolean
+  relatedSectionTitle?: string
 }) {
   const when = formatScheduleEventWhen(detail)
   const venueLabel = formatScheduleVenue(detail)
@@ -37,7 +41,13 @@ export function EventArticleContent({
         </Link>
       </p>
 
-      <p className="mt-6 text-sm text-zinc-400">
+      {isPast ? (
+        <p className="mt-6 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          This show is no longer on our schedule (or has passed).
+        </p>
+      ) : null}
+
+      <p className={isPast ? 'mt-3 text-sm text-zinc-400' : 'mt-6 text-sm text-zinc-400'}>
         <span className="uppercase tracking-wide text-amber-300">Concert</span>
         <span className="mx-1.5 text-zinc-600" aria-hidden="true">
           |
@@ -67,7 +77,7 @@ export function EventArticleContent({
 
       {venueLabel ? (
         <p className="mt-3 text-zinc-400">
-          At{' '}
+          {isPast ? 'Was at ' : 'At '}
           {venueSlug ? (
             <Link href={venueHref(venueSlug)} className="transition hover:text-amber-200">
               {venueLabel}
@@ -80,19 +90,25 @@ export function EventArticleContent({
 
       {detail.venueAddress ? <p className="mt-3 text-zinc-400">{detail.venueAddress}</p> : null}
 
-      <p className="mt-4">
-        <a
-          href={detail.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-medium uppercase tracking-wide text-amber-300 transition hover:text-amber-200"
-        >
-          Get tickets on Ticketmaster
-        </a>
-      </p>
+      {detail.url ? (
+        <p className="mt-4">
+          <a
+            href={detail.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium uppercase tracking-wide text-amber-300 transition hover:text-amber-200"
+          >
+            {isPast ? 'View on Ticketmaster' : 'Get tickets on Ticketmaster'}
+          </a>
+        </p>
+      ) : null}
 
       {detail.imageUrl ? (
-        <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
+        <div
+          className={`relative mt-8 aspect-[16/9] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900${
+            isPast ? ' opacity-90' : ''
+          }`}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element -- Ticketmaster CDN */}
           <img
             src={detail.imageUrl}
@@ -100,7 +116,7 @@ export function EventArticleContent({
             width={detail.imageWidth ?? undefined}
             height={detail.imageHeight ?? undefined}
             sizes="(max-width: 1024px) 100vw, 896px"
-            className="h-full w-full object-cover"
+            className={`h-full w-full object-cover${isPast ? ' grayscale-[20%]' : ''}`}
             decoding="async"
           />
         </div>
@@ -123,7 +139,7 @@ export function EventArticleContent({
   const relatedSection = relatedEvents.length ? (
     <section className="w-full" aria-labelledby="related-events-heading">
       <h2 id="related-events-heading" className="text-2xl font-semibold tracking-tight text-zinc-50">
-        Related events
+        {relatedSectionTitle ?? 'Related events'}
       </h2>
       <div className="mt-6 grid grid-cols-1 items-stretch gap-3 sm:gap-4 md:grid-cols-3 md:gap-6">
         {relatedEvents.map((event) => (

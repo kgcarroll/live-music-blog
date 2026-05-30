@@ -3,7 +3,10 @@ import {notFound, redirect} from 'next/navigation'
 
 import {EventArticleContent} from '@/components/EventArticleContent'
 import {PastEventContent} from '@/components/PastEventContent'
-import {fetchEventArchiveBySlug, scheduleEventFromArchive} from '@/lib/eventArchive'
+import {
+  fetchEventArchiveBySlug,
+  resolvePastEventDetail,
+} from '@/lib/eventArchive'
 import {buildPageMetadata} from '@/lib/pageMetadata'
 import {eventHref} from '@/lib/paths'
 import {
@@ -26,7 +29,8 @@ async function loadPastEventView(slug: string) {
   const archive = await fetchEventArchiveBySlug(slug)
   if (!archive) return null
 
-  const [venueEventsResult, venueIndex] = await Promise.all([
+  const [detail, venueEventsResult, venueIndex] = await Promise.all([
+    resolvePastEventDetail(archive),
     archive.venueId
       ? fetchVenueEventsPage(archive.venueId, 0)
       : Promise.resolve({events: [], hasMore: false}),
@@ -42,7 +46,7 @@ async function loadPastEventView(slug: string) {
       : null)
 
   return {
-    archive,
+    detail,
     venueSlug,
     venueEvents: venueEventsResult.events.slice(0, PAST_EVENT_RELATED_LIMIT),
   }
@@ -72,13 +76,13 @@ export async function generateMetadata({params}: Props): Promise<Metadata> {
     return {title: 'Event not found'}
   }
 
-  const when = formatScheduleEventWhen(scheduleEventFromArchive(past.archive))
+  const when = formatScheduleEventWhen(past.detail)
 
   return {
     ...buildPageMetadata({
-      title: `${past.archive.name} (past)`,
+      title: `${past.detail.name} (past)`,
       description: `This show (${when.label}) is no longer on our schedule. Browse upcoming concerts in Philadelphia.`,
-      path: eventHref(past.archive.slug),
+      path: eventHref(past.detail.slug),
     }),
     robots: {index: false, follow: true},
   }
@@ -93,7 +97,7 @@ export default async function EventDetailPage({params}: Props) {
     if (past) {
       return (
         <PastEventContent
-          archive={past.archive}
+          detail={past.detail}
           venueSlug={past.venueSlug}
           venueEvents={past.venueEvents}
         />
@@ -113,7 +117,7 @@ export default async function EventDetailPage({params}: Props) {
 
     return (
       <PastEventContent
-        archive={past.archive}
+        detail={past.detail}
         venueSlug={past.venueSlug}
         venueEvents={past.venueEvents}
       />
@@ -136,7 +140,7 @@ export default async function EventDetailPage({params}: Props) {
     if (past) {
       return (
         <PastEventContent
-          archive={past.archive}
+          detail={past.detail}
           venueSlug={past.venueSlug}
           venueEvents={past.venueEvents}
         />

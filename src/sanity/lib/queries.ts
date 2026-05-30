@@ -377,41 +377,59 @@ export const RSS_EDITORIAL_FEED = defineQuery(`
   }
 `)
 
+const eventArchiveProjection = `
+  slug,
+  eventId,
+  name,
+  venueId,
+  venueName,
+  venueSlug,
+  venueCity,
+  venueState,
+  startDateTime,
+  localDate,
+  localTime,
+  timezone,
+  "ticketmasterUrl": ticketmasterUrl,
+  imageUrl,
+  imageWidth,
+  imageHeight,
+  lastSeenAt,
+  attractions[] {
+    id,
+    name,
+    url
+  },
+  info,
+  pleaseNote,
+  description,
+  genreLabels,
+  eventTypeLabel,
+  priceSummary,
+  statusLabel,
+  promoterNames,
+  accessibilityInfo,
+  ticketLimitInfo,
+  venueAddress,
+  venueUrl,
+  salesPublicStart,
+  salesPublicEnd,
+  presales[] {
+    name,
+    startDateTime,
+    endDateTime
+  }
+`
+
 export const EVENT_ARCHIVE_BY_DOC_ID = defineQuery(`
   *[_type == "eventArchive" && _id == $docId][0] {
-    slug,
-    eventId,
-    name,
-    venueId,
-    venueName,
-    venueSlug,
-    venueCity,
-    venueState,
-    startDateTime,
-    localDate,
-    localTime,
-    "ticketmasterUrl": ticketmasterUrl,
-    imageUrl,
-    lastSeenAt
+    ${eventArchiveProjection}
   }
 `)
 
 export const EVENT_ARCHIVE_BY_SLUG = defineQuery(`
   *[_type == "eventArchive" && slug == $slug][0] {
-    slug,
-    eventId,
-    name,
-    venueId,
-    venueName,
-    venueSlug,
-    venueCity,
-    venueState,
-    startDateTime,
-    localDate,
-    localTime,
-    "ticketmasterUrl": ticketmasterUrl,
-    imageUrl,
-    lastSeenAt
+    ${eventArchiveProjection}
   }
 `)
 

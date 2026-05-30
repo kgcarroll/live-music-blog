@@ -814,6 +814,15 @@ async function loadTicketmasterFeedFromApi(options?: {
   const eventsById = new Map(events.map((event) => [event.id, event]))
   const venues = buildVenuesFromRawEvents(rawEvents, eventsById)
 
+  const detailsById = new Map<string, EventDetail>()
+  for (const raw of rawEvents) {
+    const detail = eventDetailFromRaw(raw)
+    if (!detail) continue
+    const indexed = eventsById.get(detail.id)
+    if (!indexed) continue
+    detailsById.set(detail.id, {...detail, slug: indexed.slug})
+  }
+
   await persistTicketmasterFeedStatus({
     lastAttemptAt: attemptAt,
     lastSuccessAt: attemptAt,
@@ -826,7 +835,7 @@ async function loadTicketmasterFeedFromApi(options?: {
     dmaId,
   })
 
-  void syncEventArchivesOnFeedUpdate(events, venues).catch((error) => {
+  void syncEventArchivesOnFeedUpdate(events, venues, detailsById).catch((error) => {
     console.warn('[eventArchive] Failed to sync event archives:', error)
   })
 
@@ -1137,32 +1146,61 @@ export function formatVenueAddress(venue: VenueDetail): string | null {
   return parts.length ? parts.join(' · ') : null
 }
 
+function formatLocalTimeSuffix(localTime: string | null | undefined): string {
+  const raw = localTime?.trim()
+  if (!raw || raw.startsWith('00:00')) return ''
+
+  const match = raw.match(/^(\d{1,2}):(\d{2})/)
+  if (!match) return ` · ${raw}`
+
+  let hour = Number.parseInt(match[1]!, 10)
+  const minute = match[2]!
+  if (!Number.isFinite(hour)) return ` · ${raw}`
+
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  hour = hour % 12 || 12
+  const clock = minute === '00' ? `${hour} ${ampm}` : `${hour}:${minute} ${ampm}`
+  return ` · ${clock}`
+}
+
+function formatLocalDateLabel(localDate: string): string {
+  const match = localDate.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return localDate
+
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12))
+  if (Number.isNaN(date.getTime())) return localDate
+
+  return date.toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  })
+}
+
 export function formatScheduleEventWhen(event: ScheduleEvent): {
   label: string
   dateTime?: string
 } {
-  if (event.startDateTime) {
-    const date = new Date(event.startDateTime)
-    if (!Number.isNaN(date.getTime())) {
-      return {
-        label: date.toLocaleString(undefined, {
-          weekday: 'short',
-          month: 'short',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit',
-        }),
-        dateTime: event.startDateTime,
-      }
+  const timezone = event.timezone?.trim() || null
+
+  if (event.startDateTime && timezone) {
+    const label = formatTicketmasterDateTime(event.startDateTime, timezone)
+    if (label) {
+      return {label, dateTime: event.startDateTime}
     }
   }
 
   if (event.localDate) {
-    const time =
-      event.localTime && !event.localTime.startsWith('00:00')
-        ? ` · ${event.localTime}`
-        : ''
-    return {label: `${event.localDate}${time}`, dateTime: event.localDate}
+    const label = `${formatLocalDateLabel(event.localDate)}${formatLocalTimeSuffix(event.localTime)}`
+    return {label, dateTime: event.startDateTime ?? event.localDate}
+  }
+
+  if (event.startDateTime) {
+    const label = formatTicketmasterDateTime(event.startDateTime, timezone)
+    if (label) {
+      return {label, dateTime: event.startDateTime}
+    }
   }
 
   return {label: 'Date TBA'}

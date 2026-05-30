@@ -9,6 +9,7 @@
     "lint": "next lint",
     "algolia:index": "node --env-file=.env.local --import tsx scripts/algolia-index.ts",
     "event-archive:backfill": "node --env-file=.env.local --import tsx scripts/backfill-event-archives.ts",
+    "event-archive:enrich": "node --env-file=.env.local --import tsx scripts/enrich-event-archives.ts",
     "event-archive:prune-live": "node --env-file=.env.local --import tsx scripts/prune-live-event-archives.ts",
     "event-archive:migrate-ids": "node --env-file=.env.local --import tsx scripts/migrate-event-archive-ids.ts",
     "spotify-artist:sync": "node --env-file=.env.local --import tsx scripts/sync-spotify-artists.ts",
