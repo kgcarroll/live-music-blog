@@ -53,6 +53,11 @@ export function VenueCard({venue}: {venue: VenueMapPin}) {
         <p className="mt-auto shrink-0 pt-1 text-xs text-zinc-500">
           {venue.upcomingEventCount} upcoming show{venue.upcomingEventCount === 1 ? '' : 's'}
         </p>
+        {venue.imageSource === 'google_places' && venue.imageAttribution ? (
+          <p className="shrink-0 text-[10px] leading-snug text-zinc-600" title={venue.imageAttribution}>
+            Photo: {venue.imageAttribution}
+          </p>
+        ) : null}
       </div>
     </article>
   )

@@ -32,4 +32,5 @@ export const STRUCTURE_HIDDEN_DOCUMENT_TYPES = [
   'eventArchive',
   'spotifyArtistMatch',
   'eventSpotifyCuration',
+  'venueImage',
 ] as const

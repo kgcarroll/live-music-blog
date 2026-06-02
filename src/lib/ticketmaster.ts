@@ -13,6 +13,8 @@ import type {TicketmasterAttractionRef} from '@/lib/spotifyArtistMatch'
 import {formatSpotifyRateLimitMessage} from '@/lib/spotifyApi'
 import {syncSpotifyArtistMatchesOnFeed} from '@/lib/spotifyAttractionSync'
 import {persistTicketmasterFeedStatus} from '@/lib/ticketmasterFeedStatus'
+import {applyCachedVenueImages} from '@/lib/venueImage'
+import {syncVenueImagesOnFeed} from '@/lib/venueImageSync'
 import {assignUniqueVenueSlugs} from '@/lib/venueSlug'
 import {
   isVenueWithinMapRegion,
@@ -173,10 +175,12 @@ export type VenueMapPin = {
   city: string | null
   state: string | null
   upcomingEventCount: number
-  /** Often from an upcoming event at this venue; venue detail may have its own images. */
+  /** Often from an upcoming event at this venue; overridden when a cached venue image exists. */
   imageUrl: string | null
   imageWidth: number | null
   imageHeight: number | null
+  imageSource?: 'google_places' | 'ticketmaster'
+  imageAttribution?: string
   /** Earliest upcoming show at this venue in the current date window. */
   nextShowName: string | null
   nextShowWhen: string | null
@@ -769,6 +773,7 @@ function buildVenuesFromRawEvents(
 /** One paginated Discovery scan; builds both event and venue indexes. */
 async function loadTicketmasterFeedFromApi(options?: {
   skipSpotifySync?: boolean
+  skipVenueImageSync?: boolean
 }): Promise<TicketmasterFeed> {
   const attemptAt = new Date().toISOString()
   const fingerprint = getTicketmasterApiKeyFingerprint()
@@ -812,7 +817,8 @@ async function loadTicketmasterFeedFromApi(options?: {
 
   const events = buildScheduleEventsFromRaw(rawEvents)
   const eventsById = new Map(events.map((event) => [event.id, event]))
-  const venues = buildVenuesFromRawEvents(rawEvents, eventsById)
+  let venues = buildVenuesFromRawEvents(rawEvents, eventsById)
+  venues = await applyCachedVenueImages(venues)
 
   const detailsById = new Map<string, EventDetail>()
   for (const raw of rawEvents) {
@@ -852,12 +858,19 @@ async function loadTicketmasterFeedFromApi(options?: {
       })
   }
 
+  if (!options?.skipVenueImageSync) {
+    void syncVenueImagesOnFeed(venues).catch((error) => {
+      console.warn('[venueImage] Failed to sync venue images:', error)
+    })
+  }
+
   return {events, venues, curationInputs}
 }
 
 /** Bypass Next.js `unstable_cache` / React `cache` — use in CLI scripts only. */
 export async function loadTicketmasterFeedDirect(options?: {
   skipSpotifySync?: boolean
+  skipVenueImageSync?: boolean
 }): Promise<TicketmasterFeed> {
   return loadTicketmasterFeedFromApi(options)
 }

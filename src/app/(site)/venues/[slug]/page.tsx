@@ -107,6 +107,7 @@ export default async function VenueDetailPage({params}: Props) {
   if (!venue) notFound()
 
   const address = formatVenueAddress(venue)
+  const venueImageUrl = pin.imageUrl ?? venue.imageUrl
   const mapEnabled = settings?.venuesMapEnabled !== false
   const latitude = venue.latitude ?? pin.latitude
   const longitude = venue.longitude ?? pin.longitude
@@ -135,6 +136,26 @@ export default async function VenueDetailPage({params}: Props) {
       </p>
       <h1 className="mt-3 text-3xl font-bold tracking-tight text-zinc-50 sm:text-4xl">{venue.name}</h1>
       {address ? <p className="mt-3 text-zinc-400">{address}</p> : null}
+      {venueImageUrl ? (
+        <figure className="mt-6 max-w-2xl">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-800">
+            {/* eslint-disable-next-line @next/next/no-img-element -- Google Places / Ticketmaster CDN */}
+            <img
+              src={venueImageUrl}
+              alt={venue.name}
+              width={pin.imageWidth ?? undefined}
+              height={pin.imageHeight ?? undefined}
+              className="h-full w-full object-cover"
+              decoding="async"
+            />
+          </div>
+          {pin.imageSource === 'google_places' && pin.imageAttribution ? (
+            <figcaption className="mt-2 text-xs text-zinc-600">
+              Photo: {pin.imageAttribution}
+            </figcaption>
+          ) : null}
+        </figure>
+      ) : null}
       {venue.url ? (
         <p className="mt-4">
           <a

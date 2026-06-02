@@ -13,7 +13,9 @@
     "event-archive:prune-live": "node --env-file=.env.local --import tsx scripts/prune-live-event-archives.ts",
     "event-archive:migrate-ids": "node --env-file=.env.local --import tsx scripts/migrate-event-archive-ids.ts",
     "spotify-artist:sync": "node --env-file=.env.local --import tsx scripts/sync-spotify-artists.ts",
-    "spotify-artist:recurate": "node --env-file=.env.local --import tsx scripts/recurate-spotify-artists.ts"
+    "spotify-artist:recurate": "node --env-file=.env.local --import tsx scripts/recurate-spotify-artists.ts",
+    "venue-image:spike": "node --env-file=.env.local --import tsx scripts/venue-image-spike.ts",
+    "venue-image:sync": "node --env-file=.env.local --import tsx scripts/sync-venue-images.ts"
   },
   "dependencies": {
     "@portabletext/react": "^4.0.3",

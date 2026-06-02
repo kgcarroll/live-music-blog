@@ -2,6 +2,7 @@ import {author} from './author'
 import {eventArchive} from './eventArchive'
 import {eventSpotifyCuration} from './eventSpotifyCuration'
 import {spotifyArtistMatch} from './spotifyArtistMatch'
+import {venueImage} from './venueImage'
 import {instagramEmbed} from './instagramEmbed'
 import {interview} from './interview'
 import {news} from './news'
@@ -14,6 +15,7 @@ export const schemaTypes = [
   eventArchive,
   eventSpotifyCuration,
   spotifyArtistMatch,
+  venueImage,
   siteSettings,
   tag,
   author,
