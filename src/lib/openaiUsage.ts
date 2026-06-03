@@ -3,6 +3,9 @@
 const OPENAI_API_BASE = 'https://api.openai.com/v1'
 
 const DEFAULT_PERIOD_DAYS = 30
+/** Daily buckets: API max 31 per request — avoids extra pagination round trips. */
+const DAILY_BUCKET_LIMIT = 31
+const MAX_USAGE_PAGES = 2
 
 type UsageResult = {
   input_tokens?: number
@@ -39,6 +42,7 @@ export type OpenAIUsageSummary = {
   configured: boolean
   error?: 'not_configured' | 'forbidden' | 'api_error'
   errorMessage?: string
+  truncated?: boolean
 }
 
 function getAdminApiKey(): string | null {
@@ -54,7 +58,11 @@ export function isOpenAIUsageConfigured(): boolean {
 async function fetchPaginatedBuckets<T extends UsageBucket | CostsBucket>(
   path: string,
   baseParams: Record<string, string | number>,
-): Promise<{ok: true; buckets: T[]} | {ok: false; status: number; message: string}> {
+  maxPages = MAX_USAGE_PAGES,
+): Promise<
+  | {ok: true; buckets: T[]; truncated: boolean}
+  | {ok: false; status: number; message: string}
+> {
   const key = getAdminApiKey()
   if (!key) {
     return {ok: false, status: 0, message: 'OpenAI API key is not configured'}
@@ -63,7 +71,9 @@ async function fetchPaginatedBuckets<T extends UsageBucket | CostsBucket>(
   const buckets: T[] = []
   let page: string | undefined
 
-  for (let guard = 0; guard < 50; guard++) {
+  let truncated = false
+
+  for (let guard = 0; guard < maxPages; guard++) {
     const params = new URLSearchParams()
     for (const [k, v] of Object.entries(baseParams)) {
       params.set(k, String(v))
@@ -102,9 +112,10 @@ async function fetchPaginatedBuckets<T extends UsageBucket | CostsBucket>(
     buckets.push(...(json.data ?? []))
     page = json.next_page ?? undefined
     if (!page) break
+    if (guard === maxPages - 1) truncated = true
   }
 
-  return {ok: true, buckets}
+  return {ok: true, buckets, truncated}
 }
 
 function toFiniteNumber(value: unknown): number {
@@ -176,25 +187,30 @@ export async function fetchOpenAIUsageSummary(
     }
   }
 
-  const startTime = Math.floor(Date.now() / 1000) - periodDays * 24 * 60 * 60
-  const limit = Math.min(Math.max(periodDays, 1), 180)
+  const endTime = Math.floor(Date.now() / 1000)
+  const startTime = endTime - periodDays * 24 * 60 * 60
+  const bucketLimit = Math.min(Math.max(periodDays, 1), DAILY_BUCKET_LIMIT)
 
   const usageParams = {
     start_time: startTime,
+    end_time: endTime,
     bucket_width: '1d',
-    limit,
+    limit: bucketLimit,
   }
 
   const costsParams = {
     start_time: startTime,
+    end_time: endTime,
     bucket_width: '1d',
-    limit,
+    limit: bucketLimit,
   }
 
   const [usage, costs] = await Promise.all([
     fetchPaginatedBuckets<UsageBucket>('/organization/usage/completions', usageParams),
     fetchPaginatedBuckets<CostsBucket>('/organization/costs', costsParams),
   ])
+
+  const truncated = Boolean(usage.ok && usage.truncated) || Boolean(costs.ok && costs.truncated)
 
   if (!usage.ok) {
     const error =
@@ -238,7 +254,12 @@ export async function fetchOpenAIUsageSummary(
     currency,
     fetchedAt,
     configured: true,
+    truncated: truncated || undefined,
     error: costs.ok ? undefined : 'api_error',
-    errorMessage: costs.ok ? undefined : costs.message,
+    errorMessage: costs.ok
+      ? truncated
+        ? 'Totals may be incomplete (OpenAI returned additional pages).'
+        : undefined
+      : costs.message,
   }
 }

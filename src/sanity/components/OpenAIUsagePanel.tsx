@@ -56,8 +56,10 @@ export function OpenAIUsagePanel() {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState<string | null>(null)
 
-  const loadUsage = useCallback(async () => {
-    const response = await fetch(`${studioApiOrigin()}/api/studio/openai-usage?days=30`, {
+  const loadUsage = useCallback(async (refresh = false) => {
+    const query = new URLSearchParams({days: '30'})
+    if (refresh) query.set('refresh', '1')
+    const response = await fetch(`${studioApiOrigin()}/api/studio/openai-usage?${query}`, {
       credentials: 'same-origin',
     })
     if (!response.ok) {
@@ -89,7 +91,7 @@ export function OpenAIUsagePanel() {
     setMessage(null)
     setLoading(true)
     try {
-      setSummary(await loadUsage())
+      setSummary(await loadUsage(true))
     } catch {
       setMessage('Could not load OpenAI usage.')
     } finally {
@@ -103,8 +105,9 @@ export function OpenAIUsagePanel() {
     <Stack space={4}>
       <Flex align="center" justify="space-between" gap={3}>
         <Text size={1} muted>
-          Organization-wide completions usage for the last {summary?.periodDays ?? 30} days. Requires
-          OPENAI_ADMIN_API_KEY with read access on the site.
+          Organization-wide completions usage for the last {summary?.periodDays ?? 30} days. Results
+          are cached for five minutes; Refresh fetches live data from OpenAI (may take several
+          seconds). Requires OPENAI_ADMIN_API_KEY with read access on the site.
         </Text>
         <Button
           icon={RefreshIcon}
