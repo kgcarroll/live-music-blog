@@ -1,5 +1,7 @@
 /** Server-only Google Places API (New) — venue lookup + photo fetch. */
 
+import {recordGooglePlacesRequest} from '@/lib/googlePlacesUsage'
+
 const PLACES_API_BASE = 'https://places.googleapis.com/v1'
 
 const VENUE_TYPE_BONUS = new Set([
@@ -290,9 +292,14 @@ export async function searchGooglePlaceCandidates(
   })
 
   if (!result.ok) {
+    if (result.status !== 0) {
+      await recordGooglePlacesRequest('api_error')
+    }
     const code = result.status === 0 ? 'not_configured' : 'api_error'
     return {error: code, message: result.message}
   }
+
+  await recordGooglePlacesRequest('text_search')
 
   const candidates = (result.data.places ?? [])
     .map((place) => candidateFromPlace(place, tm))
@@ -324,12 +331,18 @@ export async function fetchGooglePlacePhotoUrl(
     return 'api_error'
   }
 
-  if (!response.ok) return 'api_error'
+  if (!response.ok) {
+    await recordGooglePlacesRequest('api_error')
+    return 'api_error'
+  }
+
+  await recordGooglePlacesRequest('place_photo')
 
   try {
     const json = (await response.json()) as {photoUri?: string}
     return json.photoUri?.trim() || null
   } catch {
+    await recordGooglePlacesRequest('api_error')
     return 'api_error'
   }
 }

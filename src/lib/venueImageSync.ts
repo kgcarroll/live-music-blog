@@ -3,6 +3,7 @@ import {
   matchVenueToGooglePlace,
   type TicketmasterVenueIdentity,
 } from '@/lib/googlePlaces'
+import {recordGooglePlacesSyncResult} from '@/lib/googlePlacesUsage'
 import {fetchVenueById, type VenueMapPin} from '@/lib/ticketmaster'
 import {
   isVenueImageStale,
@@ -127,11 +128,13 @@ export async function syncVenueImagesOnFeed(
   options: VenueImageSyncOptions = {},
 ): Promise<VenueImageSyncResult> {
   if (!isGooglePlacesConfigured()) {
+    await recordGooglePlacesSyncResult({venuesProcessed: 0, imagesWritten: 0})
     return {venuesProcessed: 0, imagesWritten: 0, skippedNotConfigured: true}
   }
 
   const pending = await selectVenuesToProcess(venues, options)
   if (!pending.length) {
+    await recordGooglePlacesSyncResult({venuesProcessed: 0, imagesWritten: 0})
     return {venuesProcessed: 0, imagesWritten: 0, skippedNotConfigured: false}
   }
 
@@ -151,5 +154,10 @@ export async function syncVenueImagesOnFeed(
     await new Promise((resolve) => setTimeout(resolve, RESOLVE_DELAY_MS))
   }
 
-  return {venuesProcessed, imagesWritten, skippedNotConfigured: false}
+  const result = {venuesProcessed, imagesWritten, skippedNotConfigured: false}
+  await recordGooglePlacesSyncResult({
+    venuesProcessed: result.venuesProcessed,
+    imagesWritten: result.imagesWritten,
+  })
+  return result
 }

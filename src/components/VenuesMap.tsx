@@ -3,6 +3,7 @@
 import mapboxgl from 'mapbox-gl'
 import {useEffect, useRef} from 'react'
 
+import {reportMapboxLoad} from '@/lib/mapboxLoadReport'
 import type {VenueMapPin} from '@/lib/ticketmaster'
 import {eventHref, venueHref} from '@/lib/paths'
 import {
@@ -302,6 +303,7 @@ export function VenuesMap({
         fitMapToRadius(map, loadCenter, radiusMilesRef.current)
       }
       prevRadiusMilesRef.current = radiusMilesRef.current
+      reportMapboxLoad('venues_hub')
     }
 
     map.on('load', onLoad)

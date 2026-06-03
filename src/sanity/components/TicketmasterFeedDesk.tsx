@@ -54,7 +54,7 @@ function StatusRow({label, value}: {label: string; value: string}) {
   )
 }
 
-export function TicketmasterFeedDesk() {
+export function TicketmasterFeedDesk({embedded = false}: {embedded?: boolean}) {
   const client = useClient({apiVersion})
   const [status, setStatus] = useState<TicketmasterFeedStatus | null>(null)
   const [loading, setLoading] = useState(true)
@@ -106,7 +106,7 @@ export function TicketmasterFeedDesk() {
         return
       }
       setMessage(
-        'Cache cleared. Open /events on the site to trigger a fresh Ticketmaster fetch, then refresh status.',
+        'Cache cleared. Open /events on the site to refetch the feed (and run venue image sync), then refresh status.',
       )
     } catch {
       setMessage('Could not clear the feed cache.')
@@ -119,17 +119,38 @@ export function TicketmasterFeedDesk() {
   const cacheExpiry = cacheExpiresAt(status?.lastSuccessAt)
   const cacheMinutes = Math.round(SCHEDULE_REVALIDATE_SECONDS / 60)
 
-  return (
-    <Box padding={4} sizing="border">
+  const content = (
       <Stack space={4}>
-        <Flex align="center" justify="space-between" gap={3}>
-          <Flex align="center" gap={2}>
-            <CalendarIcon />
-            <Text size={2} weight="semibold">
-              Ticketmaster feed
-            </Text>
+        {!embedded ? (
+          <Flex align="center" justify="space-between" gap={3}>
+            <Flex align="center" gap={2}>
+              <CalendarIcon />
+              <Text size={2} weight="semibold">
+                Ticketmaster feed
+              </Text>
+            </Flex>
+            <Flex gap={2}>
+              <Button
+                icon={RefreshIcon}
+                text="Refresh status"
+                mode="ghost"
+                disabled={loading || refreshing}
+                onClick={onRefreshStatus}
+              />
+              <Button
+                icon={LaunchIcon}
+                text="Open /events"
+                mode="ghost"
+                tone="primary"
+                as="a"
+                href={`${studioApiOrigin()}/events`}
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            </Flex>
           </Flex>
-          <Flex gap={2}>
+        ) : (
+          <Flex align="center" justify="flex-end" gap={2}>
             <Button
               icon={RefreshIcon}
               text="Refresh status"
@@ -148,7 +169,7 @@ export function TicketmasterFeedDesk() {
               rel="noopener noreferrer"
             />
           </Flex>
-        </Flex>
+        )}
 
         <Text size={1} muted>
           Status is written to Site Settings when the server refreshes the cached Discovery feed (~{cacheMinutes}{' '}
@@ -231,6 +252,13 @@ export function TicketmasterFeedDesk() {
           </Text>
         ) : null}
       </Stack>
+  )
+
+  if (embedded) return content
+
+  return (
+    <Box padding={4} sizing="border">
+      {content}
     </Box>
   )
 }

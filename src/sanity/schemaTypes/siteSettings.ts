@@ -3,6 +3,109 @@ import {defineField, defineType} from 'sanity'
 import {PinnedCarouselEventInput} from '@/sanity/components/PinnedCarouselEventInput'
 import {pageIntroField} from './blocks'
 
+const googlePlacesUsageFields = [
+  defineField({
+    name: 'periodMonth',
+    type: 'string',
+    title: 'Usage period (YYYY-MM)',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'textSearch',
+    type: 'number',
+    title: 'Text Search requests',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'placePhoto',
+    type: 'number',
+    title: 'Place Photo requests',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'apiErrors',
+    type: 'number',
+    title: 'Failed API requests',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'lastRequestAt',
+    type: 'datetime',
+    title: 'Last API request',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'lastRequestKind',
+    type: 'string',
+    title: 'Last API request type',
+    readOnly: true,
+    options: {
+      list: [
+        {title: 'Text Search', value: 'text_search'},
+        {title: 'Place Photo', value: 'place_photo'},
+        {title: 'API error', value: 'api_error'},
+      ],
+    },
+  }),
+  defineField({
+    name: 'lastSyncAt',
+    type: 'datetime',
+    title: 'Last venue image sync',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'lastSyncVenuesProcessed',
+    type: 'number',
+    title: 'Venues processed (last sync)',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'lastSyncImagesWritten',
+    type: 'number',
+    title: 'Images written (last sync)',
+    readOnly: true,
+  }),
+]
+
+const mapboxUsageFields = [
+  defineField({
+    name: 'periodMonth',
+    type: 'string',
+    title: 'Usage period (YYYY-MM)',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'venuesHub',
+    type: 'number',
+    title: 'Venues hub map loads',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'venueDetail',
+    type: 'number',
+    title: 'Venue detail map loads',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'lastLoadAt',
+    type: 'datetime',
+    title: 'Last map load',
+    readOnly: true,
+  }),
+  defineField({
+    name: 'lastLoadSource',
+    type: 'string',
+    title: 'Last map load source',
+    readOnly: true,
+    options: {
+      list: [
+        {title: 'Venues hub (/venues)', value: 'venues_hub'},
+        {title: 'Venue detail', value: 'venue_detail'},
+      ],
+    },
+  }),
+]
+
 const ticketmasterFeedStatusFields = [
   defineField({
     name: 'lastAttemptAt',
@@ -165,6 +268,20 @@ export const siteSettings = defineType({
       title: 'Ticketmaster feed status',
       hidden: true,
       fields: ticketmasterFeedStatusFields,
+    }),
+    defineField({
+      name: 'mapboxUsage',
+      type: 'object',
+      title: 'Mapbox usage (site-reported)',
+      hidden: true,
+      fields: mapboxUsageFields,
+    }),
+    defineField({
+      name: 'googlePlacesUsage',
+      type: 'object',
+      title: 'Google Places usage (site-reported)',
+      hidden: true,
+      fields: googlePlacesUsageFields,
     }),
     defineField({
       name: 'ticketmasterFeedSnapshot',

@@ -1,4 +1,4 @@
-import {CogIcon, StarIcon, CalendarIcon} from '@sanity/icons'
+import {ActivityIcon, CogIcon, StarIcon} from '@sanity/icons'
 import type {StructureResolver} from 'sanity/structure'
 
 import {
@@ -6,7 +6,7 @@ import {
   STRUCTURE_HIDDEN_DOCUMENT_TYPES,
 } from './constants'
 import {homepageCarouselList} from './structure/homepageCarousel'
-import {ticketmasterFeedList} from './structure/ticketmasterFeed'
+import {integrationDashboardList} from './structure/integrationDashboard'
 
 const hiddenStructureTypes = new Set<string>(STRUCTURE_HIDDEN_DOCUMENT_TYPES)
 
@@ -30,10 +30,10 @@ export const structure: StructureResolver = (S, context) =>
         .icon(StarIcon)
         .child(() => homepageCarouselList(S)),
       S.listItem()
-        .title('Ticketmaster Feed')
-        .id('ticketmaster-feed')
-        .icon(CalendarIcon)
-        .child(() => ticketmasterFeedList(S)),
+        .title('Integration Dashboard')
+        .id('integration-dashboard')
+        .icon(ActivityIcon)
+        .child(() => integrationDashboardList(S)),
       S.divider(),
       ...S.documentTypeListItems().filter((item) => !hiddenStructureTypes.has(item.getId() ?? '')),
     ])

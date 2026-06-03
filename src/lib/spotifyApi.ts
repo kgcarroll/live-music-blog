@@ -65,6 +65,21 @@ export function isSpotifyApiConfigured(): boolean {
   return getCredentials() != null
 }
 
+export function getSpotifyClientIdFingerprint(): string | null {
+  const clientId = getCredentials()?.clientId
+  if (!clientId || clientId.length < 8) return clientId ?? null
+  return `${clientId.slice(0, 8)}…`
+}
+
+/** Verify Client Credentials can obtain an access token (no search quota used). */
+export async function verifySpotifyApiConnection(): Promise<
+  {status: 'ok'} | {status: 'not_configured'} | {status: 'auth_failed'}
+> {
+  if (!getCredentials()) return {status: 'not_configured'}
+  const token = await fetchAccessToken()
+  return token ? {status: 'ok'} : {status: 'auth_failed'}
+}
+
 export function formatSpotifyRateLimitMessage(retryAfterMs: number): string {
   const seconds = Math.ceil(retryAfterMs / 1000)
   const minutes = Math.ceil(seconds / 60)

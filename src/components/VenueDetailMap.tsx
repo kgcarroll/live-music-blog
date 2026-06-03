@@ -3,6 +3,7 @@
 import mapboxgl from 'mapbox-gl'
 import {useEffect, useRef} from 'react'
 
+import {reportMapboxLoad} from '@/lib/mapboxLoadReport'
 import {VENUE_DETAIL_MAP_HEIGHT_CLASS, VENUE_DETAIL_MAP_ZOOM} from '@/lib/venues'
 
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -33,6 +34,10 @@ export function VenueDetailMap({
 
     map.addControl(new mapboxgl.NavigationControl({showCompass: false}), 'top-right')
     map.addControl(new mapboxgl.AttributionControl({compact: true}))
+
+    map.once('load', () => {
+      reportMapboxLoad('venue_detail')
+    })
 
     const marker = new mapboxgl.Marker({color: '#fbbf24'}).setLngLat([longitude, latitude]).addTo(map)
 

@@ -859,9 +859,11 @@ async function loadTicketmasterFeedFromApi(options?: {
   }
 
   if (!options?.skipVenueImageSync) {
-    void syncVenueImagesOnFeed(venues).catch((error) => {
+    try {
+      await syncVenueImagesOnFeed(venues)
+    } catch (error) {
       console.warn('[venueImage] Failed to sync venue images:', error)
-    })
+    }
   }
 
   return {events, venues, curationInputs}
