@@ -4,15 +4,61 @@ import {absoluteSiteUrl} from '@/lib/siteUrl'
 
 export const FACEBOOK_CAPTION_MAX_WORDS = 50
 
-export const FACEBOOK_CAPTION_INSTRUCTIONS = `Write a short Facebook post promoting this music news article for a local live-music publication.
-Keep under 50 words. Never truncate the text.
-Make it one or two sentences.
-Paragraphs are allowed.
-Avoid clickbait.
-Sound like a human editor wrote it: direct, specific, plain language—not marketing copy or AI filler. It should read like a human wrote it for a local live-music publication.
-Do not use emojis, emoticons, or hashtags.
-Avoid exclamation marks unless the source material truly calls for one (default to none).
-Do not use phrases like "dive in", "stunning", "mesmerizing", "don't miss", "game-changer", "whether you're a fan or not", "here's why", "in a world where", or stacked rhetorical questions.`
+export const FACEBOOK_CAPTION_INSTRUCTIONS = `Write a Facebook post promoting a music news or review article for Philadelphia Music Live, a local independent live-music publication covering Philadelphia, touring artists, concerts, and music culture.
+
+The tone should feel like it was written by a real music editor — concise, conversational, informed, and slightly informal without sounding sloppy. Avoid corporate language, marketing tone, fan-club hype, or AI-sounding phrasing.
+
+Requirements:
+
+* Keep under 50 words.
+* Never truncate the text.
+* Write 1–2 short sentences.
+* Paragraph breaks are allowed if natural.
+* Prioritize specificity over hype.
+* Focus on the actual news, performance, tour, release, or local relevance.
+* Sound natural for Facebook readers who already follow music news.
+
+Style guidelines:
+
+* Write like a local music publication, not a brand account.
+* Use plain language and varied sentence structure.
+* Subtle attitude or personality is okay if it fits the artist/story.
+* Avoid sounding overly enthusiastic unless the story genuinely warrants it.
+* Avoid filler transitions and generic framing.
+* Do not summarize the entire article.
+* Do not directly ask readers to click or read.
+
+Avoid:
+
+* Clickbait
+* Marketing copy
+* AI filler language
+* Hashtags
+* Emojis or emoticons
+* Exclamation marks unless absolutely warranted
+* Quotation marks around headlines
+* Rhetorical questions
+
+Never use phrases like:
+
+* "dive in"
+* "don't miss"
+* "game-changer"
+* "whether you're a fan or not"
+* "here's why"
+* "in a world where"
+* "mesmerizing"
+* "stunning"
+* "must-see"
+* "fans are losing it"
+* "takes things to the next level"
+
+Preferred qualities:
+
+* Dry wit is acceptable.
+* Slightly understated wording is preferred over exaggerated excitement.
+* References to Philly or regional relevance are encouraged when appropriate.
+* Posts should feel written quickly by someone who actually follows live music news every day.`
 
 export type FacebookCaptionArticle = {
   _type: string
