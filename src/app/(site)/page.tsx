@@ -1,12 +1,13 @@
 import type {Metadata} from 'next'
+import {Suspense} from 'react'
 import {HomeEditorialFeed} from '@/components/HomeEditorialFeed'
 import {HomeFeaturedSlideshow} from '@/components/HomeFeaturedSlideshow'
 import {JsonLd} from '@/components/JsonLd'
-import type {EditorialCardItem} from '@/components/EditorialCard'
+import {fetchHomeEditorialThroughPage} from '@/app/(site)/homeEditorialActions'
 import {buildWebSiteJsonLd} from '@/lib/editorialJsonLd'
 import {fetchHomeCarouselSourceData} from '@/lib/fetchHomeCarousel'
 import {normalizeHomeCarouselSlideOrder} from '@/lib/homeFeatured'
-import {HOME_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
+import {parseListPageParam} from '@/lib/listPagination'
 import {
   buildPageMetadata,
   homepageOgImageFromSiteSettings,
@@ -14,7 +15,7 @@ import {
 } from '@/lib/pageMetadata'
 import {client} from '@/sanity/lib/client'
 import {sanityFetch} from '@/sanity/lib/live'
-import {HOME_EDITORIAL_PAGE, SITE_SETTINGS} from '@/sanity/lib/queries'
+import {SITE_SETTINGS} from '@/sanity/lib/queries'
 
 /** Fresher home page when you publish in Studio (layout still uses 60s elsewhere). */
 export const revalidate = 30
@@ -37,7 +38,10 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function HomePage() {
+export default async function HomePage({searchParams}: {searchParams: Promise<{page?: string}>}) {
+  const {page: pageParam} = await searchParams
+  const listPage = parseListPageParam(pageParam)
+
   const {data: settings} = await sanityFetch({query: SITE_SETTINGS, stega: false})
   const pinnedEventSlug =
     typeof settings?.homepageCarouselEventSlug === 'string'
@@ -59,16 +63,10 @@ export default async function HomePage() {
     .filter((slide) => slide.kind === 'editorial')
     .map((slide) => slide.item._id)
 
-  const {data: grid} = await sanityFetch({
-    query: HOME_EDITORIAL_PAGE,
-    params: {
-      start: 0,
-      end: HOME_EDITORIAL_PAGE_SIZE,
-      excludeIds: excludeCarouselIds,
-    },
-  })
-  const excludeSet = new Set(excludeCarouselIds)
-  const initialItems = ((grid ?? []) as EditorialCardItem[]).filter((item) => !excludeSet.has(item._id))
+  const {items: initialItems, hasMore: initialHasMore} = await fetchHomeEditorialThroughPage(
+    listPage,
+    excludeCarouselIds,
+  )
 
   return (
     <div>
@@ -80,7 +78,14 @@ export default async function HomePage() {
           Interviews, news, photo galleries, and reviews from the Philadelphia area and beyond.
         </p>
       </section>
-      <HomeEditorialFeed excludeCarouselIds={excludeCarouselIds} initialItems={initialItems} />
+      <Suspense fallback={null}>
+        <HomeEditorialFeed
+          excludeCarouselIds={excludeCarouselIds}
+          initialItems={initialItems}
+          initialHasMore={initialHasMore}
+          initialPage={listPage}
+        />
+      </Suspense>
     </div>
   )
 }

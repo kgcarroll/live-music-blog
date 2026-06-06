@@ -1,9 +1,11 @@
 import type {Metadata} from 'next'
 import type {TypedObject} from '@portabletext/types'
+import {Suspense} from 'react'
 import {ArticleBody} from '@/components/ArticleBody'
 import {SchedulePageClient} from '@/components/SchedulePageClient'
 import {buildHubPageMetadata} from '@/lib/hubMetadata'
-import {fetchScheduleEventsPage} from '@/lib/ticketmaster'
+import {parseListPageParam} from '@/lib/listPagination'
+import {fetchScheduleEventsThroughPage} from '@/lib/ticketmaster'
 import {sanityFetch} from '@/sanity/lib/live'
 import {SITE_SETTINGS} from '@/sanity/lib/queries'
 
@@ -19,10 +21,15 @@ export async function generateMetadata(): Promise<Metadata> {
   })
 }
 
-export default async function EventsPage() {
+type Props = {searchParams: Promise<{page?: string}>}
+
+export default async function EventsPage({searchParams}: Props) {
+  const {page: pageParam} = await searchParams
+  const listPage = parseListPageParam(pageParam)
+
   const [{data: settings}, schedule] = await Promise.all([
     sanityFetch({query: SITE_SETTINGS}),
-    fetchScheduleEventsPage(0),
+    fetchScheduleEventsThroughPage(listPage),
   ])
 
   const intro = (settings?.scheduleHubPortable ?? null) as TypedObject[] | null
@@ -37,18 +44,21 @@ export default async function EventsPage() {
   }
 
   return (
-    <SchedulePageClient
-      initialEvents={schedule.events}
-      initialHasMore={schedule.hasMore}
-      emptyMessage={emptyMessage}
-    >
-      {intro?.length ? (
-        <div className="mt-6 max-w-2xl">
-          <ArticleBody value={intro} />
-        </div>
-      ) : (
-        <p className="mt-3 max-w-2xl text-zinc-400">{fallbackIntro}</p>
-      )}
-    </SchedulePageClient>
+    <Suspense fallback={null}>
+      <SchedulePageClient
+        initialEvents={schedule.events}
+        initialHasMore={schedule.hasMore}
+        initialPage={listPage}
+        emptyMessage={emptyMessage}
+      >
+        {intro?.length ? (
+          <div className="mt-6 max-w-2xl">
+            <ArticleBody value={intro} />
+          </div>
+        ) : (
+          <p className="mt-3 max-w-2xl text-zinc-400">{fallbackIntro}</p>
+        )}
+      </SchedulePageClient>
+    </Suspense>
   )
 }

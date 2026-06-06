@@ -925,6 +925,19 @@ export async function fetchScheduleEventsPage(page: number): Promise<ScheduleEve
   return paginateScheduleEvents(feed.events, page)
 }
 
+export async function fetchScheduleEventsThroughPage(page: number): Promise<ScheduleEventsPageResult> {
+  const feed = await getTicketmasterFeed()
+  if (feed.error) {
+    return {events: [], hasMore: false, error: feed.error}
+  }
+  const maxPage = Math.max(0, page)
+  const end = (maxPage + 1) * SCHEDULE_PAGE_SIZE
+  return {
+    events: feed.events.slice(0, end),
+    hasMore: end < feed.events.length,
+  }
+}
+
 type EventIndex = {
   events: ScheduleEvent[]
   bySlug: Map<string, ScheduleEvent>
@@ -1063,6 +1076,25 @@ export async function fetchVenueEventsPage(
   const venueEvents = index.events.filter((event) => event.venueId === id)
   const result = paginateScheduleEvents(venueEvents, page)
   return {events: result.events, hasMore: result.hasMore}
+}
+
+export async function fetchVenueEventsThroughPage(
+  venueId: string,
+  page: number,
+): Promise<VenueEventsResult> {
+  const index = await getEventIndex()
+  if (index.error) {
+    return {events: [], hasMore: false, error: index.error}
+  }
+
+  const id = venueId.trim()
+  const venueEvents = index.events.filter((event) => event.venueId === id)
+  const maxPage = Math.max(0, page)
+  const end = (maxPage + 1) * SCHEDULE_PAGE_SIZE
+  return {
+    events: venueEvents.slice(0, end),
+    hasMore: end < venueEvents.length,
+  }
 }
 
 export async function fetchEventMatchBySlug(

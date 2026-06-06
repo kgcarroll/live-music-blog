@@ -9,11 +9,13 @@ export function SchedulePageClient({
   children,
   initialEvents,
   initialHasMore,
+  initialPage,
   emptyMessage,
 }: {
   children: ReactNode
   initialEvents: ScheduleEvent[]
   initialHasMore: boolean
+  initialPage: number
   emptyMessage: string
 }) {
   const [view, setView] = useState<ScheduleViewMode>('grid')
@@ -29,6 +31,7 @@ export function SchedulePageClient({
         view={view}
         initialEvents={initialEvents}
         initialHasMore={initialHasMore}
+        initialPage={initialPage}
         emptyMessage={emptyMessage}
       />
     </div>

@@ -1,22 +1,27 @@
 import type {Metadata} from 'next'
 import Link from 'next/link'
 import {notFound, redirect} from 'next/navigation'
+import {Suspense} from 'react'
 
 import {VenueDetailLayout, VenueMapStickyAside} from '@/components/VenueDetailLayout'
 import {VenueDetailMapLazy} from '@/components/VenueDetailMapLazy'
 import {VenueUpcomingEvents} from '@/components/VenueUpcomingEvents'
 import {buildPageMetadata} from '@/lib/pageMetadata'
+import {parseListPageParam} from '@/lib/listPagination'
 import {venueHref} from '@/lib/paths'
 import {
   fetchVenueById,
-  fetchVenueEventsPage,
+  fetchVenueEventsThroughPage,
   fetchVenueMapPinBySlug,
   formatVenueAddress,
 } from '@/lib/ticketmaster'
 import {sanityFetch} from '@/sanity/lib/live'
 import {SITE_SETTINGS} from '@/sanity/lib/queries'
 
-type Props = {params: Promise<{slug: string}>}
+type Props = {
+  params: Promise<{slug: string}>
+  searchParams: Promise<{page?: string}>
+}
 
 function VenueMapPanel({
   latitude,
@@ -69,8 +74,10 @@ export async function generateMetadata({params}: Props): Promise<Metadata> {
   })
 }
 
-export default async function VenueDetailPage({params}: Props) {
+export default async function VenueDetailPage({params, searchParams}: Props) {
   const {slug} = await params
+  const {page: pageParam} = await searchParams
+  const listPage = parseListPageParam(pageParam)
   const [{data: settings}, match] = await Promise.all([
     sanityFetch({query: SITE_SETTINGS, stega: false}),
     fetchVenueMapPinBySlug(slug),
@@ -93,7 +100,7 @@ export default async function VenueDetailPage({params}: Props) {
 
   const [venue, eventsResult] = await Promise.all([
     fetchVenueById(pin.id),
-    fetchVenueEventsPage(pin.id, 0),
+    fetchVenueEventsThroughPage(pin.id, listPage),
   ])
 
   if (venue === 'not_configured' || venue === 'api_error') {
@@ -202,6 +209,7 @@ export default async function VenueDetailPage({params}: Props) {
         venueId={venue.id}
         initialEvents={eventsResult.events}
         initialHasMore={eventsResult.hasMore}
+        initialPage={listPage}
       />
     </section>
   )
@@ -217,7 +225,11 @@ export default async function VenueDetailPage({params}: Props) {
         ) : undefined
       }
       mapMobile={showMap && mapPanelProps ? <VenueMapPanel {...mapPanelProps} /> : undefined}
-      below={upcomingShows}
+      below={
+        <Suspense fallback={null}>
+          {upcomingShows}
+        </Suspense>
+      }
     />
   )
 }

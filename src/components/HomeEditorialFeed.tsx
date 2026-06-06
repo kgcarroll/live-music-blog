@@ -2,26 +2,39 @@
 
 import Link from 'next/link'
 import {useCallback, useState} from 'react'
+import {usePathname, useRouter, useSearchParams} from 'next/navigation'
 import {EditorialCard, EditorialCardSkeleton, type EditorialCardItem} from '@/components/EditorialCard'
 import {loadOlderHomeEditorial} from '@/app/(site)/homeEditorialActions'
 import {HOME_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
+import {listPageHref} from '@/lib/listPagination'
 
 export function HomeEditorialFeed({
   excludeCarouselIds,
   initialItems,
+  initialHasMore,
+  initialPage,
 }: {
   excludeCarouselIds: string[]
   initialItems: EditorialCardItem[]
+  initialHasMore: boolean
+  initialPage: number
 }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
   const [items, setItems] = useState(initialItems)
   const [loading, setLoading] = useState(false)
-  const [hasMore, setHasMore] = useState(initialItems.length === HOME_EDITORIAL_PAGE_SIZE)
+  const [hasMore, setHasMore] = useState(initialHasMore)
+  const [page, setPage] = useState(initialPage)
 
   const loadOlder = useCallback(async () => {
-    if (loading) return
+    if (loading || !hasMore) return
     setLoading(true)
     try {
-      const more = await loadOlderHomeEditorial(items.length, excludeCarouselIds)
+      const nextPage = page + 1
+      const offset = nextPage * HOME_EDITORIAL_PAGE_SIZE
+      const more = await loadOlderHomeEditorial(offset, excludeCarouselIds)
       setItems((prev) => {
         const seen = new Set(prev.map((i) => i._id))
         const next = [...prev]
@@ -33,11 +46,13 @@ export function HomeEditorialFeed({
         }
         return next
       })
+      setPage(nextPage)
       setHasMore(more.length === HOME_EDITORIAL_PAGE_SIZE)
+      router.replace(listPageHref(pathname, nextPage, searchParams), {scroll: false})
     } finally {
       setLoading(false)
     }
-  }, [excludeCarouselIds, items.length, loading])
+  }, [excludeCarouselIds, hasMore, loading, page, pathname, router, searchParams])
 
   return (
     <>

@@ -27,6 +27,24 @@ async function fetchSectionPage(
   }
 }
 
+export async function fetchSectionEditorialThroughPage(
+  type: string,
+  page: number,
+): Promise<EditorialListPageResult> {
+  const maxPage = Math.max(0, page)
+  const limit = (maxPage + 1) * SECTION_EDITORIAL_PAGE_SIZE
+  const end = limit + 1
+  const {data} = await sanityFetch({
+    query: SECTION_EDITORIAL_PAGE,
+    params: {type, start: 0, end},
+  })
+  const rows = (data ?? []) as EditorialCardItem[]
+  return {
+    items: rows.slice(0, limit),
+    hasMore: rows.length > limit,
+  }
+}
+
 async function fetchTagPage(tagId: string, offset: number): Promise<EditorialListPageResult> {
   const start = offset
   const end = offset + TAG_EDITORIAL_PAGE_SIZE + 1
@@ -38,6 +56,24 @@ async function fetchTagPage(tagId: string, offset: number): Promise<EditorialLis
   return {
     items: rows.slice(0, TAG_EDITORIAL_PAGE_SIZE),
     hasMore: rows.length > TAG_EDITORIAL_PAGE_SIZE,
+  }
+}
+
+export async function fetchTagEditorialThroughPage(
+  tagId: string,
+  page: number,
+): Promise<EditorialListPageResult> {
+  const maxPage = Math.max(0, page)
+  const limit = (maxPage + 1) * TAG_EDITORIAL_PAGE_SIZE
+  const end = limit + 1
+  const {data} = await sanityFetch({
+    query: POSTS_BY_TAG_ID_PAGE,
+    params: {tagId, start: 0, end},
+  })
+  const rows = (data ?? []) as EditorialCardItem[]
+  return {
+    items: rows.slice(0, limit),
+    hasMore: rows.length > limit,
   }
 }
 

@@ -2,15 +2,19 @@ import {notFound} from 'next/navigation'
 import type {Metadata} from 'next'
 import Link from 'next/link'
 import type {TypedObject} from '@portabletext/types'
+import {Suspense} from 'react'
 
 import {ArticleBody} from '@/components/ArticleBody'
 import {ListingEditorialFeed} from '@/components/ListingEditorialFeed'
-import type {EditorialCardItem} from '@/components/EditorialCard'
-import {TAG_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
+import {fetchTagEditorialThroughPage} from '@/app/(site)/listingEditorialActions'
+import {parseListPageParam} from '@/lib/listPagination'
 import {sanityFetch} from '@/sanity/lib/live'
-import {POSTS_BY_TAG_ID_PAGE, TAG_BY_SLUG, TAG_SLUGS} from '@/sanity/lib/queries'
+import {TAG_BY_SLUG, TAG_SLUGS} from '@/sanity/lib/queries'
 
-type Props = {params: Promise<{slug: string}>}
+type Props = {
+  params: Promise<{slug: string}>
+  searchParams: Promise<{page?: string}>
+}
 
 type TagHub = {
   _id: string
@@ -43,8 +47,11 @@ export async function generateMetadata({params}: Props): Promise<Metadata> {
   }
 }
 
-export default async function TagHubPage({params}: Props) {
+export default async function TagHubPage({params, searchParams}: Props) {
   const {slug} = await params
+  const {page: pageParam} = await searchParams
+  const listPage = parseListPageParam(pageParam)
+
   const {data} = await sanityFetch({
     query: TAG_BY_SLUG,
     params: {slug},
@@ -52,13 +59,7 @@ export default async function TagHubPage({params}: Props) {
   const tag = (data ?? null) as TagHub | null
   if (!tag?._id || !tag.slug) notFound()
 
-  const {data: rows} = await sanityFetch({
-    query: POSTS_BY_TAG_ID_PAGE,
-    params: {tagId: tag._id, start: 0, end: TAG_EDITORIAL_PAGE_SIZE + 1},
-  })
-
-  const items = ((rows ?? []) as EditorialCardItem[]).slice(0, TAG_EDITORIAL_PAGE_SIZE)
-  const hasMore = (rows ?? []).length > TAG_EDITORIAL_PAGE_SIZE
+  const {items, hasMore} = await fetchTagEditorialThroughPage(tag._id, listPage)
 
   return (
     <div>
@@ -77,13 +78,16 @@ export default async function TagHubPage({params}: Props) {
           <ArticleBody value={tag.description} />
         </div>
       ) : null}
-      <ListingEditorialFeed
-        mode="tag"
-        tagId={tag._id}
-        initialItems={items}
-        initialHasMore={hasMore}
-        emptyMessage="No published articles for this tag yet."
-      />
+      <Suspense fallback={null}>
+        <ListingEditorialFeed
+          mode="tag"
+          tagId={tag._id}
+          initialItems={items}
+          initialHasMore={hasMore}
+          initialPage={listPage}
+          emptyMessage="No published articles for this tag yet."
+        />
+      </Suspense>
     </div>
   )
 }

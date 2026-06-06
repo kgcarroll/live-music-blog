@@ -1,32 +1,43 @@
 'use client'
 
 import {useCallback, useState} from 'react'
+import {usePathname, useRouter, useSearchParams} from 'next/navigation'
 import {loadOlderAuthorEditorial} from '@/app/(site)/authorEditorialActions'
 import {EditorialCard, EditorialCardSkeleton, type EditorialCardItem} from '@/components/EditorialCard'
 import {AUTHOR_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
+import {listPageHref} from '@/lib/listPagination'
 
 export function AuthorEditorialFeed({
   authorSlug,
   initialHasMore,
   initialItems,
+  initialPage,
 }: {
   authorSlug: string
   initialHasMore: boolean
   initialItems: EditorialCardItem[]
+  initialPage: number
 }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
   const [items, setItems] = useState(initialItems)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialHasMore)
+  const [page, setPage] = useState(initialPage)
 
   const loadOlder = useCallback(async () => {
-    if (loading) return
+    if (loading || !hasMore) return
     setLoading(true)
     try {
-      const page = await loadOlderAuthorEditorial(authorSlug, items.length)
+      const nextPage = page + 1
+      const offset = nextPage * AUTHOR_EDITORIAL_PAGE_SIZE
+      const result = await loadOlderAuthorEditorial(authorSlug, offset)
       setItems((prev) => {
         const seen = new Set(prev.map((item) => item._id))
         const next = [...prev]
-        for (const row of page.items) {
+        for (const row of result.items) {
           if (row?._id && !seen.has(row._id)) {
             seen.add(row._id)
             next.push(row)
@@ -34,11 +45,13 @@ export function AuthorEditorialFeed({
         }
         return next
       })
-      setHasMore(page.hasMore)
+      setPage(nextPage)
+      setHasMore(result.hasMore)
+      router.replace(listPageHref(pathname, nextPage, searchParams), {scroll: false})
     } finally {
       setLoading(false)
     }
-  }, [authorSlug, items.length, loading])
+  }, [authorSlug, hasMore, loading, page, pathname, router, searchParams])
 
   return (
     <>

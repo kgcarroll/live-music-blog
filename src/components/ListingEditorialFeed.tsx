@@ -1,16 +1,23 @@
 'use client'
 
 import {useCallback, useState} from 'react'
+import {usePathname, useRouter, useSearchParams} from 'next/navigation'
 import {
   loadOlderSectionEditorial,
   loadOlderTagEditorial,
 } from '@/app/(site)/listingEditorialActions'
 import {EditorialCard, EditorialCardSkeleton, type EditorialCardItem} from '@/components/EditorialCard'
-import {EDITORIAL_LIST_PAGE_SIZE} from '@/lib/homeEditorial'
+import {
+  EDITORIAL_LIST_PAGE_SIZE,
+  SECTION_EDITORIAL_PAGE_SIZE,
+  TAG_EDITORIAL_PAGE_SIZE,
+} from '@/lib/homeEditorial'
+import {listPageHref} from '@/lib/listPagination'
 
 type ListingEditorialFeedProps = {
   initialHasMore: boolean
   initialItems: EditorialCardItem[]
+  initialPage: number
   emptyMessage: string
 } & (
   | {mode: 'section'; sectionType: string}
@@ -18,24 +25,34 @@ type ListingEditorialFeedProps = {
 )
 
 export function ListingEditorialFeed(props: ListingEditorialFeedProps) {
-  const {initialHasMore, initialItems, emptyMessage} = props
+  const {initialHasMore, initialItems, initialPage, emptyMessage} = props
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
   const [items, setItems] = useState(initialItems)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialHasMore)
+  const [page, setPage] = useState(initialPage)
+
+  const pageSize =
+    props.mode === 'section' ? SECTION_EDITORIAL_PAGE_SIZE : TAG_EDITORIAL_PAGE_SIZE
 
   const loadOlder = useCallback(async () => {
-    if (loading) return
+    if (loading || !hasMore) return
     setLoading(true)
     try {
-      const page =
+      const nextPage = page + 1
+      const offset = nextPage * pageSize
+      const result =
         props.mode === 'section'
-          ? await loadOlderSectionEditorial(props.sectionType, items.length)
-          : await loadOlderTagEditorial(props.tagId, items.length)
+          ? await loadOlderSectionEditorial(props.sectionType, offset)
+          : await loadOlderTagEditorial(props.tagId, offset)
 
       setItems((prev) => {
         const seen = new Set(prev.map((item) => item._id))
         const next = [...prev]
-        for (const row of page.items) {
+        for (const row of result.items) {
           if (row?._id && !seen.has(row._id)) {
             seen.add(row._id)
             next.push(row)
@@ -43,15 +60,22 @@ export function ListingEditorialFeed(props: ListingEditorialFeedProps) {
         }
         return next
       })
-      setHasMore(page.hasMore)
+      setPage(nextPage)
+      setHasMore(result.hasMore)
+      router.replace(listPageHref(pathname, nextPage, searchParams), {scroll: false})
     } finally {
       setLoading(false)
     }
   }, [
-    items.length,
+    hasMore,
     loading,
+    page,
+    pageSize,
+    pathname,
     props.mode,
     props.mode === 'section' ? props.sectionType : props.tagId,
+    router,
+    searchParams,
   ])
 
   return (

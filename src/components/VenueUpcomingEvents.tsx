@@ -1,8 +1,10 @@
 'use client'
 
 import {useCallback, useState} from 'react'
+import {usePathname, useRouter, useSearchParams} from 'next/navigation'
 import {loadMoreVenueEvents} from '@/app/(site)/venues/venueEventsActions'
 import {ScheduleEventCard, ScheduleEventCardSkeleton} from '@/components/ScheduleEventCard'
+import {listPageHref} from '@/lib/listPagination'
 import {SCHEDULE_PAGE_SIZE} from '@/lib/schedule'
 import type {ScheduleEvent} from '@/lib/ticketmaster'
 
@@ -10,15 +12,21 @@ export function VenueUpcomingEvents({
   venueId,
   initialEvents,
   initialHasMore,
+  initialPage,
 }: {
   venueId: string
   initialEvents: ScheduleEvent[]
   initialHasMore: boolean
+  initialPage: number
 }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
   const [events, setEvents] = useState(initialEvents)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialHasMore)
-  const [page, setPage] = useState(0)
+  const [page, setPage] = useState(initialPage)
 
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return
@@ -39,10 +47,11 @@ export function VenueUpcomingEvents({
       })
       setPage(nextPage)
       setHasMore(result.hasMore)
+      router.replace(listPageHref(pathname, nextPage, searchParams), {scroll: false})
     } finally {
       setLoading(false)
     }
-  }, [hasMore, loading, page, venueId])
+  }, [hasMore, loading, page, pathname, router, searchParams, venueId])
 
   if (!events.length) {
     return <p className="mt-6 text-sm text-zinc-500">No upcoming music events at this venue in the next 30 days.</p>

@@ -2,14 +2,18 @@ import {notFound} from 'next/navigation'
 import type {Metadata} from 'next'
 import Link from 'next/link'
 import type {TypedObject} from '@portabletext/types'
+import {Suspense} from 'react'
 import {ArticleBody} from '@/components/ArticleBody'
 import {AuthorEditorialFeed} from '@/components/AuthorEditorialFeed'
-import type {EditorialCardItem} from '@/components/EditorialCard'
-import {AUTHOR_EDITORIAL_PAGE_SIZE} from '@/lib/homeEditorial'
+import {fetchAuthorEditorialThroughPage} from '@/app/(site)/authorEditorialActions'
+import {parseListPageParam} from '@/lib/listPagination'
 import {sanityFetch} from '@/sanity/lib/live'
-import {AUTHOR_BY_SLUG, AUTHOR_SLUGS, POSTS_BY_AUTHOR_SLUG} from '@/sanity/lib/queries'
+import {AUTHOR_BY_SLUG, AUTHOR_SLUGS} from '@/sanity/lib/queries'
 
-type Props = {params: Promise<{slug: string}>}
+type Props = {
+  params: Promise<{slug: string}>
+  searchParams: Promise<{page?: string}>
+}
 
 type AuthorPageData = {
   name?: string | null
@@ -40,8 +44,11 @@ export async function generateMetadata({params}: Props): Promise<Metadata> {
   }
 }
 
-export default async function AuthorPostsPage({params}: Props) {
+export default async function AuthorPostsPage({params, searchParams}: Props) {
   const {slug} = await params
+  const {page: pageParam} = await searchParams
+  const listPage = parseListPageParam(pageParam)
+
   const {data: author} = await sanityFetch({
     query: AUTHOR_BY_SLUG,
     params: {slug},
@@ -49,13 +56,7 @@ export default async function AuthorPostsPage({params}: Props) {
   const authorData = (author ?? null) as AuthorPageData | null
   if (!authorData?.slug) notFound()
 
-  const {data: posts} = await sanityFetch({
-    query: POSTS_BY_AUTHOR_SLUG,
-    params: {slug, start: 0, end: AUTHOR_EDITORIAL_PAGE_SIZE + 1},
-  })
-  const rows = (posts ?? []) as EditorialCardItem[]
-  const items = rows.slice(0, AUTHOR_EDITORIAL_PAGE_SIZE)
-  const hasMore = rows.length > AUTHOR_EDITORIAL_PAGE_SIZE
+  const {items, hasMore} = await fetchAuthorEditorialThroughPage(slug, listPage)
 
   return (
     <div>
@@ -76,7 +77,14 @@ export default async function AuthorPostsPage({params}: Props) {
       ) : (
         <p className="mt-3 max-w-2xl text-zinc-400">Interviews, photo posts, and reviews by this author.</p>
       )}
-      <AuthorEditorialFeed authorSlug={slug} initialHasMore={hasMore} initialItems={items} />
+      <Suspense fallback={null}>
+        <AuthorEditorialFeed
+          authorSlug={slug}
+          initialHasMore={hasMore}
+          initialItems={items}
+          initialPage={listPage}
+        />
+      </Suspense>
     </div>
   )
 }

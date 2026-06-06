@@ -1,4 +1,5 @@
 import type {TypedObject} from '@portabletext/types'
+import {Suspense} from 'react'
 import {ArticleBody} from '@/components/ArticleBody'
 import {ListingEditorialFeed} from '@/components/ListingEditorialFeed'
 import type {EditorialCardItem} from '@/components/EditorialCard'
@@ -10,6 +11,7 @@ export function HubSectionPage({
   sectionType,
   initialItems,
   initialHasMore,
+  initialPage,
   emptyMessage,
 }: {
   title: string
@@ -18,6 +20,7 @@ export function HubSectionPage({
   sectionType: string
   initialItems: EditorialCardItem[]
   initialHasMore: boolean
+  initialPage: number
   emptyMessage: string
 }) {
   return (
@@ -30,13 +33,16 @@ export function HubSectionPage({
       ) : (
         <p className="mt-3 max-w-2xl text-zinc-400">{fallbackIntro}</p>
       )}
-      <ListingEditorialFeed
-        mode="section"
-        sectionType={sectionType}
-        initialItems={initialItems}
-        initialHasMore={initialHasMore}
-        emptyMessage={emptyMessage}
-      />
+      <Suspense fallback={null}>
+        <ListingEditorialFeed
+          mode="section"
+          sectionType={sectionType}
+          initialItems={initialItems}
+          initialHasMore={initialHasMore}
+          initialPage={initialPage}
+          emptyMessage={emptyMessage}
+        />
+      </Suspense>
     </div>
   )
 }
