@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 import type {VenueMapPin} from '@/lib/ticketmaster'
@@ -13,16 +14,12 @@ export function VenueCard({venue}: {venue: VenueMapPin}) {
         className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-zinc-800"
       >
         {venue.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- Ticketmaster CDN
-          <img
+          <Image
             src={venue.imageUrl}
             alt=""
-            width={venue.imageWidth ?? undefined}
-            height={venue.imageHeight ?? undefined}
+            fill
             sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, min(400px, 33vw)"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-            loading="lazy"
-            decoding="async"
+            className="object-cover transition duration-300 group-hover:scale-[1.02]"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-sm text-zinc-500">

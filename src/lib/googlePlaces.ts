@@ -48,7 +48,8 @@ export type GooglePlaceMatchResult =
   | {
       status: 'matched'
       candidate: GooglePlaceCandidate
-      photoUrl: string | null
+      /** Photo resource name; resolve to bytes with fetchGooglePlacePhotoBytes. */
+      photoName: string
     }
   | {
       status: 'not_found' | 'not_configured' | 'api_error'
@@ -309,24 +310,32 @@ export async function searchGooglePlaceCandidates(
   return {candidates}
 }
 
-export async function fetchGooglePlacePhotoUrl(
+export type GooglePlacePhotoBytes = {
+  bytes: Buffer
+  contentType: string
+}
+
+/**
+ * Download photo bytes for a place.
+ *
+ * Google only issues short-lived photo URIs, so the image itself must be
+ * copied somewhere durable rather than linking to Google's URL.
+ */
+export async function fetchGooglePlacePhotoBytes(
   photoName: string,
-  maxWidthPx = 1200,
-): Promise<string | null | 'not_configured' | 'api_error'> {
+  maxWidthPx = 1600,
+): Promise<GooglePlacePhotoBytes | 'not_configured' | 'api_error'> {
   const key = getApiKey()
   if (!key) return 'not_configured'
 
   const params = new URLSearchParams({
     maxWidthPx: String(maxWidthPx),
-    skipHttpRedirect: 'true',
     key,
   })
 
   let response: Response
   try {
-    response = await fetch(
-      `${PLACES_API_BASE}/${photoName}/media?${params.toString()}`,
-    )
+    response = await fetch(`${PLACES_API_BASE}/${photoName}/media?${params.toString()}`)
   } catch {
     return 'api_error'
   }
@@ -336,15 +345,27 @@ export async function fetchGooglePlacePhotoUrl(
     return 'api_error'
   }
 
-  await recordGooglePlacesRequest('place_photo')
+  const contentType = response.headers.get('content-type')?.split(';')[0]?.trim() || ''
+  if (!contentType.startsWith('image/')) {
+    await recordGooglePlacesRequest('api_error')
+    return 'api_error'
+  }
 
+  let bytes: Buffer
   try {
-    const json = (await response.json()) as {photoUri?: string}
-    return json.photoUri?.trim() || null
+    bytes = Buffer.from(await response.arrayBuffer())
   } catch {
     await recordGooglePlacesRequest('api_error')
     return 'api_error'
   }
+
+  if (!bytes.byteLength) {
+    await recordGooglePlacesRequest('api_error')
+    return 'api_error'
+  }
+
+  await recordGooglePlacesRequest('place_photo')
+  return {bytes, contentType}
 }
 
 export async function matchVenueToGooglePlace(
@@ -377,14 +398,9 @@ export async function matchVenueToGooglePlace(
     }
   }
 
-  const photoUrl = await fetchGooglePlacePhotoUrl(best.firstPhotoName)
-  if (photoUrl === 'not_configured' || photoUrl === 'api_error') {
-    return {status: photoUrl, candidates, message: 'Photo fetch failed'}
-  }
-
   return {
     status: 'matched',
     candidate: best,
-    photoUrl,
+    photoName: best.firstPhotoName,
   }
 }

@@ -1,4 +1,5 @@
 import type {Metadata} from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import {notFound, redirect} from 'next/navigation'
 import {Suspense} from 'react'
@@ -146,14 +147,13 @@ export default async function VenueDetailPage({params, searchParams}: Props) {
       {venueImageUrl ? (
         <figure className="mt-6 max-w-2xl">
           <div className="relative aspect-[16/9] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-800">
-            {/* eslint-disable-next-line @next/next/no-img-element -- Google Places / Ticketmaster CDN */}
-            <img
+            <Image
               src={venueImageUrl}
               alt={venue.name}
-              width={pin.imageWidth ?? undefined}
-              height={pin.imageHeight ?? undefined}
-              className="h-full w-full object-cover"
-              decoding="async"
+              fill
+              sizes="(max-width: 767px) calc(100vw - 2rem), 672px"
+              className="object-cover"
+              priority
             />
           </div>
           {pin.imageSource === 'google_places' && pin.imageAttribution ? (

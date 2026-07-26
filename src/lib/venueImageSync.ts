@@ -1,4 +1,5 @@
 import {
+  fetchGooglePlacePhotoBytes,
   isGooglePlacesConfigured,
   matchVenueToGooglePlace,
   type TicketmasterVenueIdentity,
@@ -6,10 +7,13 @@ import {
 import {recordGooglePlacesSyncResult} from '@/lib/googlePlacesUsage'
 import {fetchVenueById, type VenueMapPin} from '@/lib/ticketmaster'
 import {
+  deleteVenueImageAsset,
   isVenueImageStale,
   loadVenueImageSnapshots,
+  uploadVenueImageAsset,
   upsertVenueImageDocuments,
   venueImageDocument,
+  type VenueImageRecord,
 } from '@/lib/venueImage'
 
 const RESOLVE_DELAY_MS = 400
@@ -37,20 +41,18 @@ function maxVenuesPerSync(options: VenueImageSyncOptions): number {
   return 5
 }
 
-async function selectVenuesToProcess(
+function selectVenuesToProcess(
   venues: VenueMapPin[],
+  snapshots: Map<string, VenueImageRecord>,
   options: VenueImageSyncOptions,
-): Promise<VenueMapPin[]> {
+): VenueMapPin[] {
   if (!venues.length) return []
 
   if (options.force) {
     return venues.slice(0, maxVenuesPerSync(options))
   }
 
-  const snapshots = await loadVenueImageSnapshots(venues.map((venue) => venue.id))
-  const stale = venues.filter((venue) =>
-    isVenueImageStale(snapshots.get(venue.id), false),
-  )
+  const stale = venues.filter((venue) => isVenueImageStale(snapshots.get(venue.id), false))
 
   return stale.slice(0, maxVenuesPerSync(options))
 }
@@ -77,16 +79,26 @@ async function resolveVenueImage(pin: VenueMapPin): Promise<ReturnType<typeof ve
   const google = await matchVenueToGooglePlace(identity)
 
   if (google.status === 'matched') {
-    const {candidate, photoUrl} = google
-    if (photoUrl) {
-      return venueImageDocument(pin, {
-        imageUrl: photoUrl,
-        imageSource: 'google_places',
-        googlePlaceId: candidate.placeId,
-        photoAttribution: candidate.photoAttributions.join(', ') || null,
-        matchScore: candidate.matchScore,
-        matchStatus: 'matched',
-      })
+    const {candidate, photoName} = google
+    const photo = await fetchGooglePlacePhotoBytes(photoName)
+
+    if (photo !== 'not_configured' && photo !== 'api_error') {
+      const uploaded = await uploadVenueImageAsset(pin.slug || pin.id, photo.bytes, photo.contentType)
+
+      if (uploaded) {
+        return venueImageDocument(pin, {
+          imageUrl: uploaded.url,
+          imageSource: 'google_places',
+          imageAssetId: uploaded.assetId,
+          imageWidth: uploaded.width,
+          imageHeight: uploaded.height,
+          googlePlaceId: candidate.placeId,
+          googlePhotoName: photoName,
+          photoAttribution: candidate.photoAttributions.join(', ') || null,
+          matchScore: candidate.matchScore,
+          matchStatus: 'matched',
+        })
+      }
     }
   }
 
@@ -132,7 +144,8 @@ export async function syncVenueImagesOnFeed(
     return {venuesProcessed: 0, imagesWritten: 0, skippedNotConfigured: true}
   }
 
-  const pending = await selectVenuesToProcess(venues, options)
+  const snapshots = await loadVenueImageSnapshots(venues.map((venue) => venue.id))
+  const pending = selectVenuesToProcess(venues, snapshots, options)
   if (!pending.length) {
     await recordGooglePlacesSyncResult({venuesProcessed: 0, imagesWritten: 0})
     return {venuesProcessed: 0, imagesWritten: 0, skippedNotConfigured: false}
@@ -147,6 +160,11 @@ export async function syncVenueImagesOnFeed(
       await upsertVenueImageDocuments([doc])
       imagesWritten += 1
       venuesProcessed += 1
+
+      const previousAssetId = snapshots.get(pin.id)?.imageAssetId
+      if (previousAssetId && previousAssetId !== doc.imageAssetId) {
+        await deleteVenueImageAsset(previousAssetId)
+      }
     } catch (error) {
       console.warn(`[venueImage] Failed for ${pin.slug}:`, error)
     }

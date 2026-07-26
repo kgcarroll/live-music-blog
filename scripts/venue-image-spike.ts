@@ -134,7 +134,7 @@ async function main() {
   if (result.status === 'matched') {
     console.log('\n✓ Match found\n')
     printCandidate('Winner', result.candidate)
-    console.log(`\n  photoUrl: ${result.photoUrl ?? '(none)'}`)
+    console.log(`\n  photoName: ${result.photoName}`)
     console.log('\nSpike succeeded — safe to proceed with Sanity cache + sync.')
     return
   }

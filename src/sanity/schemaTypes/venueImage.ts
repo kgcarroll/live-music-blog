@@ -27,7 +27,12 @@ export const venueImage = defineType({
         ],
       },
     }),
+    defineField({name: 'image', type: 'image', title: 'Cached photo'}),
+    defineField({name: 'imageAssetId', type: 'string', title: 'Image asset ID'}),
+    defineField({name: 'imageWidth', type: 'number', title: 'Image width'}),
+    defineField({name: 'imageHeight', type: 'number', title: 'Image height'}),
     defineField({name: 'googlePlaceId', type: 'string', title: 'Google place ID'}),
+    defineField({name: 'googlePhotoName', type: 'string', title: 'Google photo name'}),
     defineField({name: 'photoAttribution', type: 'string', title: 'Photo attribution'}),
     defineField({name: 'matchScore', type: 'number', title: 'Match score'}),
     defineField({
